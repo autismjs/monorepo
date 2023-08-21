@@ -7,6 +7,7 @@ export enum MessageType {
   Connection,
   Profile,
   Chat,
+  Group,
   Revert,
 }
 
@@ -23,7 +24,7 @@ export class Base {
 
   constructor(param: { [B in keyof BaseJSON]: BaseJSON[B] } | string) {
     if (typeof param === 'string') {
-      const values = decode(param, [
+      const { values } = decode(param, [
         decodeNumber(0xff),
         decodeNumber(0xff),
         decodeNumber(0xffffffffffff),

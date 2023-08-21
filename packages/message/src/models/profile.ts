@@ -8,33 +8,28 @@ import {
   decodeString,
 } from '../utils/encoding';
 
-export enum ModerationSubtype {
-  Like = 0,
-  Dislike,
-  Block,
-  ThreadBanlist,
-  THreadAllowlist,
-  ThreadMentionOnly,
-  NSFW,
-  Emoji,
+export enum ProfileSubtype {
+  Name = 0,
+  Bio,
+  ProfileImageUrl,
+  CoverImageUrl,
+  Custom,
 }
 
-export type ModerationJSON = BaseJSON & {
-  subtype: ModerationSubtype;
-  reference: string;
-  value?: string;
+export type ProfileJSON = BaseJSON & {
+  subtype: ProfileSubtype;
+  key?: string;
+  value: string;
 };
 
-export class Moderation extends Base {
-  _subtype: ModerationSubtype;
+export class Profile extends Base {
+  _subtype: ProfileSubtype;
   _hex: string = '';
   _hash: string = '';
-  _reference: string;
-  _value?: string;
+  _key?: string;
+  _value: string;
 
-  constructor(
-    param: { [P in keyof ModerationJSON]: ModerationJSON[P] } | string,
-  ) {
+  constructor(param: { [P in keyof ProfileJSON]: ProfileJSON[P] } | string) {
     super(param);
 
     if (typeof param === 'string') {
@@ -43,47 +38,47 @@ export class Moderation extends Base {
         decodeNumber(0xff),
         decodeNumber(0xffffffffffff),
         decodeString(0xff),
-        decodeString(0xfff),
         decodeString(0xff),
+        decodeString(0xfff),
       ]);
 
-      this._type = MessageType.Moderation;
-      this._subtype = values[1] as ModerationSubtype;
+      this._type = MessageType.Profile;
+      this._subtype = values[1] as ProfileSubtype;
       this._createdAt = new Date(values[2] as number);
       this._creator = values[3] as string;
-      this._reference = values[4] as string;
+      this._key = values[4] as string;
       this._value = values[5] as string;
     }
 
     if (typeof param === 'object') {
-      this._type = MessageType.Moderation;
+      this._type = MessageType.Profile;
       this._subtype = param.subtype;
       this._createdAt = param.createdAt;
       this._creator = param.creator;
-      this._reference = param.reference;
+      this._key = param.key;
       this._value = param.value;
     }
   }
 
-  get subtype(): ModerationSubtype {
+  get subtype(): ProfileSubtype {
     return this._subtype;
   }
 
-  get reference() {
-    return this._reference;
+  get key() {
+    return this._key;
   }
 
   get value() {
     return this._value;
   }
 
-  get json(): ModerationJSON & { hash: string } {
+  get json(): ProfileJSON & { hash: string } {
     const json = super.json;
     return {
       ...json,
       hash: this.hash,
       subtype: this.subtype,
-      reference: this.reference,
+      key: this.key,
       value: this.value,
     };
   }
@@ -96,8 +91,8 @@ export class Moderation extends Base {
       encodeNumber(this.subtype, 0xff),
       encodeNumber(this.createdAt.getTime(), 0xffffffffffff),
       encodeString(this.creator, 0xff),
-      encodeString(this.reference || '', 0xfff),
-      encodeString(this.value || '', 0xff),
+      encodeString(this.key || '', 0xff),
+      encodeString(this.value || '', 0xfff),
     ].join('');
 
     return this._hex;

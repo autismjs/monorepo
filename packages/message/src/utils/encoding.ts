@@ -88,7 +88,7 @@ export function decode(
   decoders: ((
     data: string,
   ) => DecoderResult & { value: string | number | string[] })[],
-): (string | number | string[])[] {
+): { values: (string | number | string[])[]; next: string } {
   let _data = data;
   const returnValue = [];
 
@@ -98,7 +98,7 @@ export function decode(
     _data = next;
   }
 
-  return returnValue;
+  return { values: returnValue, next: _data };
 }
 
 export function decodeStrings(maxLength: number) {

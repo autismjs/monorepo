@@ -10,33 +10,46 @@ import {
   decodeStrings,
 } from '../utils/encoding';
 
-export enum PostSubtype {
-  Default = 0,
-  Comment,
-  Repost,
-  Cross,
+export enum ChatSubtype {
+  DirectMessage = 0,
+  GroupMessage,
+  CustomGroupMessage,
 }
 
-export type PostJSON = BaseJSON & {
-  subtype: PostSubtype;
-  topic?: string;
-  title?: string;
-  content?: string;
+export type ChatJSON = BaseJSON & {
+  subtype: ChatSubtype;
+  from?: {
+    seed: string;
+    key: string;
+  };
+  to?: {
+    seed: string;
+    key: string;
+  };
+  destination: string;
   reference?: string;
+  content?: string;
   attachment?: string[];
 };
 
-export class Post extends Base {
-  _subtype: PostSubtype;
+export class Chat extends Base {
+  _subtype: ChatSubtype;
   _hex: string = '';
   _hash: string = '';
-  _topic?: string;
-  _title?: string;
-  _content?: string;
+  _from?: {
+    seed: string;
+    key: string;
+  };
+  _to?: {
+    seed: string;
+    key: string;
+  };
+  _destination: string;
   _reference?: string;
+  _content?: string;
   _attachment?: string[];
 
-  constructor(param: { [P in keyof PostJSON]: PostJSON[P] } | string) {
+  constructor(param: { [P in keyof ChatJSON]: ChatJSON[P] } | string) {
     super(param);
 
     if (typeof param === 'string') {
@@ -45,47 +58,68 @@ export class Post extends Base {
         decodeNumber(0xff),
         decodeNumber(0xffffffffffff),
         decodeString(0xff),
+        decodeString(0xff),
+        decodeString(0xff),
+        decodeString(0xff),
+        decodeString(0xff),
         decodeString(0xfff),
         decodeString(0xfff),
-        decodeString(0xffff),
-        decodeString(0xfff),
+        decodeString(0xff),
         decodeStrings(0xfff),
       ]);
 
-      this._type = MessageType.Post;
-      this._subtype = values[1] as PostSubtype;
+      this._type = MessageType.Chat;
+      this._subtype = values[1] as ChatSubtype;
       this._createdAt = new Date(values[2] as number);
       this._creator = values[3] as string;
-      this._topic = values[4] as string;
-      this._title = values[5] as string;
-      this._content = values[6] as string;
-      this._reference = values[7] as string;
-      this._attachment = values[8] as string[];
+      this._from =
+        values[4] || values[5]
+          ? {
+              key: values[4] as string,
+              seed: values[5] as string,
+            }
+          : undefined;
+      this._to =
+        values[6] || values[7]
+          ? {
+              key: values[6] as string,
+              seed: values[7] as string,
+            }
+          : undefined;
+      this._destination = values[8] as string;
+      this._content = values[9] as string;
+      this._reference = values[10] as string;
+      this._attachment = values[11] as string[];
     }
 
     if (typeof param === 'object') {
-      this._type = MessageType.Post;
+      this._type = MessageType.Chat;
       this._subtype = param.subtype;
       this._createdAt = param.createdAt;
       this._creator = param.creator;
-      this._topic = param.topic;
-      this._title = param.title;
+      this._from = param.from;
+      this._to = param.to;
+      this._destination = param.destination;
       this._content = param.content;
       this._reference = param.reference;
       this._attachment = param.attachment;
     }
   }
 
-  get subtype(): PostSubtype {
+  get subtype(): ChatSubtype {
     return this._subtype;
   }
 
-  get topic() {
-    return this._topic;
+  get from() {
+    return this._from;
   }
 
-  get title() {
-    return this._title;
+  get to() {
+    return this._to;
+  }
+
+  get destination() {
+    return this._destination;
   }
 
   get content() {
@@ -100,14 +134,15 @@ export class Post extends Base {
     return this._attachment;
   }
 
-  get json(): PostJSON & { hash: string } {
+  get json(): ChatJSON & { hash: string } {
     const json = super.json;
     return {
       ...json,
       hash: this.hash,
       subtype: this.subtype,
-      topic: this.topic,
-      title: this.title,
+      from: this.from,
+      to: this.to,
+      destination: this.destination,
       content: this.content,
       reference: this.reference,
       attachment: this.attachment,
@@ -122,10 +157,13 @@ export class Post extends Base {
       encodeNumber(this.subtype, 0xff),
       encodeNumber(this.createdAt.getTime(), 0xffffffffffff),
       encodeString(this.creator, 0xff),
-      encodeString(this.topic || '', 0xfff),
-      encodeString(this.title || '', 0xfff),
-      encodeString(this.content || '', 0xffff),
-      encodeString(this.reference || '', 0xfff),
+      encodeString(this.from?.key || '', 0xff),
+      encodeString(this.from?.seed || '', 0xff),
+      encodeString(this.to?.key || '', 0xff),
+      encodeString(this.to?.seed || '', 0xff),
+      encodeString(this.destination || '', 0xfff),
+      encodeString(this.content || '', 0xfff),
+      encodeString(this.reference || '', 0xff),
       encodeStrings(this.attachment || [], 0xfff),
     ].join('');
 
