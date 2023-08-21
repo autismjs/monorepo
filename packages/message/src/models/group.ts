@@ -1,7 +1,5 @@
-import crypto from 'crypto';
-import { Base, BaseJSON, MessageType } from './base';
+import { Base, BaseJSON } from './base';
 import {
-  encodeNumber,
   encodeString,
   encodeStrings,
   decode,
@@ -43,30 +41,26 @@ export class Group extends Base {
 
     if (typeof param === 'string') {
       const { values, next } = decode(param, [
+        // header
+        decodeNumber(0xff),
+        decodeString(0xfff),
         decodeNumber(0xff),
         decodeNumber(0xff),
         decodeNumber(0xffffffffffff),
         decodeString(0xff),
+        // content
         decodeString(0xff),
       ]);
 
-      this._type = MessageType.Group;
-      this._subtype = values[1] as GroupSubtype;
-      this._createdAt = new Date(values[2] as number);
-      this._creator = values[3] as string;
-      this._groupId = values[4] as string;
+      this._groupId = values[6] as string;
 
       this._data =
-        values[1] === GroupSubtype.Broadcast
+        this.subtype === GroupSubtype.Broadcast
           ? (next as string)
           : (decodeStrings(0xfff)(next).value as string[]);
     }
 
     if (typeof param === 'object') {
-      this._type = MessageType.Group;
-      this._subtype = param.subtype;
-      this._createdAt = param.createdAt;
-      this._creator = param.creator;
       this._groupId = param.groupId;
       this._data = param.data;
     }
@@ -98,28 +92,17 @@ export class Group extends Base {
   get hex(): string {
     if (this._hex) return this._hex;
 
-    this._hex = [
-      encodeNumber(this.type, 0xff),
-      encodeNumber(this.subtype, 0xff),
-      encodeNumber(this.createdAt.getTime(), 0xffffffffffff),
-      encodeString(this.creator, 0xff),
-      encodeString(this.groupId || '', 0xff),
-      this.subtype === GroupSubtype.Broadcast
-        ? (this.data as string)
-        : encodeStrings((this.data as string[]) || [], 0xfff),
-    ].join('');
+    this._hex =
+      super.hex +
+      [
+        encodeString(this.groupId || '', 0xff),
+        this.subtype === GroupSubtype.Broadcast
+          ? (this.data as string)
+          : encodeStrings((this.data as string[]) || [], 0xfff),
+      ].join('');
 
     return this._hex;
   }
-
-  get hash(): string {
-    if (this._hash) return this._hash;
-
-    this._hash = crypto.createHash('sha256').update(this.hex).digest('hex');
-
-    return this._hash;
-  }
-
   get messageId(): string {
     return this.creator + '/' + this.hash;
   }

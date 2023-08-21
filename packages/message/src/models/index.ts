@@ -1,5 +1,5 @@
 import { MessageType } from './base';
-import { decode, decodeNumber } from '../utils/encoding';
+import { decode, decodeNumber, decodeString } from '../utils/encoding';
 import { Post, PostJSON } from './post';
 import { Moderation, ModerationJSON } from './moderation';
 import { Connection, ConnectionJSON } from './connection';
@@ -11,8 +11,12 @@ import { Revert, RevertJSON } from './revert';
 export class Message {
   static getType(data: string): MessageType {
     const {
-      values: [type],
-    } = decode(data, [decodeNumber(0xff)]);
+      values: [, , type],
+    } = decode(data, [
+      decodeNumber(0xff),
+      decodeString(0xfff),
+      decodeNumber(0xff),
+    ]);
     return type as MessageType;
   }
 

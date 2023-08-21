@@ -63,6 +63,7 @@ tape('Message Format', (t) => {
           '0x5d432ce201d2c03234e314d4703559102Ebf365C/900450baa9176d246c9199b680f6516d2c813088b4d94372d6a47a5133d1b94d',
           'https://docs.auti.sm',
         ],
+        proof: undefined,
       },
       'should match values',
     );
@@ -104,6 +105,7 @@ tape('Message Format', (t) => {
         creator: '0xa1b77ccf93a2b14174c322d673a87bfa0031a2d2',
         reference: 'thread-id',
         value: 'u-10000',
+        proof: undefined,
       },
       'should match values',
     );
@@ -142,6 +144,7 @@ tape('Message Format', (t) => {
         createdAt: connA.createdAt,
         creator: '0xa1b77ccf93a2b14174c322d673a87bfa0031a2d2',
         value: '0xa1b77ccf93a2b14174c322d673a87bfa0031a2d2',
+        proof: undefined,
       },
       'should match values',
     );
@@ -183,6 +186,7 @@ tape('Message Format', (t) => {
         createdAt: new Date(0x018a01173656),
         key: 'cover',
         value: 'image.url',
+        proof: undefined,
       },
       'should match values',
     );
@@ -240,6 +244,7 @@ tape('Message Format', (t) => {
         content: 'hello!"',
         reference: 'referrence',
         attachment: ['a', 'ab', 'abcdefg'],
+        proof: undefined,
       },
       'should match values',
     );
@@ -296,6 +301,7 @@ tape('Message Format', (t) => {
         createdAt: new Date(0x018a01173656),
         groupId: 'group-id',
         data: ['a', 'ab', 'abcdefg'],
+        proof: undefined,
       },
       'should match values',
     );
@@ -303,13 +309,14 @@ tape('Message Format', (t) => {
     test.deepEqual(
       msgC.json,
       {
-        hash: '4a9e2acdd98c42a873ff064d62a660696560d968e4af9a61b74b2b02da83a35c',
+        hash: '9061fc18475bf39243af2eed49e8e8183cdbf79eaafdcccb4f8bf4157178731b',
         type: MessageType.Group,
         subtype: GroupSubtype.Broadcast,
         creator: '0xa1b77ccf93a2b14174c322d673a87bfa0031a2d2',
         createdAt: new Date(0x018a01173656),
         groupId: 'group-id',
         data: msgA.hex,
+        proof: undefined,
       },
       'should match values',
     );
@@ -351,6 +358,7 @@ tape('Message Format', (t) => {
         subtype: RevertSubtype.Default,
         creator: '0xa1b77ccf93a2b14174c322d673a87bfa0031a2d2',
         createdAt: new Date(0x018a01173656),
+        proof: undefined,
         reference:
           '0xa1b77ccf93a2b14174c322d673a87bfa0031a2d2/4a9e2acdd98c42a873ff064d62a660696560d968e4af9a61b74b2b02da83a35c',
       },

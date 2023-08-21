@@ -1,7 +1,5 @@
-import crypto from 'crypto';
-import { Base, BaseJSON, MessageType } from './base';
+import { Base, BaseJSON } from './base';
 import {
-  encodeNumber,
   encodeString,
   decode,
   decodeNumber,
@@ -39,27 +37,23 @@ export class Moderation extends Base {
 
     if (typeof param === 'string') {
       const { values } = decode(param, [
+        // header
+        decodeNumber(0xff),
+        decodeString(0xfff),
         decodeNumber(0xff),
         decodeNumber(0xff),
         decodeNumber(0xffffffffffff),
         decodeString(0xff),
+        // content
         decodeString(0xfff),
         decodeString(0xff),
       ]);
 
-      this._type = MessageType.Moderation;
-      this._subtype = values[1] as ModerationSubtype;
-      this._createdAt = new Date(values[2] as number);
-      this._creator = values[3] as string;
-      this._reference = values[4] as string;
-      this._value = values[5] as string;
+      this._reference = values[6] as string;
+      this._value = values[7] as string;
     }
 
     if (typeof param === 'object') {
-      this._type = MessageType.Moderation;
-      this._subtype = param.subtype;
-      this._createdAt = param.createdAt;
-      this._creator = param.creator;
       this._reference = param.reference;
       this._value = param.value;
     }
@@ -91,24 +85,14 @@ export class Moderation extends Base {
   get hex(): string {
     if (this._hex) return this._hex;
 
-    this._hex = [
-      encodeNumber(this.type, 0xff),
-      encodeNumber(this.subtype, 0xff),
-      encodeNumber(this.createdAt.getTime(), 0xffffffffffff),
-      encodeString(this.creator, 0xff),
-      encodeString(this.reference || '', 0xfff),
-      encodeString(this.value || '', 0xff),
-    ].join('');
+    this._hex =
+      super.hex +
+      [
+        encodeString(this.reference || '', 0xfff),
+        encodeString(this.value || '', 0xff),
+      ].join('');
 
     return this._hex;
-  }
-
-  get hash(): string {
-    if (this._hash) return this._hash;
-
-    this._hash = crypto.createHash('sha256').update(this.hex).digest('hex');
-
-    return this._hash;
   }
 
   get messageId(): string {

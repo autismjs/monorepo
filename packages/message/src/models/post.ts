@@ -1,7 +1,5 @@
-import crypto from 'crypto';
-import { Base, BaseJSON, MessageType } from './base';
+import { Base, BaseJSON } from './base';
 import {
-  encodeNumber,
   encodeString,
   encodeStrings,
   decode,
@@ -41,10 +39,14 @@ export class Post extends Base {
 
     if (typeof param === 'string') {
       const { values } = decode(param, [
+        // header
+        decodeNumber(0xff),
+        decodeString(0xfff),
         decodeNumber(0xff),
         decodeNumber(0xff),
         decodeNumber(0xffffffffffff),
         decodeString(0xff),
+        // content
         decodeString(0xfff),
         decodeString(0xfff),
         decodeString(0xffff),
@@ -52,22 +54,14 @@ export class Post extends Base {
         decodeStrings(0xfff),
       ]);
 
-      this._type = MessageType.Post;
-      this._subtype = values[1] as PostSubtype;
-      this._createdAt = new Date(values[2] as number);
-      this._creator = values[3] as string;
-      this._topic = values[4] as string;
-      this._title = values[5] as string;
-      this._content = values[6] as string;
-      this._reference = values[7] as string;
-      this._attachment = values[8] as string[];
+      this._topic = values[6] as string;
+      this._title = values[7] as string;
+      this._content = values[8] as string;
+      this._reference = values[9] as string;
+      this._attachment = values[10] as string[];
     }
 
     if (typeof param === 'object') {
-      this._type = MessageType.Post;
-      this._subtype = param.subtype;
-      this._createdAt = param.createdAt;
-      this._creator = param.creator;
       this._topic = param.topic;
       this._title = param.title;
       this._content = param.content;
@@ -117,27 +111,17 @@ export class Post extends Base {
   get hex(): string {
     if (this._hex) return this._hex;
 
-    this._hex = [
-      encodeNumber(this.type, 0xff),
-      encodeNumber(this.subtype, 0xff),
-      encodeNumber(this.createdAt.getTime(), 0xffffffffffff),
-      encodeString(this.creator, 0xff),
-      encodeString(this.topic || '', 0xfff),
-      encodeString(this.title || '', 0xfff),
-      encodeString(this.content || '', 0xffff),
-      encodeString(this.reference || '', 0xfff),
-      encodeStrings(this.attachment || [], 0xfff),
-    ].join('');
+    this._hex =
+      super.hex +
+      [
+        encodeString(this.topic || '', 0xfff),
+        encodeString(this.title || '', 0xfff),
+        encodeString(this.content || '', 0xffff),
+        encodeString(this.reference || '', 0xfff),
+        encodeStrings(this.attachment || [], 0xfff),
+      ].join('');
 
     return this._hex;
-  }
-
-  get hash(): string {
-    if (this._hash) return this._hash;
-
-    this._hash = crypto.createHash('sha256').update(this.hex).digest('hex');
-
-    return this._hash;
   }
 
   get messageId(): string {
