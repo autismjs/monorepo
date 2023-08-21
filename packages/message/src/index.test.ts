@@ -7,8 +7,7 @@ import {
   Message,
   Chat,
   Group,
-} from './index';
-import {
+  Revert,
   MessageType,
   PostSubtype,
   ModerationSubtype,
@@ -16,6 +15,7 @@ import {
   ProfileSubtype,
   ChatSubtype,
   GroupSubtype,
+  RevertSubtype,
 } from '.';
 
 tape('Message Format', (t) => {
@@ -317,6 +317,43 @@ tape('Message Format', (t) => {
     test.deepEqual(
       msgA.json,
       Message.fromHex(msgC.data as string)!.json,
+      'should match values',
+    );
+
+    test.end();
+  });
+
+  tape('Revert', (test) => {
+    const msgA = new Revert({
+      type: MessageType.Revert,
+      subtype: RevertSubtype.Default,
+      creator: '0xa1b77ccf93a2b14174c322d673a87bfa0031a2d2',
+      createdAt: new Date(0x018a01173656),
+      reference:
+        '0xa1b77ccf93a2b14174c322d673a87bfa0031a2d2/4a9e2acdd98c42a873ff064d62a660696560d968e4af9a61b74b2b02da83a35c',
+    });
+
+    const msgB = Message.fromHex(msgA.hex) as Revert;
+
+    test.equal(
+      msgA.hex,
+      msgB!.hex,
+      'should serialize and deserialize with hex',
+    );
+
+    test.deepEqual(msgA.json, new Revert(msgB.json).json, 'should export json');
+
+    test.deepEqual(
+      msgA.json,
+      {
+        hash: '1ab0e9642e1ac857132112cc4bed955e8c10c20d1656d16ba5b3bed11a6ba2e0',
+        type: MessageType.Revert,
+        subtype: RevertSubtype.Default,
+        creator: '0xa1b77ccf93a2b14174c322d673a87bfa0031a2d2',
+        createdAt: new Date(0x018a01173656),
+        reference:
+          '0xa1b77ccf93a2b14174c322d673a87bfa0031a2d2/4a9e2acdd98c42a873ff064d62a660696560d968e4af9a61b74b2b02da83a35c',
+      },
       'should match values',
     );
 

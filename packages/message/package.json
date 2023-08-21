@@ -1,8 +1,8 @@
 {
-  "name": "@autism/message",
+  "name": "autism-message",
   "version": "0.0.1",
-  "description": "",
-  "main": "index.js",
+  "description": "Message Serialization Format for Autism",
+  "main": "build/index.js",
   "scripts": {
     "test": "NODE_ENV=development TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' tape -r ts-node/register './src/**/*.test.ts' | tap-spec",
     "build:types": "tsc --project tsconfig.compile.json",
@@ -13,6 +13,9 @@
     "tsc": "tsc --noEmit",
     "lint": "concurrently npm:tsc npm:eslint"
   },
-  "author": "",
+  "types": "build/src/index.d.ts",
+  "browser": "dist/browser.js",
+  "files": ["build/", "src/", "readme.md"],
+  "author": "0xtsukino",
   "license": "MIT"
 }

@@ -17,5 +17,6 @@
     "useUnknownInCatchVariables": false,
     "strictPropertyInitialization": false
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["**/*.test.ts"]
 }

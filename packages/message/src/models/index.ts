@@ -6,6 +6,7 @@ import { Connection, ConnectionJSON } from './connection';
 import { Chat, ChatJSON } from './chat';
 import { Profile, ProfileJSON } from './profile';
 import { Group, GroupJSON } from './group';
+import { Revert, RevertJSON } from './revert';
 
 export class Message {
   static getType(data: string): MessageType {
@@ -22,8 +23,9 @@ export class Message {
       | ConnectionJSON
       | ProfileJSON
       | ChatJSON
-      | GroupJSON,
-  ): Post | Moderation | Connection | Profile | Chat | Group | null {
+      | GroupJSON
+      | RevertJSON,
+  ): Post | Moderation | Connection | Profile | Chat | Group | Revert | null {
     switch (json.type) {
       case MessageType.Post:
         return new Post(json as PostJSON);
@@ -37,6 +39,8 @@ export class Message {
         return new Chat(json as ChatJSON);
       case MessageType.Group:
         return new Group(json as GroupJSON);
+      case MessageType.Revert:
+        return new Revert(json as RevertJSON);
       default:
         return null;
     }
@@ -44,7 +48,7 @@ export class Message {
 
   static fromHex(
     data: string,
-  ): Post | Moderation | Connection | Profile | Chat | Group | null {
+  ): Post | Moderation | Connection | Profile | Chat | Group | Revert | null {
     switch (Message.getType(data)) {
       case MessageType.Post:
         return new Post(data);
@@ -58,6 +62,8 @@ export class Message {
         return new Chat(data);
       case MessageType.Group:
         return new Group(data);
+      case MessageType.Revert:
+        return new Revert(data);
       default:
         return null;
     }

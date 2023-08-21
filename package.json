@@ -1,5 +1,5 @@
 {
-  "name": "autism",
+  "name": "autism-monorepo",
   "version": "0.0.1",
   "description": "Monorepo of Autism libraries",
   "scripts": {
