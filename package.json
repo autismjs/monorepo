@@ -10,6 +10,11 @@
   "workspaces": [
     "packages/message"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/autism-org/monorepo.git"
+  },
+  "url": "https://github.com/autism-org/monorepo/issues",
   "devDependencies": {
     "@types/tape": "^5.6.0",
     "@typescript-eslint/eslint-plugin": "^6.4.0",
