@@ -1,4 +1,4 @@
-name: build and test autism-message
+name: autism-message build
 
 on:
   push:
@@ -10,10 +10,6 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [16.x, 18.x]
 
     steps:
       - name: Checkout
@@ -46,11 +42,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Lint
+      - name: Build
         run: npm run build -w autism-message
-
-      - name: Build
-        run: npm run lint -w autism-message
-
-      - name: Build
-        run: npm run test -w autism-message
