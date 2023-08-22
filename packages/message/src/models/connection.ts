@@ -17,10 +17,8 @@ export type ConnectionJSON = BaseJSON & {
 };
 
 export class Connection extends Base {
-  _subtype: ConnectionSubtype;
-  _hex: string = '';
-  _hash: string = '';
-  _value: string;
+  #hex: string = '';
+  #value: string;
 
   constructor(
     param: { [P in keyof ConnectionJSON]: ConnectionJSON[P] } | string,
@@ -40,20 +38,20 @@ export class Connection extends Base {
         decodeString(0xfff),
       ]);
 
-      this._value = values[6] as string;
+      this.#value = values[6] as string;
     }
 
     if (typeof param === 'object') {
-      this._value = param.value;
+      this.#value = param.value;
     }
   }
 
   get subtype(): ConnectionSubtype {
-    return this._subtype;
+    return super.subtype;
   }
 
   get value() {
-    return this._value;
+    return this.#value;
   }
 
   get json(): ConnectionJSON & { hash: string } {
@@ -67,11 +65,11 @@ export class Connection extends Base {
   }
 
   get hex(): string {
-    if (this._hex) return this._hex;
+    if (this.#hex) return this.#hex;
 
-    this._hex = super.hex + [encodeString(this.value || '', 0xfff)].join('');
+    this.#hex = super.hex + [encodeString(this.value || '', 0xfff)].join('');
 
-    return this._hex;
+    return this.#hex;
   }
 
   get messageId(): string {

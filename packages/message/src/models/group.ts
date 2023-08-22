@@ -30,11 +30,9 @@ type GroupBroadcastJSON = BaseJSON & {
 export type GroupJSON = GroupMemberJSON | GroupBroadcastJSON;
 
 export class Group extends Base {
-  _subtype: GroupSubtype;
-  _hex: string = '';
-  _hash: string = '';
-  _groupId: string;
-  _data: string | string[];
+  #hex: string = '';
+  #groupId: string;
+  #data: string | string[];
 
   constructor(param: { [P in keyof GroupJSON]: GroupJSON[P] } | string) {
     super(param);
@@ -52,30 +50,30 @@ export class Group extends Base {
         decodeString(0xff),
       ]);
 
-      this._groupId = values[6] as string;
+      this.#groupId = values[6] as string;
 
-      this._data =
+      this.#data =
         this.subtype === GroupSubtype.Broadcast
           ? (next as string)
           : (decodeStrings(0xfff)(next).value as string[]);
     }
 
     if (typeof param === 'object') {
-      this._groupId = param.groupId;
-      this._data = param.data;
+      this.#groupId = param.groupId;
+      this.#data = param.data;
     }
   }
 
   get subtype(): GroupSubtype {
-    return this._subtype;
+    return super.subtype;
   }
 
   get groupId() {
-    return this._groupId;
+    return this.#groupId;
   }
 
   get data() {
-    return this._data;
+    return this.#data;
   }
 
   get json(): GroupJSON & { hash: string } {
@@ -90,9 +88,9 @@ export class Group extends Base {
   }
 
   get hex(): string {
-    if (this._hex) return this._hex;
+    if (this.#hex) return this.#hex;
 
-    this._hex =
+    this.#hex =
       super.hex +
       [
         encodeString(this.groupId || '', 0xff),
@@ -101,7 +99,7 @@ export class Group extends Base {
           : encodeStrings((this.data as string[]) || [], 0xfff),
       ].join('');
 
-    return this._hex;
+    return this.#hex;
   }
   get messageId(): string {
     return this.creator + '/' + this.hash;

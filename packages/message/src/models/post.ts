@@ -25,14 +25,12 @@ export type PostJSON = BaseJSON & {
 };
 
 export class Post extends Base {
-  _subtype: PostSubtype;
-  _hex: string = '';
-  _hash: string = '';
-  _topic?: string;
-  _title?: string;
-  _content?: string;
-  _reference?: string;
-  _attachment?: string[];
+  #hex: string = '';
+  #topic?: string;
+  #title?: string;
+  #content?: string;
+  #reference?: string;
+  #attachment?: string[];
 
   constructor(param: { [P in keyof PostJSON]: PostJSON[P] } | string) {
     super(param);
@@ -54,44 +52,44 @@ export class Post extends Base {
         decodeStrings(0xfff),
       ]);
 
-      this._topic = values[6] as string;
-      this._title = values[7] as string;
-      this._content = values[8] as string;
-      this._reference = values[9] as string;
-      this._attachment = values[10] as string[];
+      this.#topic = values[6] as string;
+      this.#title = values[7] as string;
+      this.#content = values[8] as string;
+      this.#reference = values[9] as string;
+      this.#attachment = values[10] as string[];
     }
 
     if (typeof param === 'object') {
-      this._topic = param.topic;
-      this._title = param.title;
-      this._content = param.content;
-      this._reference = param.reference;
-      this._attachment = param.attachment;
+      this.#topic = param.topic;
+      this.#title = param.title;
+      this.#content = param.content;
+      this.#reference = param.reference;
+      this.#attachment = param.attachment;
     }
   }
 
   get subtype(): PostSubtype {
-    return this._subtype;
+    return super.subtype;
   }
 
   get topic() {
-    return this._topic;
+    return this.#topic;
   }
 
   get title() {
-    return this._title;
+    return this.#title;
   }
 
   get content() {
-    return this._content;
+    return this.#content;
   }
 
   get reference() {
-    return this._reference;
+    return this.#reference;
   }
 
   get attachment() {
-    return this._attachment;
+    return this.#attachment;
   }
 
   get json(): PostJSON & { hash: string } {
@@ -109,9 +107,9 @@ export class Post extends Base {
   }
 
   get hex(): string {
-    if (this._hex) return this._hex;
+    if (this.#hex) return this.#hex;
 
-    this._hex =
+    this.#hex =
       super.hex +
       [
         encodeString(this.topic || '', 0xfff),
@@ -121,7 +119,7 @@ export class Post extends Base {
         encodeStrings(this.attachment || [], 0xfff),
       ].join('');
 
-    return this._hex;
+    return this.#hex;
   }
 
   get messageId(): string {

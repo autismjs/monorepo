@@ -38,9 +38,9 @@ export type BaseJSON = {
 };
 
 export class Base {
-  _hash: string = '';
-  _type: MessageType;
-  _subtype: number;
+  #hash: string = '';
+  #type: MessageType;
+  #subtype: number;
   _createdAt: Date;
   _creator: string;
   _proof?: Proof;
@@ -62,27 +62,27 @@ export class Base {
           value: values[1] as string,
         };
       }
-      this._type = values[2] as number;
-      this._subtype = values[3] as number;
+      this.#type = values[2] as number;
+      this.#subtype = values[3] as number;
       this._createdAt = new Date(values[4] as number);
       this._creator = values[5] as string;
     }
 
     if (typeof param === 'object') {
       this._proof = param.proof;
-      this._type = param.type;
-      this._subtype = param.subtype;
+      this.#type = param.type;
+      this.#subtype = param.subtype;
       this._createdAt = param.createdAt;
       this._creator = param.creator;
     }
   }
 
   get type(): MessageType {
-    return this._type;
+    return this.#type;
   }
 
   get subtype(): number {
-    return this._subtype;
+    return this.#subtype;
   }
 
   get createdAt(): Date {
@@ -99,8 +99,8 @@ export class Base {
 
   get json(): BaseJSON {
     return {
-      type: this.type,
-      subtype: this.subtype,
+      type: this.#type,
+      subtype: this.#subtype,
       createdAt: this.createdAt,
       creator: this.creator,
       proof: this.proof,
@@ -111,23 +111,23 @@ export class Base {
     return [
       encodeNumber(this.proof?.type || 0, 0xff),
       encodeString(this.proof?.value || '', 0xfff),
-      encodeNumber(this.type, 0xff),
-      encodeNumber(this.subtype, 0xff),
+      encodeNumber(this.#type, 0xff),
+      encodeNumber(this.#subtype, 0xff),
       encodeNumber(this.createdAt.getTime(), 0xffffffffffff),
       encodeString(this.creator, 0xff),
     ].join('');
   }
 
   get hash(): string {
-    if (this._hash) return this._hash;
+    if (this.#hash) return this.#hash;
 
     const { next } = decode(this.hex, [
       decodeNumber(0xff),
       decodeString(0xfff),
     ]);
 
-    this._hash = crypto.createHash('sha256').update(next).digest('hex');
+    this.#hash = crypto.createHash('sha256').update(next).digest('hex');
 
-    return this._hash;
+    return this.#hash;
   }
 }

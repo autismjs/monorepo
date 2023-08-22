@@ -21,11 +21,9 @@ export type ProfileJSON = BaseJSON & {
 };
 
 export class Profile extends Base {
-  _subtype: ProfileSubtype;
-  _hex: string = '';
-  _hash: string = '';
-  _key?: string;
-  _value: string;
+  #hex: string = '';
+  #key?: string;
+  #value: string;
 
   constructor(param: { [P in keyof ProfileJSON]: ProfileJSON[P] } | string) {
     super(param);
@@ -44,26 +42,26 @@ export class Profile extends Base {
         decodeString(0xfff),
       ]);
 
-      this._key = values[6] as string;
-      this._value = values[7] as string;
+      this.#key = values[6] as string;
+      this.#value = values[7] as string;
     }
 
     if (typeof param === 'object') {
-      this._key = param.key;
-      this._value = param.value;
+      this.#key = param.key;
+      this.#value = param.value;
     }
   }
 
   get subtype(): ProfileSubtype {
-    return this._subtype;
+    return super.subtype;
   }
 
   get key() {
-    return this._key;
+    return this.#key;
   }
 
   get value() {
-    return this._value;
+    return this.#value;
   }
 
   get json(): ProfileJSON & { hash: string } {
@@ -78,16 +76,16 @@ export class Profile extends Base {
   }
 
   get hex(): string {
-    if (this._hex) return this._hex;
+    if (this.#hex) return this.#hex;
 
-    this._hex =
+    this.#hex =
       super.hex +
       [
         encodeString(this.key || '', 0xff),
         encodeString(this.value || '', 0xfff),
       ].join('');
 
-    return this._hex;
+    return this.#hex;
   }
 
   get messageId(): string {

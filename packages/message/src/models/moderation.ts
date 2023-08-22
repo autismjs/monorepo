@@ -24,11 +24,9 @@ export type ModerationJSON = BaseJSON & {
 };
 
 export class Moderation extends Base {
-  _subtype: ModerationSubtype;
-  _hex: string = '';
-  _hash: string = '';
-  _reference: string;
-  _value?: string;
+  #hex: string = '';
+  #reference: string;
+  #value?: string;
 
   constructor(
     param: { [P in keyof ModerationJSON]: ModerationJSON[P] } | string,
@@ -49,26 +47,26 @@ export class Moderation extends Base {
         decodeString(0xff),
       ]);
 
-      this._reference = values[6] as string;
-      this._value = values[7] as string;
+      this.#reference = values[6] as string;
+      this.#value = values[7] as string;
     }
 
     if (typeof param === 'object') {
-      this._reference = param.reference;
-      this._value = param.value;
+      this.#reference = param.reference;
+      this.#value = param.value;
     }
   }
 
   get subtype(): ModerationSubtype {
-    return this._subtype;
+    return super.subtype;
   }
 
   get reference() {
-    return this._reference;
+    return this.#reference;
   }
 
   get value() {
-    return this._value;
+    return this.#value;
   }
 
   get json(): ModerationJSON & { hash: string } {
@@ -83,16 +81,16 @@ export class Moderation extends Base {
   }
 
   get hex(): string {
-    if (this._hex) return this._hex;
+    if (this.#hex) return this.#hex;
 
-    this._hex =
+    this.#hex =
       super.hex +
       [
         encodeString(this.reference || '', 0xfff),
         encodeString(this.value || '', 0xff),
       ].join('');
 
-    return this._hex;
+    return this.#hex;
   }
 
   get messageId(): string {

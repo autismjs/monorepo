@@ -31,21 +31,19 @@ export type ChatJSON = BaseJSON & {
 };
 
 export class Chat extends Base {
-  _subtype: ChatSubtype;
-  _hex: string = '';
-  _hash: string = '';
-  _from?: {
+  #hex: string = '';
+  #from?: {
     seed: string;
     key: string;
   };
-  _to?: {
+  #to?: {
     seed: string;
     key: string;
   };
-  _destination: string;
-  _reference?: string;
-  _content?: string;
-  _attachment?: string[];
+  #destination: string;
+  #reference?: string;
+  #content?: string;
+  #attachment?: string[];
 
   constructor(param: { [P in keyof ChatJSON]: ChatJSON[P] } | string) {
     super(param);
@@ -70,62 +68,62 @@ export class Chat extends Base {
         decodeStrings(0xfff),
       ]);
 
-      this._from =
+      this.#from =
         values[6] || values[7]
           ? {
               key: values[6] as string,
               seed: values[7] as string,
             }
           : undefined;
-      this._to =
+      this.#to =
         values[8] || values[9]
           ? {
               key: values[8] as string,
               seed: values[9] as string,
             }
           : undefined;
-      this._destination = values[10] as string;
-      this._content = values[11] as string;
-      this._reference = values[12] as string;
-      this._attachment = values[13] as string[];
+      this.#destination = values[10] as string;
+      this.#content = values[11] as string;
+      this.#reference = values[12] as string;
+      this.#attachment = values[13] as string[];
     }
 
     if (typeof param === 'object') {
-      this._from = param.from;
-      this._to = param.to;
-      this._destination = param.destination;
-      this._content = param.content;
-      this._reference = param.reference;
-      this._attachment = param.attachment;
+      this.#from = param.from;
+      this.#to = param.to;
+      this.#destination = param.destination;
+      this.#content = param.content;
+      this.#reference = param.reference;
+      this.#attachment = param.attachment;
     }
   }
 
   get subtype(): ChatSubtype {
-    return this._subtype;
+    return super.subtype;
   }
 
   get from() {
-    return this._from;
+    return this.#from;
   }
 
   get to() {
-    return this._to;
+    return this.#to;
   }
 
   get destination() {
-    return this._destination;
+    return this.#destination;
   }
 
   get content() {
-    return this._content;
+    return this.#content;
   }
 
   get reference() {
-    return this._reference;
+    return this.#reference;
   }
 
   get attachment() {
-    return this._attachment;
+    return this.#attachment;
   }
 
   get json(): ChatJSON & { hash: string } {
@@ -144,9 +142,9 @@ export class Chat extends Base {
   }
 
   get hex(): string {
-    if (this._hex) return this._hex;
+    if (this.#hex) return this.#hex;
 
-    this._hex =
+    this.#hex =
       super.hex +
       [
         // Content
@@ -160,7 +158,7 @@ export class Chat extends Base {
         encodeStrings(this.attachment || [], 0xfff),
       ].join('');
 
-    return this._hex;
+    return this.#hex;
   }
 
   get messageId(): string {

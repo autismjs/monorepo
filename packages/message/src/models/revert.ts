@@ -16,9 +16,8 @@ export type RevertJSON = BaseJSON & {
 };
 
 export class Revert extends Base {
-  _subtype: RevertSubtype;
-  _hex: string = '';
-  _reference: string;
+  #hex: string = '';
+  #reference: string;
 
   constructor(param: { [P in keyof RevertJSON]: RevertJSON[P] } | string) {
     super(param);
@@ -36,20 +35,20 @@ export class Revert extends Base {
         decodeString(0xfff),
       ]);
 
-      this._reference = values[6] as string;
+      this.#reference = values[6] as string;
     }
 
     if (typeof param === 'object') {
-      this._reference = param.reference;
+      this.#reference = param.reference;
     }
   }
 
   get subtype(): RevertSubtype {
-    return this._subtype;
+    return super.subtype;
   }
 
   get reference() {
-    return this._reference;
+    return this.#reference;
   }
 
   get json(): RevertJSON & { hash: string } {
@@ -63,12 +62,12 @@ export class Revert extends Base {
   }
 
   get hex(): string {
-    if (this._hex) return this._hex;
+    if (this.#hex) return this.#hex;
 
-    this._hex =
+    this.#hex =
       super.hex + [encodeString(this.reference || '', 0xfff)].join('');
 
-    return this._hex;
+    return this.#hex;
   }
 
   get messageId(): string {
