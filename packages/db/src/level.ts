@@ -14,7 +14,7 @@ import {
   ModerationSubtype,
   ConnectionSubtype,
   ProfileSubtype,
-} from 'autism-message/build/index';
+} from 'autism-message';
 
 const charwise = require('charwise');
 

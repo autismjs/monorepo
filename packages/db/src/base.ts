@@ -1,8 +1,4 @@
-import {
-  Any,
-  ModerationSubtype,
-  ConnectionSubtype,
-} from 'autism-message/build/index';
+import { Any, ModerationSubtype, ConnectionSubtype } from 'autism-message';
 
 export type UserProfileData = {
   name: string;
