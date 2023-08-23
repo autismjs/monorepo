@@ -1,6 +1,6 @@
 {
-  "name": "autism-message",
-  "version": "0.1.2",
+  "name": "@autismjs/message",
+  "version": "0.1.0",
   "description": "Message Serialization Format for Autism",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -9,8 +9,8 @@
     "test": "NODE_ENV=development TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' tape -r ts-node/register './src/**/*.test.ts' | tap-spec",
     "build:types": "tsc --project tsconfig.compile.json",
     "build:src": "webpack --config webpack.config.js",
-    "build": "concurrently --kill-others-on-fail npm:build:types npm:build:src",
-    "dev": "webpack-dev-server --config webpack.config.js --hot",
+    "build": "NODE_ENV=production concurrently --kill-others-on-fail npm:build:types npm:build:src",
+    "dev": "NODE_ENV=development webpack-dev-server --config webpack.config.js --hot",
     "eslint": "eslint . --fix",
     "tsc": "tsc --noEmit",
     "lint": "concurrently npm:tsc npm:eslint"
