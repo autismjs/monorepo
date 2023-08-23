@@ -43,4 +43,4 @@ jobs:
         run: pnpm install
 
       - name: Build
-        run: npm run build -w autism-message
+        run: npm run build -w @autismjs/message

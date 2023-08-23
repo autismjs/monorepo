@@ -43,4 +43,4 @@ jobs:
         run: pnpm install
 
       - name: Lint
-        run: npm run lint -w autism-message
+        run: npm run lint -w @autismjs/message

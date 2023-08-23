@@ -42,7 +42,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - run: npm run build -w autism-message
+      - run: npm run build -w @autismjs/message
 
       - name: Lint
-        run: npm run lint -w autism-db
+        run: npm run lint -w @autismjs/db
