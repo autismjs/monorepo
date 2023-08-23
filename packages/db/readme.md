@@ -1,20 +1,20 @@
-# autism-message
+# autism-db
 
-autism-message is a serialization utility for autism. 
+autism-db is a universal database adapter (leveldb and postgres) for Autism.
 
-It supports the following message type
-- Profile
-- Post
-- Moderation
-- Connection
-- Group
-- Chat
-- Revert
+It store all `autism-message` types and indexes them to provide optimized query for:
+- reading a user profile
+- getting all posts
+- getting a user's feed
+- getting all replies to a post
+- getting all moderations to a post
+- getting all connections related to a user
+
 
 ## Install as NPM Package
 
 ```
-npm install autism-message
+npm install autism-db
 ```
 
 ## Development

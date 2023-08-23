@@ -8,6 +8,24 @@ import { Profile, ProfileJSON } from './profile';
 import { Group, GroupJSON } from './group';
 import { Revert, RevertJSON } from './revert';
 
+export type Any =
+  | Post
+  | Moderation
+  | Connection
+  | Profile
+  | Chat
+  | Group
+  | Revert;
+
+export type AnyJSON =
+  | PostJSON
+  | ModerationJSON
+  | ConnectionJSON
+  | ProfileJSON
+  | ChatJSON
+  | GroupJSON
+  | RevertJSON;
+
 export class Message {
   static getType(data: string): MessageType {
     const {
@@ -29,7 +47,7 @@ export class Message {
       | ChatJSON
       | GroupJSON
       | RevertJSON,
-  ): Post | Moderation | Connection | Profile | Chat | Group | Revert | null {
+  ): Any | null {
     switch (json.type) {
       case MessageType.Post:
         return new Post(json as PostJSON);
@@ -50,9 +68,7 @@ export class Message {
     }
   }
 
-  static fromHex(
-    data: string,
-  ): Post | Moderation | Connection | Profile | Chat | Group | Revert | null {
+  static fromHex(data: string): Any | null {
     switch (Message.getType(data)) {
       case MessageType.Post:
         return new Post(data);

@@ -41,9 +41,9 @@ export class Base {
   #hash: string = '';
   #type: MessageType;
   #subtype: number;
-  _createdAt: Date;
-  _creator: string;
-  _proof?: Proof;
+  #createdAt: Date;
+  #creator: string;
+  #proof?: Proof;
 
   constructor(param: { [B in keyof BaseJSON]: BaseJSON[B] } | string) {
     if (typeof param === 'string') {
@@ -57,23 +57,26 @@ export class Base {
       ]);
 
       if (values[0] && values[1]) {
-        this._proof = {
+        this.#proof = {
           type: values[0] as ProofType,
           value: values[1] as string,
         };
       }
       this.#type = values[2] as number;
       this.#subtype = values[3] as number;
-      this._createdAt = new Date(values[4] as number);
-      this._creator = values[5] as string;
+      this.#createdAt = new Date(values[4] as number);
+      this.#creator = values[5] as string;
     }
 
     if (typeof param === 'object') {
-      this._proof = param.proof;
+      this.#proof = param.proof;
       this.#type = param.type;
       this.#subtype = param.subtype;
-      this._createdAt = param.createdAt;
-      this._creator = param.creator;
+      this.#createdAt =
+        param.createdAt instanceof Date
+          ? param.createdAt
+          : new Date(param.createdAt);
+      this.#creator = param.creator;
     }
   }
 
@@ -86,21 +89,21 @@ export class Base {
   }
 
   get createdAt(): Date {
-    return this._createdAt;
+    return this.#createdAt;
   }
 
   get creator(): string {
-    return this._creator;
+    return this.#creator;
   }
 
   get proof(): Proof | undefined {
-    return this._proof;
+    return this.#proof;
   }
 
   get json(): BaseJSON {
     return {
-      type: this.#type,
-      subtype: this.#subtype,
+      type: this.type,
+      subtype: this.subtype,
       createdAt: this.createdAt,
       creator: this.creator,
       proof: this.proof,

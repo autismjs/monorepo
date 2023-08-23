@@ -21,4 +21,4 @@ export { Group, type GroupJSON, GroupSubtype } from './models/group';
 
 export { Revert, type RevertJSON, RevertSubtype } from './models/revert';
 
-export { Message } from './models/index';
+export { Message, type Any, type AnyJSON } from './models/index';
