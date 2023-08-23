@@ -69,8 +69,8 @@ importers:
         specifier: ^1.0.3
         version: 1.0.3
       autism-message:
-        specifier: file:../message
-        version: file:packages/message
+        specifier: 0.1.2
+        version: link:../message
       charwise:
         specifier: ^3.0.1
         version: 3.0.1
@@ -4860,8 +4860,3 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
     dev: true
-
-  file:packages/message:
-    resolution: {directory: packages/message, type: directory}
-    name: autism-message
-    dev: false

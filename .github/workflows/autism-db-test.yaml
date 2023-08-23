@@ -41,6 +41,8 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
+        
+      - run: npm run build -w autism-message
 
       - name: Test
         run: npm run test -w autism-db
