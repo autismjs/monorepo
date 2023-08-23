@@ -8,12 +8,12 @@ importers:
 
   .:
     dependencies:
+      abstract-level:
+        specifier: ^1.0.3
+        version: 1.0.3
       autism-db:
         specifier: workspace:^
         version: link:packages/db
-      autism-message:
-        specifier: link:packages/message
-        version: link:packages/message
     devDependencies:
       '@types/node':
         specifier: ^20.5.3
