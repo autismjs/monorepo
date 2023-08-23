@@ -42,4 +42,13 @@ export interface BaseDBAdapter {
     },
   ): Promise<Any[]>;
   getProfile(user: string): Promise<UserProfileData>;
+  getPostMeta(reference: string): Promise<{
+    moderations: { [subtype: string]: number };
+    replies: number;
+  }>;
+  getUserMeta(user: string): Promise<{
+    outgoingConnections: { [subtype: string]: number };
+    incomingConnections: { [subtype: string]: number };
+    posts: number;
+  }>;
 }
