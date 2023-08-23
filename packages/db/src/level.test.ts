@@ -1,7 +1,7 @@
 import tape from 'tape';
 import fs from 'fs';
 import { LevelDBAdapter } from '.';
-import { Post, Moderation, Connection, Profile } from 'autism-message';
+import { Post, Moderation, Connection, Profile } from '@autismjs/message';
 
 fs.rmSync('./build/db', { recursive: true, force: true });
 

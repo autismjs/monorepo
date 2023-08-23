@@ -65,12 +65,15 @@ importers:
 
   packages/db:
     dependencies:
+      '@autismjs/message':
+        specifier: 0.1.0
+        version: link:../message
       abstract-level:
         specifier: ^1.0.3
         version: 1.0.3
-      autism-message:
-        specifier: 0.1.2
-        version: link:../message
+      buffer:
+        specifier: ^6.0.3
+        version: 6.0.3
       charwise:
         specifier: ^3.0.1
         version: 3.0.1

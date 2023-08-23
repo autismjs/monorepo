@@ -46,6 +46,7 @@ module.exports = [
         // "https": require.resolve("https-browserify"),
         // constants: require.resolve('constants-browserify'),
         // fs: false,
+        buffer: require.resolve('buffer/'),
         process: require.resolve('process/browser'),
       },
     },
