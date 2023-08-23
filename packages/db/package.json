@@ -24,7 +24,8 @@
   "author": "0xtsukino",
   "license": "MIT",
   "dependencies": {
-    "autism-message": "0.1.2",
+    "abstract-level": "^1.0.3",
+    "autism-message": "file:../message",
     "charwise": "^3.0.1",
     "level": "^8.0.0"
   },
