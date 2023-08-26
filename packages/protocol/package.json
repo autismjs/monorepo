@@ -1,0 +1,49 @@
+{
+  "name": "@autismjs/protocol",
+  "version": "0.1.0",
+  "description": "Protocol implementation for Autism",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "browser": "dist/browser.js",
+  "scripts": {
+    "test:coverage": "NODE_ENV=development TS_NODE_PROJECT='./tsconfig.json' nyc --reporter=lcov --require ts-node/register tape './src/**/*.test.ts' | tap-spec; nyc report ---reporter=text",
+    "test": "NODE_ENV=development TS_NODE_PROJECT='./tsconfig.json' tape -r ts-node/register './src/**/*.test.ts' | tap-spec",
+    "build:types": "tsc --project tsconfig.compile.json",
+    "build:src": "webpack --config webpack.config.js",
+    "build:web": "webpack --config webpack.browser.js",
+    "build": "NODE_ENV=production concurrently --kill-others-on-fail npm:build:types npm:build:src npm:build:web",
+    "dev": "NODE_ENV=development webpack-dev-server --config webpack.config.js --hot",
+    "eslint": "eslint . --fix",
+    "tsc": "tsc --noEmit",
+    "lint": "concurrently npm:tsc npm:eslint"
+  },
+  "files": [
+    "build/",
+    "src/",
+    "readme.md"
+  ],
+  "author": "0xtsukino",
+  "license": "MIT",
+  "dependencies": {
+    "@chainsafe/libp2p-gossipsub": "^10.1.0",
+    "@chainsafe/libp2p-noise": "^13.0.0",
+    "@chainsafe/libp2p-yamux": "^5.0.0",
+    "@libp2p/bootstrap": "^9.0.4",
+    "@libp2p/kad-dht": "^10.0.4",
+    "@libp2p/mdns": "^9.0.4",
+    "@libp2p/mplex": "^9.0.4",
+    "@libp2p/pubsub-peer-discovery": "^8.0.4",
+    "@libp2p/tcp": "^8.0.5",
+    "@libp2p/webrtc": "^3.1.7",
+    "@libp2p/websockets": "^7.0.4",
+    "eventemitter2": "^6.4.9",
+    "it-all": "^3.0.3",
+    "it-pipe": "^3.0.1",
+    "libp2p": "^0.46.6",
+    "uint8arrays": "^4.0.6",
+    "winston": "^3.10.0"
+  },
+  "devDependencies": {
+    "@libp2p/interface": "^0.1.2"
+  }
+}

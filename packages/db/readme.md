@@ -14,7 +14,7 @@ It store all `autism-message` types and indexes them to provide optimized query 
 ## Install as NPM Package
 
 ```
-npm install autism-db
+npm install @autismjs/db
 ```
 
 ## Development

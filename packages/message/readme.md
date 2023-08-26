@@ -14,7 +14,7 @@ It supports the following message type
 ## Install as NPM Package
 
 ```
-npm install autism-message
+npm install @autismjs/message
 ```
 
 ## Development
