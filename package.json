@@ -8,8 +8,9 @@
   "author": "",
   "license": "MIT",
   "workspaces": [
-    "packages/message",
+    "packages/crypto",
     "packages/db",
+    "packages/message",
     "packages/protocol"
   ],
   "repository": {

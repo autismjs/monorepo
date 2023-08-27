@@ -4,7 +4,7 @@
   "description": "Database adapters for Autism",
   "main": "build/index.js",
   "types": "build/index.d.ts",
-  "browser": "dist/browser.js",
+  "browser": "build/browser.js",
   "scripts": {
     "test:coverage": "NODE_ENV=development TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' nyc --reporter=lcov --require ts-node/register tape './src/**/*.test.ts' | tap-spec; nyc report ---reporter=text",
     "test": "NODE_ENV=development TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' tape -r ts-node/register './src/**/*.test.ts' | tap-spec",

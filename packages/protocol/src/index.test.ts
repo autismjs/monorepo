@@ -2,8 +2,6 @@ import { Autism } from './index';
 import tape from 'tape';
 
 tape('protocol', async (t) => {
-  const { toString } = await import('uint8arrays/to-string');
-
   let port = 8080;
   let connections = 0;
   let discoveries = 0;
@@ -66,7 +64,7 @@ tape('protocol', async (t) => {
 
   bob.p2p.publish('heyooo', Buffer.from('i am bob', 'utf-8'));
 
-  // await endTest();
+  await endTest();
 
   async function testConnections(event: any) {
     connections++;
