@@ -9,6 +9,7 @@ import type { PubSub } from '@libp2p/interface';
 import type { GossipsubEvents } from '@chainsafe/libp2p-gossipsub';
 import { EventEmitter2, ConstructorOptions } from 'eventemitter2';
 import logger from '../../utils/logger';
+import { PubsubTopics } from '../../utils/types';
 
 export class P2P extends EventEmitter2 {
   #startResolve?: () => void;
@@ -171,8 +172,10 @@ export class P2P extends EventEmitter2 {
 
     node.services.pubsub.addEventListener('message', (evt) => {
       logger.info(`[${name}] pubsub message received:`, evt.detail);
-      this.emit(`message:${evt.detail.topic}`, evt.detail);
+      this.emit(`pubsub:${evt.detail.topic}`, evt.detail);
     });
+
+    node.services.pubsub.subscribe(PubsubTopics.Global);
 
     this.#node = node;
 

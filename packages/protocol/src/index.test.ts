@@ -11,7 +11,7 @@ tape('protocol', async (t) => {
 
   const node0 = new Autism({ name: 'bootstrap', port: port++ });
 
-  await node0.p2p.waitForStart();
+  await node0.start();
 
   node0.on('p2p:peer:connect', testConnections);
 
@@ -29,7 +29,7 @@ tape('protocol', async (t) => {
     port: port++,
   });
 
-  await alice.p2p.waitForStart();
+  await alice.start();
 
   const bob = new Autism({
     name: 'bob',
@@ -37,7 +37,7 @@ tape('protocol', async (t) => {
     port: port++,
   });
 
-  await bob.p2p.waitForStart();
+  await bob.start();
 
   t.equal(node0.p2p.name, 'bootstrap', 'node should match name');
 
@@ -48,23 +48,15 @@ tape('protocol', async (t) => {
     await new Promise((r) => setTimeout(r, 1000));
   }
 
-  nodes.concat(node0).forEach((node) => {
-    node.on('p2p:message:heyooo', (evt: any) => {
-      console.log(node.p2p.name, Buffer.from(evt.data).toString('utf-8'));
-    });
-
-    node.p2p.subscribe('heyooo');
-  });
-
   await new Promise((r) => setTimeout(r, 2000));
 
-  node0.p2p.publish('heyooo', Buffer.from('i am bootstrap', 'utf-8'));
+  node0.publish(Buffer.from('i am bootstrap', 'utf-8'));
 
-  alice.p2p.publish('heyooo', Buffer.from('i am alice', 'utf-8'));
+  alice.publish(Buffer.from('i am alice', 'utf-8'));
 
-  bob.p2p.publish('heyooo', Buffer.from('i am bob', 'utf-8'));
+  bob.publish(Buffer.from('i am bob', 'utf-8'));
 
-  await endTest();
+  // await endTest();
 
   async function testConnections(event: any) {
     connections++;

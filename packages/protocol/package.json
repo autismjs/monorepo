@@ -25,6 +25,9 @@
   "author": "0xtsukino",
   "license": "MIT",
   "dependencies": {
+    "@autismjs/crypto": "^0.1.0",
+    "@autismjs/db": "^0.1.2",
+    "@autismjs/message": "^0.1.2",
     "@chainsafe/libp2p-gossipsub": "^10.1.0",
     "@chainsafe/libp2p-noise": "^13.0.0",
     "@chainsafe/libp2p-yamux": "^5.0.0",

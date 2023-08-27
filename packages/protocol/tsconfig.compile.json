@@ -7,7 +7,7 @@
     "emitDeclarationOnly": true,
     "sourceMap": true,
     "outDir": "build",
-    "module": "esnext",
+    "module": "nodenext",
     "target": "es2017"
   }
 }
