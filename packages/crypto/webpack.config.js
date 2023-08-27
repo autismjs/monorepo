@@ -18,16 +18,6 @@ const rules = [
           transpileOnly: true,
         },
       },
-      {
-        test: /\.wasm$/,
-        type: 'javascript/auto',
-        loaders: ['arraybuffer-loader'],
-      },
-      {
-        test: /\.zkey$/,
-        type: 'javascript/auto',
-        loaders: ['arraybuffer-loader'],
-      },
     ],
   },
   {
