@@ -107,8 +107,6 @@ export class Post extends Base {
   }
 
   get hex(): string {
-    if (this.#hex) return this.#hex;
-
     this.#hex =
       super.hex +
       [

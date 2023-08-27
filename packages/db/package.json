@@ -1,6 +1,6 @@
 {
   "name": "@autismjs/db",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Database adapters for Autism",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -25,7 +25,7 @@
   "author": "0xtsukino",
   "license": "MIT",
   "dependencies": {
-    "@autismjs/message": "0.1.0",
+    "@autismjs/message": "0.1.2",
     "abstract-level": "^1.0.3",
     "buffer": "^6.0.3",
     "charwise": "^3.0.1",

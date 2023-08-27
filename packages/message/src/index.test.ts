@@ -17,6 +17,7 @@ import {
   GroupSubtype,
   RevertSubtype,
 } from '.';
+import { ProofType } from './models/base';
 
 tape('Message Format', (t) => {
   tape('Post', (test) => {
@@ -36,11 +37,22 @@ tape('Message Format', (t) => {
         'https://docs.auti.sm',
       ],
     });
+
     const postB = Message.fromHex(postA.hex) as Post;
+
+    postA.commit({
+      type: ProofType.ECDSA,
+      value: '0x1234567890abcdef',
+    });
+
+    postB.commit({
+      type: ProofType.ECDSA,
+      value: '0x1234567890abcdef',
+    });
 
     test.equal(
       postA.hex,
-      postB!.hex,
+      postB.hex,
       'should serialize and deserialize with hex',
     );
 
@@ -48,6 +60,7 @@ tape('Message Format', (t) => {
     test.deepEqual(
       postA.json,
       {
+        proof: { type: 0, value: '0x1234567890abcdef' },
         hash: '618fb973a7afd24093e7718dba49e57e37e33f3b93ffa30da93efc1d2c42fd2d',
         type: MessageType.Post,
         subtype: PostSubtype.Default,
@@ -63,7 +76,6 @@ tape('Message Format', (t) => {
           '0x5d432ce201d2c03234e314d4703559102Ebf365C/900450baa9176d246c9199b680f6516d2c813088b4d94372d6a47a5133d1b94d',
           'https://docs.auti.sm',
         ],
-        proof: undefined,
       },
       'should match values',
     );

@@ -38,6 +38,7 @@ export type BaseJSON = {
 };
 
 export class Base {
+  #hex: string = '';
   #hash: string = '';
   #type: MessageType;
   #subtype: number;
@@ -132,5 +133,14 @@ export class Base {
     this.#hash = crypto.createHash('sha256').update(next).digest('hex');
 
     return this.#hash;
+  }
+
+  get signed() {
+    return !!this.#proof;
+  }
+
+  commit(proof: Proof) {
+    this.#hex = '';
+    this.#proof = proof;
   }
 }
