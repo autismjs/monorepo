@@ -1,20 +1,17 @@
-# autism-message
+# autism-crypto
 
-autism-message is a serialization utility for autism. 
+autism-crypto is a crypto utility for autism. 
 
-It supports the following message type
-- Profile
-- Post
-- Moderation
-- Connection
-- Group
-- Chat
-- Revert
+It supports the following crypto type
+- ECDSA key gen, sign, verify
+- ECDH key gen, derive
+- AES encrypt, decrypt
+- ZK rln, semaphore
 
 ## Install as NPM Package
 
 ```
-npm install @autismjs/message
+npm install @autismjs/crypto
 ```
 
 ## Development
