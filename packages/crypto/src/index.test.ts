@@ -3,11 +3,11 @@ import tape from 'tape';
 import { ECDSA, ECDH, AES, ZK } from '.';
 
 // import fs from 'fs';
-import { generateMerkleTree, RLN } from '@zk-kit/protocols';
-// const circuitBuf = fs.readFileSync('./static/rln/rln.wasm');
-// const zkeyBuf = fs.readFileSync('./static/rln/rln_final.zkey');
-// fs.writeFileSync('./static/rln/circuit.json', JSON.stringify(circuitBuf.toJSON()));
-// fs.writeFileSync('./static/rln/zkey.json', JSON.stringify(zkeyBuf.toJSON()));
+import { generateMerkleTree, RLN, Semaphore } from '@zk-kit/protocols';
+// const circuitBuf = fs.readFileSync('./static/semaphore/semaphore.wasm');
+// const zkeyBuf = fs.readFileSync('./static/semaphore/semaphore_final.zkey');
+// fs.writeFileSync('./static/semaphore/circuit.json', JSON.stringify(circuitBuf.toJSON()));
+// fs.writeFileSync('./static/semaphore/zkey.json', JSON.stringify(zkeyBuf.toJSON()));
 
 tape('crypto', async (t) => {
   t.comment('ECDSA');
@@ -89,6 +89,7 @@ tape('crypto', async (t) => {
   const zk2 = new ZK(
     '0x006b8315da14c3430076f16c1e31f1740b41467f273c8d2e0e3452ef7868017400d6b96d764285bfdcc32d2b7b6d471274bf7c8130b3fef3e2b5105f4943f599',
   );
+  const zk3 = new ZK();
 
   t.equal(
     zk1.secret,
@@ -101,6 +102,7 @@ tape('crypto', async (t) => {
     'it should match commitment',
   );
 
+  t.comment('RLN');
   const tree = generateMerkleTree(15, BigInt(0), [
     zk1.commitment,
     zk2.commitment,
@@ -168,6 +170,50 @@ tape('crypto', async (t) => {
 
   t.notEqual(commitment2, zk1.commitment, 'it should not retrieve non-spammer');
   t.notEqual(commitment2, zk2.commitment, 'it should not retrieve non-spammer');
+
+  t.comment('Semaphore');
+  const tree2 = generateMerkleTree(20, BigInt(0), [
+    zk1.commitment,
+    zk2.commitment,
+  ]);
+
+  const sProof1 = await zk1.genSemaphoreProof({
+    signal: 'hello semaphore',
+    merkleProof: tree2.createProof(0),
+  });
+
+  const t5 = performance.now();
+  console.log(`Proof Generation Perf #4: ${t5 - t4} ms`);
+
+  t.equal(
+    sProof1.publicSignals.merkleRoot,
+    tree2.root.toString(),
+    'it should have valid root',
+  );
+  t.equal(
+    sProof1.publicSignals.signalHash,
+    Semaphore.genSignalHash('hello semaphore').toString(),
+    'it should have valid signal hash',
+  );
+
+  const sProof2 = await zk3.genSemaphoreProof({
+    signal: 'hello semaphore!!',
+    merkleProof: tree2.createProof(0),
+  });
+
+  const t6 = performance.now();
+  console.log(`Proof Generation Perf #5: ${t6 - t5} ms`);
+
+  t.notEqual(
+    sProof2.publicSignals.merkleRoot,
+    tree2.root.toString(),
+    'it should not have valid root',
+  );
+  t.equal(
+    sProof2.publicSignals.signalHash,
+    Semaphore.genSignalHash('hello semaphore!!').toString(),
+    'it should still have valid signal hash',
+  );
 
   t.end();
   process.exit(0);

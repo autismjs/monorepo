@@ -1,20 +1,38 @@
 import { ZkIdentity, Strategy } from '@zk-kit/identity';
 import { MerkleProof } from '@zk-kit/incremental-merkle-tree';
-import { hexify, sha256, strip0x } from './utils/encoding';
-import { genExternalNullifier, RLN, RLNFullProof } from '@zk-kit/protocols';
+import { sha256, strip0x } from './utils/encoding';
+import {
+  genExternalNullifier,
+  RLN,
+  RLNFullProof,
+  Semaphore,
+  SemaphoreFullProof,
+} from '@zk-kit/protocols';
 import RLNCircuit from '../static/rln/circuit.json';
 import RLNZKey from '../static/rln/zkey.json';
 import RLNVKey from '../static/rln/verification_key.json';
+
+import SemaphoreCircuit from '../static/semaphore/circuit.json';
+import SemaphoreZKey from '../static/semaphore/zkey.json';
+import SemaphoreVKey from '../static/semaphore/verification_key.json';
 
 const { poseidon } = require('circomlibjs');
 
 const RLNCircuitBuf = Buffer.from((RLNCircuit as any).data);
 const RLNZKeyBuf = Buffer.from((RLNZKey as any).data);
+const SemaphoreCircuitBuf = Buffer.from((SemaphoreCircuit as any).data);
+const SemaphoreZKeyBuf = Buffer.from((SemaphoreZKey as any).data);
 
 export default class ZK {
   static async verifyRLNProof(signal: string, proof: RLNFullProof) {
     const verified = await RLN.verifyProof(RLNVKey as any, proof);
     const signalHash = RLN.genSignalHash(signal).toString(16);
+    return verified && signalHash === proof.publicSignals.signalHash;
+  }
+
+  static async verifySemaphoreProof(signal: string, proof: SemaphoreFullProof) {
+    const verified = await Semaphore.verifyProof(SemaphoreVKey as any, proof);
+    const signalHash = Semaphore.genSignalHash(signal).toString(16);
     return verified && signalHash === proof.publicSignals.signalHash;
   }
 
@@ -81,7 +99,7 @@ export default class ZK {
       wasm?: string;
       zkey?: string;
     };
-  }) {
+  }): Promise<RLNFullProof> {
     const identitySecretHash = this.identity.getSecretHash();
     const externalNullifier = genExternalNullifier(args.epoch);
     const rlnIdentifier = sha256('autism.rln');
@@ -99,6 +117,31 @@ export default class ZK {
       // @ts-ignore
       args.circuits?.wasm || RLNCircuitBuf,
       args.circuits?.zkey || RLNZKeyBuf,
+    );
+  }
+
+  async genSemaphoreProof(args: {
+    signal: string;
+    merkleProof: MerkleProof;
+    circuits?: {
+      wasm?: string;
+      zkey?: string;
+    };
+  }): Promise<SemaphoreFullProof> {
+    const witness = Semaphore.genWitness(
+      this.identity.getTrapdoor(),
+      this.identity.getNullifier(),
+      args.merkleProof,
+      BigInt('0x' + sha256('autism.semaphore')),
+      args.signal,
+    );
+
+    return Semaphore.genProof(
+      witness,
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      args.circuits?.wasm || SemaphoreCircuitBuf,
+      args.circuits?.zkey || SemaphoreZKeyBuf,
     );
   }
 }
