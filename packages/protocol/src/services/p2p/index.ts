@@ -3,13 +3,35 @@
 import type { Libp2p, Libp2pInit } from 'libp2p';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
-import type { PubSub } from '@libp2p/interface';
+import type { PubSub, Connection } from '@libp2p/interface';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
 import type { GossipsubEvents } from '@chainsafe/libp2p-gossipsub';
 import { EventEmitter2, ConstructorOptions } from 'eventemitter2';
 import logger from '../../utils/logger';
 import { PubsubTopics } from '../../utils/types';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-ignore
+import { PeerId } from '@libp2p/interface/peer-id';
+
+export enum ProtocolType {
+  V1Info = 'v1/info',
+  V1Sync = 'v1/sync',
+}
+
+export type ProtocolRequestParam = {
+  body: any;
+  connection: Connection;
+};
+
+export type ProtocolResponseParam = {
+  send: (value: Buffer) => Promise<void>;
+};
+
+export type ProtocolResponse = {
+  buffer: () => Promise<Buffer>;
+  json: () => Promise<any>;
+};
 
 export class P2P extends EventEmitter2 {
   #startResolve?: () => void;
@@ -50,6 +72,53 @@ export class P2P extends EventEmitter2 {
     return this.#node!.services.pubsub.publish(topic, data);
   }
 
+  async dialProtocol(
+    peerId: PeerId,
+    procotols: ProtocolType[],
+    value: Buffer = Buffer.from('12334', 'hex'),
+  ): Promise<ProtocolResponse> {
+    const { pipe } = await import('it-pipe');
+
+    const stream = await this.#node!.dialProtocol(peerId, procotols);
+
+    const bufferPromise = new Promise<Buffer>(async (resolve) => {
+      pipe([value], stream!, async (source) => {
+        for await (const msg of source) {
+          resolve(Buffer.from(msg.subarray()));
+        }
+      });
+    });
+
+    return {
+      buffer: () => bufferPromise,
+      json: () =>
+        bufferPromise.then((buf) => JSON.parse(buf.toString('utf-8'))),
+    };
+  }
+
+  async handle(
+    protocol: ProtocolType,
+    handler: (req: ProtocolRequestParam, res: ProtocolResponseParam) => void,
+  ) {
+    const { pipe } = await import('it-pipe');
+
+    this.#node!.handle(protocol, ({ stream, connection }) => {
+      pipe(stream, async (source) => {
+        for await (const msg of source) {
+          const body = msg.subarray();
+          handler(
+            { body, connection },
+            {
+              send: async (value: Buffer) => {
+                return pipe([value], stream);
+              },
+            },
+          );
+        }
+      });
+    });
+  }
+
   async waitForStart() {
     if (!this.#startPromise) {
       return this.start();
@@ -65,8 +134,6 @@ export class P2P extends EventEmitter2 {
     });
 
     const { name = 'node', bootstrap, port = 8000 } = this;
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    //@ts-ignore
     const { createLibp2p } = await import('libp2p');
     const { circuitRelayTransport, circuitRelayServer } = await import(
       'libp2p/circuit-relay'
@@ -81,8 +148,6 @@ export class P2P extends EventEmitter2 {
     const { mplex } = await import('@libp2p/mplex');
     const { mdns } = await import('@libp2p/mdns');
     const { bootstrap: _bootstrap } = await import('@libp2p/bootstrap');
-    const { pipe } = await import('it-pipe');
-    const { fromString } = await import('uint8arrays/from-string');
     const { pubsubPeerDiscovery } = await import(
       '@libp2p/pubsub-peer-discovery'
     );
@@ -132,7 +197,7 @@ export class P2P extends EventEmitter2 {
         dht: kadDHT(),
         pubsub: gossipsub({
           allowPublishToZeroPeers: true,
-          // emitSelf: true,
+          emitSelf: true,
           canRelayMessage: true,
         }),
         identify: identifyService(),
@@ -153,13 +218,6 @@ export class P2P extends EventEmitter2 {
       },
     });
 
-    node.handle('/ping', async (req) => {
-      await pipe(
-        ['Pong'].map((str) => fromString(str)),
-        req.stream,
-      );
-    });
-
     node.addEventListener('peer:connect', (evt) => {
       logger.info(`[${name}] Connection established to:`, evt.detail);
       this.emit('peer:connect', evt.detail);
@@ -170,12 +228,14 @@ export class P2P extends EventEmitter2 {
       this.emit('peer:discovery', evt.detail);
     });
 
-    node.services.pubsub.addEventListener('message', (evt) => {
+    const pubsub = node.services.pubsub;
+
+    pubsub.addEventListener('message', (evt) => {
       logger.info(`[${name}] pubsub message received:`, evt.detail);
       this.emit(`pubsub:${evt.detail.topic}`, evt.detail);
     });
 
-    node.services.pubsub.subscribe(PubsubTopics.Global);
+    pubsub.subscribe(PubsubTopics.Global);
 
     this.#node = node;
 

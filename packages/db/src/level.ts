@@ -59,7 +59,7 @@ export default class LevelDBAdapter implements BaseDBAdapter {
     await this.#db.close();
   }
 
-  async insertMessage(message: Any): Promise<void> {
+  async insertMessage(message: Any): Promise<Any | null> {
     const time =
       charwise.encode(message.createdAt.getTime()) +
       '-' +
@@ -68,6 +68,12 @@ export default class LevelDBAdapter implements BaseDBAdapter {
       message.type +
       '-' +
       message.subtype;
+
+    const exist = await this.getMessage(message.hash);
+
+    if (exist) {
+      return null;
+    }
 
     await this.#db.put(message.hash, message.json);
 
@@ -79,6 +85,13 @@ export default class LevelDBAdapter implements BaseDBAdapter {
       .sublevel(message.creator, { valueEncoding: 'json' })
       .sublevel(MessageType[message.type], { valueEncoding: 'json' })
       .put(time, message.hash);
+
+    await this.#indices.user
+      .sublevel(message.creator, { valueEncoding: 'json' })
+      .sublevel('all', { valueEncoding: 'json' })
+      .put(time, message.hash);
+
+    await this.#indices.user.sublevel('list').put(message.creator, '1');
 
     switch (message.type) {
       case MessageType.Post: {
@@ -133,6 +146,8 @@ export default class LevelDBAdapter implements BaseDBAdapter {
         break;
       }
     }
+
+    return message;
   }
 
   async #query(
@@ -231,6 +246,23 @@ export default class LevelDBAdapter implements BaseDBAdapter {
     const db = this.#indices.user
       .sublevel(user)
       .sublevel(MessageType[MessageType.Post]);
+
+    return this.#query(db, predicate, options);
+  }
+
+  async getMessagesByUser(
+    user: string,
+    options?: {
+      reverse?: boolean;
+      limit?: number;
+      offset?: string;
+    },
+  ): Promise<Any[]> {
+    const predicate = () => {
+      return true;
+    };
+
+    const db = this.#indices.user.sublevel(user).sublevel('all');
 
     return this.#query(db, predicate, options);
   }
@@ -407,6 +439,34 @@ export default class LevelDBAdapter implements BaseDBAdapter {
       incomingConnections: flattenByCreatorSubtype(others),
       posts: feed.length,
     };
+  }
+
+  async getAllUsernames(): Promise<string[]> {
+    const keys = await this.#indices.user.sublevel('list').keys();
+    const names = [];
+    for await (const key of keys) {
+      names.push(key);
+    }
+    return names;
+  }
+
+  async getMessage(hash: string): Promise<Any | null> {
+    try {
+      const message = await this.#db.get(hash);
+
+      if (!message) return null;
+
+      const { createdAt, ...json } = message;
+
+      const msg = Message.fromJSON({
+        ...json,
+        createdAt: new Date(createdAt),
+      });
+
+      return msg;
+    } catch (e) {
+      return null;
+    }
   }
 }
 

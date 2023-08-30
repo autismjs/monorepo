@@ -51,6 +51,12 @@ tape('Message Format', (t) => {
     });
 
     test.equal(
+      Message.fromHex(postB.hex)?.hex,
+      postB.hex,
+      'after commit, should serialize and deserialize with hex',
+    );
+
+    test.equal(
       postA.hex,
       postB.hex,
       'should serialize and deserialize with hex',

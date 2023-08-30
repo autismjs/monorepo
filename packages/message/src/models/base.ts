@@ -57,7 +57,7 @@ export class Base {
         decodeString(0xff),
       ]);
 
-      if (values[0] && values[1]) {
+      if (values[1]) {
         this.#proof = {
           type: values[0] as ProofType,
           value: values[1] as string,
@@ -120,6 +120,10 @@ export class Base {
       encodeNumber(this.createdAt.getTime(), 0xffffffffffff),
       encodeString(this.creator, 0xff),
     ].join('');
+  }
+
+  get buffer(): Buffer {
+    return Buffer.from(this.hex, 'hex');
   }
 
   get hash(): string {

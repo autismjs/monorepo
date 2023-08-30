@@ -9,7 +9,7 @@ export type UserProfileData = {
 };
 
 export interface BaseDBAdapter {
-  insertMessage(message: Any): Promise<void>;
+  insertMessage(message: Any): Promise<Any | null>;
   getPosts(options?: {
     reverse?: boolean;
     limit?: number;

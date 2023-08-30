@@ -1,4 +1,4 @@
-export { MessageType } from './models/base';
+export { MessageType, ProofType, type Proof } from './models/base';
 
 export { Post, type PostJSON, PostSubtype } from './models/post';
 export {

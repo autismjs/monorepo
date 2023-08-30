@@ -1,9 +1,9 @@
 {
   "name": "@autismjs/crypto",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Crypto utilities for Autism",
   "main": "build/index.js",
-  "types": "build/index.d.ts",
+  "types": "build/src/index.d.ts",
   "browser": "build/browser.js",
   "scripts": {
     "test:coverage": "NODE_ENV=development TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' nyc --reporter=lcov --require ts-node/register tape './src/**/*.test.ts' | tap-spec; nyc report ---reporter=text",

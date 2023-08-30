@@ -1,7 +1,14 @@
-import crypto from 'crypto';
+import crypto, { Hash } from 'crypto';
 
 export const strip0x = (data: string | bigint): string => {
-  return BigInt(data).toString(16);
+  if (typeof data === 'string') {
+    if (/^(0x)[0-9a-fA-F]+$/.test(data)) {
+      return BigInt(data).toString(16);
+    }
+    return BigInt('0x' + data).toString(16);
+  }
+
+  return data.toString(16);
 };
 
 export const bufferify = (data: string | bigint | Buffer): Buffer => {
@@ -27,16 +34,11 @@ export const hexify = (data: string | Buffer | bigint, prefix = ''): string => {
   return hex;
 };
 
-export const sha256 = (data: string | string[]): string => {
+export const sha256 = (
+  data: string | Buffer | bigint,
+  encodig?: 'hex',
+): string | Hash => {
   let h = crypto.createHash('sha256');
-
-  if (typeof data === 'string') {
-    h = h.update(data);
-  } else {
-    data.forEach((d) => {
-      h = h.update(d);
-    });
-  }
-
-  return h.digest('hex');
+  h = h.update(bufferify(data));
+  return encodig ? h.digest(encodig) : h;
 };
