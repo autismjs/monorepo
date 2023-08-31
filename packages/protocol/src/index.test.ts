@@ -9,6 +9,7 @@ import { PubsubTopics } from './utils/types';
 fs.rmSync('./build/test', { recursive: true, force: true });
 
 tape('protocol', async (t) => {
+  t.plan(17);
   let port = 8080;
   const connections: {
     [k: string]: boolean;
@@ -221,12 +222,7 @@ tape('protocol', async (t) => {
     try {
       console.log('closing');
       await wait(5000);
-      await node0.stop();
-      await alice.stop();
-      await bob.stop();
-      await others[0].stop();
-      await others[1].stop();
-      await others[2].stop();
+      await Promise.all([node0, ...nodes].map((n) => n.stop()));
       await wait(5000);
     } catch (e) {
       console.log(e);
@@ -237,4 +233,6 @@ tape('protocol', async (t) => {
     fs.rmSync('./build/test', { recursive: true, force: true });
     t.end();
   }
+
+  console.log('done');
 });

@@ -102,7 +102,7 @@ export default class ZK {
   }): Promise<RLNFullProof> {
     const identitySecretHash = this.identity.getSecretHash();
     const externalNullifier = genExternalNullifier(args.epoch);
-    const rlnIdentifier = sha256('autism.rln');
+    const rlnIdentifier = sha256('autism.rln', 'hex');
     const witness = RLN.genWitness(
       identitySecretHash,
       args.merkleProof,
@@ -132,7 +132,7 @@ export default class ZK {
       this.identity.getTrapdoor(),
       this.identity.getNullifier(),
       args.merkleProof,
-      BigInt('0x' + sha256('autism.semaphore')),
+      BigInt('0x' + sha256('autism.semaphore', 'hex')),
       args.signal,
     );
 

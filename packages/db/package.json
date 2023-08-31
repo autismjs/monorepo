@@ -1,6 +1,6 @@
 {
   "name": "@autismjs/db",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Database adapters for Autism",
   "main": "build/index.js",
   "types": "build/index.d.ts",

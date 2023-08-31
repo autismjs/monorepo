@@ -1,6 +1,6 @@
 {
   "name": "@autismjs/crypto",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Crypto utilities for Autism",
   "main": "build/index.js",
   "types": "build/src/index.d.ts",

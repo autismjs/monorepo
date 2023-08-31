@@ -140,7 +140,7 @@ export class P2P extends EventEmitter2 {
     );
     const { identifyService } = await import('libp2p/identify');
     const { webSockets } = await import('@libp2p/websockets');
-    const { tcp } = await import('@libp2p/tcp');
+    // const { tcp } = await import('@libp2p/tcp');
     const { noise } = await import('@chainsafe/libp2p-noise');
     const { kadDHT } = await import('@libp2p/kad-dht');
     const { gossipsub } = await import('@chainsafe/libp2p-gossipsub');
@@ -171,13 +171,13 @@ export class P2P extends EventEmitter2 {
     const node = await createLibp2p({
       addresses: {
         listen: [
-          `/ip4/0.0.0.0/tcp/${port}`,
+          // `/ip4/0.0.0.0/tcp/${port}`,
           `/ip4/0.0.0.0/tcp/${port}/ws`,
           `/ip4/0.0.0.0/tcp/${port}/webrtc`,
         ],
       },
       transports: [
-        tcp(),
+        // tcp(),
         webRTC(),
         webSockets(),
         circuitRelayTransport({

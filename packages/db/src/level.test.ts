@@ -348,6 +348,21 @@ tape('LevelDB', async (t) => {
     'it should return expected user metadata',
   );
 
+  const msg = new Post({
+    type: 1,
+    subtype: 0,
+    creator: '0x1',
+    createdAt: new Date(),
+    content: 'yoyoyo',
+  });
+
+  t.assert(await ldb.insertMessage(msg), 'return inserted message');
+  t.equal(
+    await ldb.insertMessage(msg),
+    null,
+    'return null when inserting dups',
+  );
+
   await ldb.stop();
 
   fs.rmSync('./build/db', { recursive: true, force: true });

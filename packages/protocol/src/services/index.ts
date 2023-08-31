@@ -8,7 +8,6 @@ import {
 } from './p2p';
 import { DB } from './db';
 import { PubsubTopics } from '../utils/types';
-import { wait } from '../utils/test';
 import { ECDSA, hexify } from '@autismjs/crypto';
 import { version } from '../../package.json';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -19,6 +18,8 @@ import { Mutex } from 'async-mutex';
 export class Autism extends EventEmitter2 {
   p2p: P2P;
   db: DB;
+  #syncTimeout: any | null;
+  #sync: number;
   #name: string;
   #nameMutex: {
     [name: string]: Mutex;
@@ -31,19 +32,25 @@ export class Autism extends EventEmitter2 {
       port?: number;
       start?: boolean;
       relay?: boolean;
+      sync?: number;
     },
   ) {
     super(options);
     this.#name = options?.name || 'node';
     this.#nameMutex = {};
+
     this.p2p = new P2P({
       ...options,
       name: this.#name,
     });
+
     this.db = new DB({
       ...options,
       name: this.#name,
     });
+
+    this.#sync = options?.sync || 5 * 60 * 1000; // default: 5m;
+    this.#syncTimeout = null;
   }
 
   get name() {
@@ -75,8 +82,9 @@ export class Autism extends EventEmitter2 {
 
         if (!verified) return;
 
-        await this.db.insertMessage(message);
-        this.emit('pubsub:message:success', message.json);
+        if (await this.db.insertMessage(message)) {
+          this.emit('pubsub:message:success', message.json);
+        }
         return;
       }
     } catch (e) {
@@ -217,6 +225,20 @@ export class Autism extends EventEmitter2 {
     }
   };
 
+  #startSync = async () => {
+    if (this.#syncTimeout) return;
+
+    const peers = this.p2p.node?.getPeers() || [];
+    for (const peerId of peers) {
+      this.#dialSync(peerId);
+    }
+
+    this.#syncTimeout = setTimeout(() => {
+      this.#syncTimeout = null;
+      this.#startSync();
+    }, this.#sync);
+  };
+
   async publish(message: Any) {
     if (message.proof?.type === ProofType.ECDSA) {
       const creatoryKey = new ECDSA({
@@ -233,7 +255,7 @@ export class Autism extends EventEmitter2 {
   async start() {
     this.p2p.onAny(this.#onAny);
     this.p2p.on(`pubsub:${PubsubTopics.Global}`, this.#onGlobalPubSub);
-    this.p2p.on('peer:connect', this.#dialSync);
+    this.p2p.once('peer:connect', this.#startSync);
 
     await this.db.start();
     await this.p2p.start();
@@ -243,6 +265,10 @@ export class Autism extends EventEmitter2 {
   }
 
   async stop() {
+    if (this.#syncTimeout) {
+      clearTimeout(this.#syncTimeout);
+      this.#syncTimeout = null;
+    }
     await this.p2p.offAny(this.#onAny);
     await this.p2p.off(`pubsub:${PubsubTopics.Global}`, this.#onGlobalPubSub);
     await this.db.stop();
