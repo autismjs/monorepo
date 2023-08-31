@@ -20,7 +20,9 @@ export class Autism extends EventEmitter2 {
   p2p: P2P;
   db: DB;
   #name: string;
-  #mutex: Mutex;
+  #nameMutex: {
+    [name: string]: Mutex;
+  };
 
   constructor(
     options?: ConstructorOptions & {
@@ -33,7 +35,7 @@ export class Autism extends EventEmitter2 {
   ) {
     super(options);
     this.#name = options?.name || 'node';
-    this.#mutex = new Mutex();
+    this.#nameMutex = {};
     this.p2p = new P2P({
       ...options,
       name: this.#name,
@@ -47,6 +49,11 @@ export class Autism extends EventEmitter2 {
   get name() {
     return this.#name;
   }
+
+  #getMutex = (name: string): Mutex => {
+    this.#nameMutex[name] = this.#nameMutex[name] || new Mutex();
+    return this.#nameMutex[name];
+  };
 
   #onAny = async (event: string | string[], value: any) => {
     this.emit('p2p:' + event, value);
@@ -90,23 +97,22 @@ export class Autism extends EventEmitter2 {
     );
   };
 
-  #handleSync = (req: ProtocolRequestParam, res: ProtocolResponseParam) => {
-    return this.#mutex.runExclusive(async () => {
-      const body = Buffer.from(req.body, 'hex').toString('utf-8');
-      const { user, root } = JSON.parse(body);
+  #handleSync = async (
+    req: ProtocolRequestParam,
+    res: ProtocolResponseParam,
+  ) => {
+    const body = Buffer.from(req.body, 'hex').toString('utf-8');
+    const { user, root, depth, index } = JSON.parse(body);
 
+    return this.#getMutex(user).runExclusive(async () => {
       const merkle = await this.db.merklize(user);
 
-      const children = merkle.getChildren(BigInt(root));
-
-      // console.log(`[${this.name}] handleSync`, {
-      //   user,
-      //   root: BigInt(root).toString(),
-      //   children,
-      // });
+      const children = merkle.checkHash(depth, index, BigInt(root));
 
       if (!children) {
-        const message = await this.db.getMessage(hexify(root));
+        const message = await this.db.getMessage(
+          hexify(merkle.leaves[index]).padStart(64, '0'),
+        );
         if (message) {
           res.send(
             Buffer.from(
@@ -119,88 +125,96 @@ export class Autism extends EventEmitter2 {
         } else {
           res.send(Buffer.from(JSON.stringify({}), 'utf-8'));
         }
-        return;
-      }
-
-      if (children) {
+      } else if (typeof children === 'object') {
         res.send(
           Buffer.from(
             JSON.stringify({
-              children: children
-                .filter((d) => d !== BigInt(0x0))
-                .map((n) => '0x' + n.toString(16)),
+              children: children,
             }),
             'utf-8',
           ),
         );
+      } else {
+        res.send(Buffer.from(JSON.stringify({}), 'utf-8'));
       }
     });
   };
 
-  #syncUserWithPeer = async (peerId: PeerId, user: string, root: string) => {
-    // console.log(`[${this.name}] syncUserWithPeer`, {
-    //   user,
-    //   root,
-    // });
-    const res = await this.p2p.dialProtocol(
-      peerId,
-      [ProtocolType.V1Sync],
-      Buffer.from(JSON.stringify({ user, root }), 'utf-8'),
-    );
-    const merkle = await this.db.merklize(user);
+  #syncUserWithPeer = async (
+    peerId: PeerId,
+    user: string,
+    root: string,
+    depth = 0,
+    index = 0,
+  ) => {
+    return this.#getMutex(user).runExclusive(async () => {
+      const res = await this.p2p.dialProtocol(
+        peerId,
+        [ProtocolType.V1Sync],
+        Buffer.from(
+          JSON.stringify({
+            user,
+            root,
+            depth,
+            index,
+          }),
+          'utf-8',
+        ),
+      );
+      const merkle = await this.db.merklize(user);
 
-    const json = await res.json();
+      const json = await res.json();
 
-    if (!json.children && !json.messages) return;
-
-    for (const node of json.children || []) {
-      if (BigInt(node) === BigInt(0x0)) {
-        console.log(`[${this.name}] blank, skip sync`);
-        continue;
+      if (!json.children && !json.messages) {
+        return;
       }
 
-      const found = merkle.getHash(node);
+      if (json.children) {
+        const { depth: _depth, indices, hashes } = json.children;
 
-      if (found) {
-        console.log(`[${this.name}] found, skip sync`);
-        continue;
+        let i = 0;
+
+        for (const node of hashes) {
+          if (BigInt(node) === BigInt(0x0)) {
+            i++;
+            continue;
+          }
+
+          const found = merkle.getHash(node);
+
+          if (found) {
+            i++;
+            continue;
+          }
+
+          this.#syncUserWithPeer(peerId, user, '0x1a2b3cc', _depth, indices[i]);
+          i++;
+        }
       }
 
-      await wait(100);
-
-      await this.#syncUserWithPeer(peerId, user, node);
-    }
-
-    if (json.messages) {
-      for (const hex of json.messages) {
-        const msg = Message.fromHex(hex);
-        if (msg && !(await this.db.getMessage(msg.hash))) {
-          const success = await this.db.insertMessage(msg);
-          if (success) {
-            this.emit('sync:new_message', msg.json);
+      if (json.messages) {
+        for (const hex of json.messages) {
+          const msg = Message.fromHex(hex);
+          if (msg) {
+            if (await this.db.insertMessage(msg)) {
+              this.emit('sync:new_message', msg);
+            }
           }
         }
       }
-    }
+    });
   };
 
   #dialSync = async (peerId: PeerId) => {
-    return this.#mutex.runExclusive(async () => {
-      const info = await this.p2p.dialProtocol(peerId, [ProtocolType.V1Info]);
-      const { users } = await info.json();
+    const info = await this.p2p.dialProtocol(peerId, [ProtocolType.V1Info]);
+    const { users } = await info.json();
 
-      for (const user of users) {
-        const merkle = await this.db.merklize(user);
-        const root = '0x' + merkle.root.toString(16);
+    for (const user of users) {
+      const merkle = await this.db.merklize(user);
+      const root = '0x' + merkle.root.toString(16);
 
-        // console.log(`[${this.name}] dialSync`, {
-        //   user,
-        //   root: merkle.root,
-        // });
-
-        this.#syncUserWithPeer(peerId, user, root);
-      }
-    });
+      this.#syncUserWithPeer(peerId, user, root);
+    }
   };
 
   async publish(message: Any) {
@@ -229,8 +243,8 @@ export class Autism extends EventEmitter2 {
   }
 
   async stop() {
-    this.p2p.offAny(this.#onAny);
-    this.p2p.off(`pubsub:${PubsubTopics.Global}`, this.#onGlobalPubSub);
+    await this.p2p.offAny(this.#onAny);
+    await this.p2p.off(`pubsub:${PubsubTopics.Global}`, this.#onGlobalPubSub);
     await this.db.stop();
     await this.p2p.stop();
   }

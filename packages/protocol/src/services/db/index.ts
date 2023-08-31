@@ -53,7 +53,7 @@ export class DB extends EventEmitter2 {
     const leaves = await this.#db.getMessagesByUser(name);
 
     const tree = new Merkle({
-      depth: 7,
+      depth: 15,
       leaves: leaves.map((leaf) => BigInt('0x' + leaf.hash)),
     });
 

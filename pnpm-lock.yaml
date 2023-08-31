@@ -132,6 +132,9 @@ importers:
       abstract-level:
         specifier: ^1.0.3
         version: 1.0.3
+      async-mutex:
+        specifier: 0.4.0
+        version: 0.4.0
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -9095,6 +9098,7 @@ packages:
     dependencies:
       '@autismjs/message': file:packages/message
       abstract-level: 1.0.3
+      async-mutex: 0.4.0
       buffer: 6.0.3
       charwise: 3.0.1
       crypto-browserify: 3.12.0

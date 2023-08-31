@@ -17,7 +17,6 @@ tape('protocol', async (t) => {
     [k: string]: boolean;
   } = {};
   let pubsubs = 0;
-  let syncs = 0;
   let pubsubErrors = 0;
   let connectionTestsEnded = false;
   let pubsubTestsEnded = false;
@@ -94,20 +93,26 @@ tape('protocol', async (t) => {
   const aliceKey = new ECDSA();
   const bobKey = new ECDSA();
 
-  Promise.all([
-    loop(78, async () => {
+  const BootstrapPostQty = 78;
+  const AlicePostQty = 56;
+  const BobPostQty = 23;
+  const BadPostQty = 11;
+  const TotalPostQty = BootstrapPostQty + AlicePostQty + BobPostQty;
+
+  await Promise.all([
+    loop(BootstrapPostQty, async () => {
       const { post } = randomPost(null, { creator: bootstrapKey });
       node0.publish(post);
     }),
-    loop(56, async () => {
+    loop(AlicePostQty, async () => {
       const { post } = randomPost(null, { creator: aliceKey });
       alice.publish(post);
     }),
-    loop(23, async () => {
+    loop(BobPostQty, async () => {
       const { post } = randomPost(null, { creator: bobKey });
       bob.publish(post);
     }),
-    loop(10, async () => {
+    loop(BadPostQty, async () => {
       const { post } = randomPost();
       post.commit({
         type: ProofType.ECDSA,
@@ -124,7 +129,7 @@ tape('protocol', async (t) => {
       t.error(new Error('test timeout after 30 seconds'));
       pubsubTestsEnded = true;
       await endTest();
-    } else if (pubsubs >= (78 + 56 + 23) * (1 + nodes.length)) {
+    } else if (pubsubs >= TotalPostQty * (1 + nodes.length)) {
       pubsubTestsEnded = true;
       await wait(1000);
     } else {
@@ -135,55 +140,31 @@ tape('protocol', async (t) => {
 
   t.equal(
     pubsubErrors,
-    10 * (1 + nodes.length),
-    `${10 * (1 + nodes.length)} bad messages were detected`,
+    BadPostQty * (1 + nodes.length),
+    `${BadPostQty * (1 + nodes.length)} bad messages were detected`,
   );
 
   t.equal(
     pubsubs,
-    (78 + 56 + 23) * (1 + nodes.length),
-    `a total of ${(78 + 56 + 23) * (1 + nodes.length)} message was logged`,
+    TotalPostQty * (1 + nodes.length),
+    `a total of ${TotalPostQty * (1 + nodes.length)} message was logged`,
   );
 
   const { db } = node0.db;
 
   t.equal(
     (await db.getPosts()).length,
-    78 + 56 + 23,
-    `there should be ${78 + 56 + 23} top level posts`,
+    TotalPostQty,
+    `there should be ${TotalPostQty} top level posts`,
   );
 
   t.equal(
     (await db.getPostsByUser(bootstrapKey.publicKey!)).length,
-    78,
-    'there should be 78 top level posts by boostrap',
+    BootstrapPostQty,
+    `there should be ${BootstrapPostQty} top level posts by boostrap`,
   );
 
-  t.comment('Sync');
-
-  const carol = new Autism({
-    name: 'test/carol',
-    bootstrap: bootstrappers,
-    port: port++,
-  });
-
-  carol.on('sync:new_message', (msg) => {
-    syncs++;
-    console.log(`syncs: ${syncs}`, msg.messageId);
-  });
-
-  await carol.start();
-
-  await wait(2000);
-
-  // const res = await carol.p2p.dialProtocol(node0.p2p.node!.peerId, [
-  //   ProtocolType.V1Info,
-  // ]);
-
-  // console.log(await res.json());
-  console.log(await carol.db.db.getPosts());
-
-  // await endTest();
+  await endTest();
 
   async function testConnections(event: any) {
     const found = [node0, ...nodes].find(
@@ -237,11 +218,22 @@ tape('protocol', async (t) => {
   }
 
   async function endTest() {
-    await Promise.all([
-      node0.stop(),
-      carol.stop(),
-      ...nodes.map((node) => node.stop()),
-    ]);
+    try {
+      console.log('closing');
+      await wait(5000);
+      await node0.stop();
+      await alice.stop();
+      await bob.stop();
+      await others[0].stop();
+      await others[1].stop();
+      await others[2].stop();
+      await wait(5000);
+    } catch (e) {
+      console.log(e);
+      // nothing happens
+    }
+
+    console.log('removing');
     fs.rmSync('./build/test', { recursive: true, force: true });
     t.end();
   }

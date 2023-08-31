@@ -15,11 +15,13 @@ import {
   ConnectionSubtype,
   ProfileSubtype,
 } from '@autismjs/message';
+import { Mutex } from 'async-mutex';
 
 const charwise = require('charwise');
 
 export default class LevelDBAdapter implements BaseDBAdapter {
   #db: Level<string, AnyJSON>;
+  #mutex: Mutex;
 
   #indices: {
     global: AbstractSublevel<any, any, string, string>;
@@ -38,6 +40,7 @@ export default class LevelDBAdapter implements BaseDBAdapter {
     this.#db = new Level(`${path}/${prefix}/db`, {
       valueEncoding: 'json',
     });
+
     this.#indices = {
       global: this.#db.sublevel('global', {
         valueEncoding: 'json',
@@ -49,6 +52,8 @@ export default class LevelDBAdapter implements BaseDBAdapter {
         valueEncoding: 'json',
       }),
     };
+
+    this.#mutex = new Mutex();
   }
 
   async start() {
@@ -60,94 +65,96 @@ export default class LevelDBAdapter implements BaseDBAdapter {
   }
 
   async insertMessage(message: Any): Promise<Any | null> {
-    const time =
-      charwise.encode(message.createdAt.getTime()) +
-      '-' +
-      message.creator +
-      '-' +
-      message.type +
-      '-' +
-      message.subtype;
+    return this.#mutex.runExclusive(async () => {
+      const exist = await this.getMessage(message.hash);
 
-    const exist = await this.getMessage(message.hash);
-
-    if (exist) {
-      return null;
-    }
-
-    await this.#db.put(message.hash, message.json);
-
-    await this.#indices.global
-      .sublevel(MessageType[message.type], { valueEncoding: 'json' })
-      .put(time, message.hash);
-
-    await this.#indices.user
-      .sublevel(message.creator, { valueEncoding: 'json' })
-      .sublevel(MessageType[message.type], { valueEncoding: 'json' })
-      .put(time, message.hash);
-
-    await this.#indices.user
-      .sublevel(message.creator, { valueEncoding: 'json' })
-      .sublevel('all', { valueEncoding: 'json' })
-      .put(time, message.hash);
-
-    await this.#indices.user.sublevel('list').put(message.creator, '1');
-
-    switch (message.type) {
-      case MessageType.Post: {
-        const msg = message as Post;
-
-        if (msg.reference) {
-          await this.#indices.thread
-            .sublevel(msg.reference.split('/')[1], { valueEncoding: 'json' })
-            .sublevel(MessageType[msg.type], { valueEncoding: 'json' })
-            .put(time, message.hash);
-        }
-
-        break;
+      if (exist) {
+        return null;
       }
 
-      case MessageType.Moderation: {
-        const msg = message as Moderation;
+      const time =
+        charwise.encode(message.createdAt.getTime()) +
+        '-' +
+        message.creator +
+        '-' +
+        message.type +
+        '-' +
+        message.subtype;
 
-        if (msg.reference) {
-          await this.#indices.thread
-            .sublevel(msg.reference.split('/')[1], { valueEncoding: 'json' })
-            .sublevel(MessageType[msg.type], { valueEncoding: 'json' })
-            .put(time, message.hash);
+      await this.#db.put(message.hash, message.json);
+
+      await this.#indices.global
+        .sublevel(MessageType[message.type], { valueEncoding: 'json' })
+        .put(time, message.hash);
+
+      await this.#indices.user
+        .sublevel(message.creator, { valueEncoding: 'json' })
+        .sublevel(MessageType[message.type], { valueEncoding: 'json' })
+        .put(time, message.hash);
+
+      await this.#indices.user
+        .sublevel(message.creator, { valueEncoding: 'json' })
+        .sublevel('all', { valueEncoding: 'json' })
+        .put(time, message.hash);
+
+      await this.#indices.user.sublevel('list').put(message.creator, '1');
+
+      switch (message.type) {
+        case MessageType.Post: {
+          const msg = message as Post;
+
+          if (msg.reference) {
+            await this.#indices.thread
+              .sublevel(msg.reference.split('/')[1], { valueEncoding: 'json' })
+              .sublevel(MessageType[msg.type], { valueEncoding: 'json' })
+              .put(time, message.hash);
+          }
+
+          break;
         }
 
-        break;
-      }
+        case MessageType.Moderation: {
+          const msg = message as Moderation;
 
-      case MessageType.Connection: {
-        const msg = message as Connection;
+          if (msg.reference) {
+            await this.#indices.thread
+              .sublevel(msg.reference.split('/')[1], { valueEncoding: 'json' })
+              .sublevel(MessageType[msg.type], { valueEncoding: 'json' })
+              .put(time, message.hash);
+          }
 
-        if (msg.value) {
-          await this.#indices.user
-            .sublevel(msg.value, { valueEncoding: 'json' })
-            .sublevel(MessageType[msg.type], { valueEncoding: 'json' })
-            .put(time, message.hash);
+          break;
         }
 
-        break;
-      }
+        case MessageType.Connection: {
+          const msg = message as Connection;
 
-      case MessageType.Profile: {
-        const msg = message as Profile;
+          if (msg.value) {
+            await this.#indices.user
+              .sublevel(msg.value, { valueEncoding: 'json' })
+              .sublevel(MessageType[msg.type], { valueEncoding: 'json' })
+              .put(time, message.hash);
+          }
 
-        if (msg.value) {
-          await this.#indices.user
-            .sublevel(msg.creator, { valueEncoding: 'json' })
-            .sublevel(MessageType[msg.type], { valueEncoding: 'json' })
-            .put(time, message.hash);
+          break;
         }
 
-        break;
-      }
-    }
+        case MessageType.Profile: {
+          const msg = message as Profile;
 
-    return message;
+          if (msg.value) {
+            await this.#indices.user
+              .sublevel(msg.creator, { valueEncoding: 'json' })
+              .sublevel(MessageType[msg.type], { valueEncoding: 'json' })
+              .put(time, message.hash);
+          }
+
+          break;
+        }
+      }
+
+      return message;
+    });
   }
 
   async #query(

@@ -5,15 +5,16 @@ import { perf } from './test';
 tape('Merkle', async (t) => {
   const end = perf();
   const tree = new Merkle({
-    depth: 18,
+    depth: 4,
     leaves: [0x1, 0x2, 0x3, 0x4, 0x5].map((num) => BigInt(num)),
   });
 
-  console.log(`merkle tree depth of 18 construction: ${end(2)} ms`);
+  console.log(`merkle tree depth of ${tree.depth} construction: ${end(2)} ms`);
 
+  // console.log(tree.hashes);
   t.equal(
     tree.root.toString(),
-    '58295260226228938201205556315828558447606311022107673010356643431978082614907',
+    '17747908749829535010742244029493603802924904336395705904631007502873869373811',
     'merkle root should be valid',
   );
   const end2 = perf();
@@ -30,43 +31,47 @@ tape('Merkle', async (t) => {
   );
 
   t.deepEqual(
-    tree.getChildren(
-      BigInt(
-        '91507985932942093822676098431567788576851404412690688138886001347141720691792',
-      ),
-    ),
-    [
-      BigInt(
-        '45297671129126603335790265785468239164292101730273863726235475996557817286079',
-      ),
-      BigInt(
-        '34859503667801835931830979568937103329837498473189022525606717518418471688065',
-      ),
-    ],
-    'it should return the right children',
+    tree.checkHash(0, 0, BigInt(0x0)),
+    {
+      depth: 1,
+      indices: [0, 1],
+      hashes: [
+        '87673094123527892849124099141735388053390146014574933123831848994748847266573',
+        '5',
+      ],
+    },
+    'it should return the right children from root',
   );
 
   t.deepEqual(
-    tree.getChildren(
+    tree.checkHash(
+      1,
+      0,
       BigInt(
-        '17747908749829535010742244029493603802924904336395705904631007502873869373812',
+        '87673094123527892849124099141735388053390146014574933123831848994748847266573',
       ),
     ),
-    [
-      BigInt(
-        '14283652997279521723690638763073989255770107588563183619778399073858414291339',
-      ),
-      BigInt(
-        '91507985932942093822676098431567788576851404412690688138886001347141720691792',
-      ),
-    ],
-    'it should return the default first children',
+    true,
+    'it should return true',
   );
 
-  t.equal(
-    tree.getChildren(BigInt(0x4)),
+  t.deepEqual(
+    tree.checkHash(1, 0, BigInt(0x0)),
+    {
+      depth: 2,
+      indices: [0, 1],
+      hashes: [
+        '48542053925442562206970678378617219313498267117402160926478466274825158240536',
+        '61014538568506221588868294043973711669514098560329658103961376235728675065327',
+      ],
+    },
+    'it should return the right children from level 1',
+  );
+
+  t.deepEqual(
+    tree.checkHash(3, 0, BigInt(0x1)),
     null,
-    'it should return null when it matches a leaf',
+    'it should return the right children',
   );
 
   t.end();
