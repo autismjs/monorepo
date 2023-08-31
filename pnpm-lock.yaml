@@ -130,8 +130,8 @@ importers:
   packages/db:
     dependencies:
       '@autismjs/message':
-        specifier: file://../message
-        version: file:packages/message
+        specifier: 0.2.0
+        version: link:../message
       abstract-level:
         specifier: ^1.0.3
         version: 1.0.3
@@ -166,14 +166,14 @@ importers:
   packages/protocol:
     dependencies:
       '@autismjs/crypto':
-        specifier: file://../crypto
-        version: file:packages/crypto
+        specifier: 0.2.0
+        version: link:../crypto
       '@autismjs/db':
-        specifier: file://../db
-        version: file:packages/db
+        specifier: 0.2.0
+        version: link:../db
       '@autismjs/message':
-        specifier: file://../message
-        version: file:packages/message
+        specifier: 0.2.0
+        version: link:../message
       '@chainsafe/libp2p-gossipsub':
         specifier: ^10.1.0
         version: 10.1.0
@@ -9139,41 +9139,3 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
     dev: true
-
-  file:packages/crypto:
-    resolution: {directory: packages/crypto, type: directory}
-    name: '@autismjs/crypto'
-    dependencies:
-      '@zk-kit/identity': 1.4.1
-      '@zk-kit/incremental-merkle-tree': 1.1.0
-      '@zk-kit/protocols': 1.11.1
-      circomlibjs: 0.0.8
-      crypto-js: 4.1.1
-      elliptic: 6.5.4
-      snarkjs: 0.7.0
-    transitivePeerDependencies:
-      - bufferutil
-      - encoding
-      - supports-color
-      - utf-8-validate
-    dev: false
-
-  file:packages/db:
-    resolution: {directory: packages/db, type: directory}
-    name: '@autismjs/db'
-    dependencies:
-      '@autismjs/message': file:packages/message
-      abstract-level: 1.0.3
-      async-mutex: 0.4.0
-      buffer: 6.0.3
-      charwise: 3.0.1
-      crypto-browserify: 3.12.0
-      level: 8.0.0
-      process: 0.11.10
-      stream-browserify: 3.0.0
-    dev: false
-
-  file:packages/message:
-    resolution: {directory: packages/message, type: directory}
-    name: '@autismjs/message'
-    dev: false
