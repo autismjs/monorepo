@@ -1,16 +1,12 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
 import type { Libp2p, Libp2pInit } from 'libp2p';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
 import type { PubSub, Connection } from '@libp2p/interface';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
 import type { GossipsubEvents } from '@chainsafe/libp2p-gossipsub';
 import { EventEmitter2, ConstructorOptions } from 'eventemitter2';
 import logger from '../../utils/logger';
 import { PubsubTopics } from '../../utils/types';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
 import { PeerId } from '@libp2p/interface/peer-id';
 

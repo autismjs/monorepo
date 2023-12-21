@@ -57,7 +57,8 @@ export class DB extends EventEmitter2 {
       leaves: leaves.map((leaf) => BigInt('0x' + leaf.hash)),
     });
 
-    await this.#cache.set(name, tree);
+    this.#cache.set(name, tree);
+
     return tree;
   }
 }

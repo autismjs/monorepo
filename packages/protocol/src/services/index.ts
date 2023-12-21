@@ -221,7 +221,7 @@ export class Autism extends EventEmitter2 {
       const merkle = await this.db.merklize(user);
       const root = '0x' + merkle.root.toString(16);
 
-      this.#syncUserWithPeer(peerId, user, root);
+      await this.#syncUserWithPeer(peerId, user, root);
     }
   };
 
@@ -230,7 +230,7 @@ export class Autism extends EventEmitter2 {
 
     const peers = this.p2p.node?.getPeers() || [];
     for (const peerId of peers) {
-      this.#dialSync(peerId);
+      await this.#dialSync(peerId);
     }
 
     this.#syncTimeout = setTimeout(() => {

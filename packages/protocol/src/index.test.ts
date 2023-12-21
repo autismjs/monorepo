@@ -1,6 +1,8 @@
 import { ECDSA } from '@autismjs/crypto';
 import { Autism } from './index';
+// @ts-ignore
 import tape from 'tape';
+// @ts-ignore
 import fs from 'fs';
 import { randomPost, wait, loop } from './utils/test';
 import { ProofType } from '@autismjs/message';
@@ -9,7 +11,7 @@ import { PubsubTopics } from './utils/types';
 fs.rmSync('./build/test', { recursive: true, force: true });
 
 tape('protocol', async (t) => {
-  t.plan(17);
+  t.plan(18);
   let port = 8080;
   const connections: {
     [k: string]: boolean;
@@ -165,6 +167,35 @@ tape('protocol', async (t) => {
     `there should be ${BootstrapPostQty} top level posts by boostrap`,
   );
 
+  const sync0 = new Autism({
+    name: `test/sync0`,
+    bootstrap: bootstrappers,
+    port: port++,
+  });
+
+  let count = 0;
+  let resolveSync: any;
+  const syncCheck = new Promise((r) => {
+    resolveSync = r;
+  });
+
+  sync0.on('sync:new_message', async () => {
+    count++;
+    if (count === TotalPostQty) {
+      const syncPostCount = (await sync0.db.db.getPosts()).length;
+      t.equal(
+        syncPostCount,
+        TotalPostQty,
+        `it should sync ${TotalPostQty} posts`,
+      );
+      resolveSync();
+    }
+  });
+
+  await sync0.start();
+
+  await syncCheck;
+
   await endTest();
 
   async function testConnections(event: any) {
@@ -222,7 +253,7 @@ tape('protocol', async (t) => {
     try {
       console.log('closing');
       await wait(5000);
-      await Promise.all([node0, ...nodes].map((n) => n.stop()));
+      await Promise.all([node0, ...nodes, sync0].map((n) => n.stop()));
       await wait(5000);
     } catch (e) {
       console.log(e);

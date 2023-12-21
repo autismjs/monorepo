@@ -1,6 +1,6 @@
 {
   "name": "@autismjs/protocol",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Protocol implementation for Autism",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -25,9 +25,9 @@
   "author": "0xtsukino",
   "license": "MIT",
   "dependencies": {
-    "@autismjs/crypto": "0.2.0",
-    "@autismjs/db": "0.2.0",
-    "@autismjs/message": "0.2.0",
+    "@autismjs/crypto": "0.2.1",
+    "@autismjs/db": "0.2.1",
+    "@autismjs/message": "0.2.1",
     "@chainsafe/libp2p-gossipsub": "^10.1.0",
     "@chainsafe/libp2p-noise": "^13.0.0",
     "@chainsafe/libp2p-yamux": "^5.0.0",

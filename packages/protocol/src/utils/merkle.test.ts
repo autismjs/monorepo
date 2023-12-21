@@ -1,3 +1,4 @@
+// @ts-ignore
 import tape from 'tape';
 import { Merkle } from './merkle';
 import { perf } from './test';
@@ -11,7 +12,6 @@ tape('Merkle', async (t) => {
 
   console.log(`merkle tree depth of ${tree.depth} construction: ${end(2)} ms`);
 
-  // console.log(tree.hashes);
   t.equal(
     tree.root.toString(),
     '17747908749829535010742244029493603802924904336395705904631007502873869373811',

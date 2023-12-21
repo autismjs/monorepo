@@ -1,4 +1,6 @@
+// @ts-ignore
 import tape from 'tape';
+// @ts-ignore
 import fs from 'fs';
 import { LevelDBAdapter } from '.';
 import { Post, Moderation, Connection, Profile } from '@autismjs/message';

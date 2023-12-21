@@ -1,3 +1,4 @@
+// @ts-ignore
 import tape from 'tape';
 import {
   Post,

@@ -1,13 +1,7 @@
+// @ts-ignore
 import tape from 'tape';
-
 import { ECDSA, ECDH, AES, ZK } from '.';
-
-// import fs from 'fs';
 import { generateMerkleTree, RLN, Semaphore } from '@zk-kit/protocols';
-// const circuitBuf = fs.readFileSync('./static/semaphore/semaphore.wasm');
-// const zkeyBuf = fs.readFileSync('./static/semaphore/semaphore_final.zkey');
-// fs.writeFileSync('./static/semaphore/circuit.json', JSON.stringify(circuitBuf.toJSON()));
-// fs.writeFileSync('./static/semaphore/zkey.json', JSON.stringify(zkeyBuf.toJSON()));
 
 tape('crypto', async (t) => {
   t.comment('ECDSA');
