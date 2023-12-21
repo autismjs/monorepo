@@ -1,6 +1,6 @@
 {
   "name": "@autismjs/db",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "description": "Database adapters for Autism",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -11,8 +11,10 @@
     "build:types": "tsc --project tsconfig.compile.json",
     "build:src": "webpack --config webpack.config.js",
     "build:web": "webpack --config webpack.browser.js",
+    "watch:webdev": "webpack --config webpack.web-dev.config.js --watch",
+    "serve:webdev": "serve ./dev-build",
     "build": "NODE_ENV=production concurrently --kill-others-on-fail npm:build:types npm:build:src npm:build:web",
-    "dev": "NODE_ENV=development webpack-dev-server --config webpack.config.js --hot",
+    "dev:web": "NODE_ENV=development concurrently npm:watch:webdev npm:serve:webdev",
     "eslint": "eslint . --fix",
     "tsc": "tsc --noEmit",
     "lint": "concurrently npm:tsc npm:eslint"
@@ -31,6 +33,7 @@
     "buffer": "^6.0.3",
     "charwise": "^3.0.1",
     "crypto-browserify": "^3.12.0",
+    "browser-level": "^1.0.1",
     "level": "^8.0.0",
     "process": "^0.11.10",
     "stream-browserify": "^3.0.0"

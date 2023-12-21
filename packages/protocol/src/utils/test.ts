@@ -1,3 +1,4 @@
+// @ts-ignore
 import crypto from 'crypto';
 import { ECDSA } from '@autismjs/crypto';
 import { MessageType, Post, PostSubtype, ProofType } from '@autismjs/message';

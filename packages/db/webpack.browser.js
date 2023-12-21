@@ -32,26 +32,10 @@ module.exports = [
     entry: {
       browser: path.join(__dirname, 'src', 'index.ts'),
     },
+    target: 'web',
     devtool: 'source-map',
     resolve: {
       extensions: ['.ts', '.js'],
-      fallback: {
-        crypto: require.resolve('crypto-browserify'),
-        // os: require.resolve('os-browserify/browser'),
-        stream: require.resolve('stream-browserify'),
-        // "assert": require.resolve("assert"),
-        // "url": require.resolve("url"),
-        // "zlib": require.resolve("browserify-zlib"),
-        // "http": require.resolve("stream-http"),
-        // "https": require.resolve("https-browserify"),
-        // constants: require.resolve('constants-browserify'),
-        // fs: false,
-        buffer: require.resolve('buffer/'),
-        process: require.resolve('process/browser'),
-      },
-    },
-    node: {
-      __dirname: true,
     },
     module: {
       rules: [...rules],

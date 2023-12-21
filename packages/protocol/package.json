@@ -11,6 +11,7 @@
     "build:types": "tsc --project tsconfig.compile.json",
     "build:src": "webpack --config webpack.config.js",
     "build:web": "webpack --config webpack.browser.js",
+    "build:webdev": "webpack --config webpack.web-dev.config.js",
     "build": "NODE_ENV=production concurrently --kill-others-on-fail npm:build:types npm:build:src npm:build:web",
     "dev": "NODE_ENV=development webpack-dev-server --config webpack.config.js --hot",
     "eslint": "eslint . --fix",
@@ -25,9 +26,9 @@
   "author": "0xtsukino",
   "license": "MIT",
   "dependencies": {
-    "@autismjs/crypto": "0.2.1",
-    "@autismjs/db": "0.2.1",
-    "@autismjs/message": "0.2.1",
+    "@autismjs/crypto": "file:../crypto",
+    "@autismjs/db": "file:../db",
+    "@autismjs/message": "file:../message",
     "@chainsafe/libp2p-gossipsub": "^10.1.0",
     "@chainsafe/libp2p-noise": "^13.0.0",
     "@chainsafe/libp2p-yamux": "^5.0.0",
@@ -40,6 +41,7 @@
     "@libp2p/webrtc": "^3.1.7",
     "@libp2p/websockets": "^7.0.4",
     "async-mutex": "0.4.0",
+    "dgram": "^1.0.1",
     "eventemitter2": "^6.4.9",
     "it-all": "^3.0.3",
     "it-pipe": "^3.0.1",
@@ -58,6 +60,12 @@
     "path-browserify": "^1.0.1",
     "stream-browserify": "^3.0.0",
     "stream-http": "^3.2.0",
-    "vm-browserify": "^1.1.2"
+    "vm-browserify": "^1.1.2",
+    "tslib": "^2.6.2",
+    "randombytes": "^2.1.0",
+    "create-hash": "^1.2.0",
+    "create-hmac": "^1.1.7",
+    "base64-js": "^1.5.1",
+    "ieee754": "^1.2.1"
   }
 }

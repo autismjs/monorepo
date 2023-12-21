@@ -56,13 +56,13 @@ const rules = [
 
 module.exports = [
   {
-    target: "web",
+    target: 'web',
     mode: isProd ? 'production' : 'development',
     entry: {
-      app: path.join(__dirname, 'src', 'index.ts'),
+      app: path.join(__dirname, 'dev', 'index.ts'),
     },
     externals: {
-      'multicast-dns': 'commonjs2 multicast-dns',
+      // '@autismjs/db': 'commonjs2 @autismjs/db',
     },
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx', '.png', '.svg'],
@@ -82,20 +82,20 @@ module.exports = [
         path: require.resolve('path-browserify'),
         vm: require.resolve('vm-browserify'),
         constants: require.resolve('constants-browserify'),
-        fs: false,
-        buffer: require.resolve('buffer/'),
+        // fs: false,
+        // buffer: require.resolve('buffer/'),
         process: require.resolve('process/browser'),
-        events: require.resolve("events/"),
+        events: require.resolve('events/'),
       },
     },
-    // node: {
-    //   __dirname: true,
-    // },
+    node: {
+      __dirname: true,
+    },
     module: {
       rules: [...rules],
     },
     output: {
-      path: __dirname + '/build',
+      path: __dirname + '/dev-build',
       publicPath: isProd ? '/' : 'http://localhost:8080/',
       filename: `[name].js`,
     },
@@ -113,7 +113,7 @@ module.exports = [
       //   ]
       // }),
       new HtmlWebpackPlugin({
-        template: path.join(__dirname, "static", "index.html"),
+        template: path.join(__dirname, "dev", "index.html"),
         filename: "index.html",
         chunks: ["index"],
         cache: false,

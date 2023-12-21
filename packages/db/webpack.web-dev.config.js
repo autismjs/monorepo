@@ -1,8 +1,9 @@
 const webpack = require('webpack');
 const path = require('path');
 const isProd = process.env.NODE_ENV === 'production';
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const CopyPlugin = require("copy-webpack-plugin");
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+// const CopyPlugin = require('copy-webpack-plugin');
+const nodeExternals = require('webpack-node-externals');
 const { compilerOptions } = require('./tsconfig.json');
 
 const envPlugin = new webpack.EnvironmentPlugin({
@@ -56,46 +57,19 @@ const rules = [
 
 module.exports = [
   {
-    target: "web",
+    target: 'web',
     mode: isProd ? 'production' : 'development',
     entry: {
-      app: path.join(__dirname, 'src', 'index.ts'),
-    },
-    externals: {
-      'multicast-dns': 'commonjs2 multicast-dns',
+      app: path.join(__dirname, 'dev', 'index.ts'),
     },
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx', '.png', '.svg'],
-      modules: [
-        path.resolve('./node_modules'),
-        path.resolve(__dirname, compilerOptions.baseUrl),
-      ],
-      fallback: {
-        crypto: require.resolve('crypto-browserify'),
-        os: require.resolve('os-browserify/browser'),
-        stream: require.resolve('stream-browserify'),
-        assert: require.resolve('assert'),
-        url: require.resolve('url'),
-        zlib: require.resolve('browserify-zlib'),
-        http: require.resolve('stream-http'),
-        https: require.resolve('https-browserify'),
-        path: require.resolve('path-browserify'),
-        vm: require.resolve('vm-browserify'),
-        constants: require.resolve('constants-browserify'),
-        fs: false,
-        buffer: require.resolve('buffer/'),
-        process: require.resolve('process/browser'),
-        events: require.resolve("events/"),
-      },
     },
-    // node: {
-    //   __dirname: true,
-    // },
     module: {
       rules: [...rules],
     },
     output: {
-      path: __dirname + '/build',
+      path: __dirname + '/dev-build',
       publicPath: isProd ? '/' : 'http://localhost:8080/',
       filename: `[name].js`,
     },
@@ -113,7 +87,7 @@ module.exports = [
       //   ]
       // }),
       new HtmlWebpackPlugin({
-        template: path.join(__dirname, "static", "index.html"),
+        template: path.join(__dirname, "dev", "index.html"),
         filename: "index.html",
         chunks: ["index"],
         cache: false,

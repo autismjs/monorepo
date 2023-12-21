@@ -34,6 +34,14 @@ module.exports = [
     },
     devtool: 'source-map',
     target: 'web',
+    externals: {
+      // snarkjs: 'commonjs2 snarkjs',
+      // snarkjs: require.resolve('snarkjs'),
+      // 'node:crypto': require.resolve('crypto-browserify'),
+      // '@autismjs/crypto': 'commonjs2 @autismjs/crypto',
+      'multicast-dns': 'commonjs2 multicast-dns',
+      // '@zk-kit/protocols': 'commonjs2 @zk-kit/protocols',
+    },
     resolve: {
       extensions: ['.ts', '.js'],
       fallback: {
@@ -53,9 +61,9 @@ module.exports = [
         process: require.resolve('process/browser'),
       },
     },
-    node: {
-      __dirname: true,
-    },
+    // node: {
+    //   __dirname: true,
+    // },
     module: {
       rules: [...rules],
     },
