@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "baseUrl": ".",
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "nodenext",
+    "module": "nodenext",
+    "target": "es2017",
+    "lib": ["esnext", "dom"],
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "useUnknownInCatchVariables": false,
+    "strictPropertyInitialization": false,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["src"],
+  "exclude": ["**/*.test.ts", "src/utils/test.ts"]
+}

@@ -34,9 +34,11 @@ module.exports = [
     entry: {
       browser: path.join(__dirname, 'src', 'index.ts'),
     },
+    target: 'web',
     devtool: 'source-map',
     externals: {
       snarkjs: 'commonjs2 snarkjs',
+      // 'node:crypto': require.resolve('crypto-browserify'),
       // '@zk-kit/protocols': 'commonjs2 @zk-kit/protocols',
     },
     resolve: {
@@ -55,11 +57,13 @@ module.exports = [
         path: false,
         buffer: require.resolve('buffer/'),
         process: require.resolve('process/browser'),
+        // worker_threads: false,
+        // readline: false,
       },
     },
-    node: {
-      __dirname: true,
-    },
+    // node: {
+    //   __dirname: true,
+    // },
     module: {
       rules: [...rules],
     },

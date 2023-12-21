@@ -1,0 +1,51 @@
+{
+  "name": "@autismjs/web",
+  "version": "0.0.0",
+  "description": "Web UI for Autism",
+  "scripts": {
+    "test:coverage": "NODE_ENV=development TS_NODE_PROJECT='./tsconfig.json' nyc --reporter=lcov --require ts-node/register tape './src/**/*.test.ts' | tap-spec; nyc report ---reporter=text",
+    "test": "NODE_ENV=development TS_NODE_PROJECT='./tsconfig.json' tape -r ts-node/register './src/**/*.test.ts' | tap-spec",
+    "build:web": "webpack --config webpack.config.js",
+    "watch:web": "webpack --config webpack.config.js --watch",
+    "serve:web": "serve build",
+    "build": "NODE_ENV=production concurrently --kill-others-on-fail npm:build:web",
+    "dev": "NODE_ENV=development concurrently npm:watch:web npm:serve:web",
+    "eslint": "eslint . --fix",
+    "tsc": "tsc --noEmit",
+    "lint": "concurrently npm:tsc npm:eslint"
+  },
+  "author": "0xtsukino",
+  "license": "MIT",
+  "dependencies": {
+    "@autismjs/crypto": "file:../crypto",
+    "@autismjs/message": "file:../message",
+    "@autismjs/protocol": "file:../protocol",
+    "base64-js": "^1.5.1",
+    "ffjavascript": "^0.2.62",
+    "snarkjs": "^0.7.2",
+    "ieee754": "^1.2.1"
+  },
+  "devDependencies": {
+    "@libp2p/interface": "^0.1.2",
+    "browserify-zlib": "^0.2.0",
+    "constants-browserify": "^1.0.0",
+    "create-ecdh": "^4.0.4",
+    "create-hash": "^1.2.0",
+    "create-hmac": "^1.1.7",
+    "public-encrypt": "^4.0.3",
+    "browserify-sign": "^4.2.2",
+    "pbkdf2": "^3.1.2",
+    "browserify-cipher": "^1.0.1",
+    "diffie-hellman": "^5.0.3",
+    "crypto-browserify": "^3.12.0",
+    "html-loader": "^4.2.0",
+    "html-webpack-plugin": "^5.6.0",
+    "https-browserify": "^1.0.0",
+    "os-browserify": "^0.3.0",
+    "path-browserify": "^1.0.1",
+    "randombytes": "^2.1.0",
+    "stream-browserify": "^3.0.0",
+    "stream-http": "^3.2.0",
+    "vm-browserify": "^1.1.2"
+  }
+}

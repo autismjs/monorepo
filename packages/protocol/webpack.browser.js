@@ -33,11 +33,7 @@ module.exports = [
       browser: path.join(__dirname, 'src', 'index.ts'),
     },
     devtool: 'source-map',
-    externals: {
-      '@autismjs/crypto': 'commonjs2 @autismjs/crypto',
-      'multicast-dns': 'commonjs2 multicast-dns',
-      // '@zk-kit/protocols': 'commonjs2 @zk-kit/protocols',
-    },
+    target: 'web',
     resolve: {
       extensions: ['.ts', '.js'],
       fallback: {

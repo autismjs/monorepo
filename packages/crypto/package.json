@@ -1,6 +1,6 @@
 {
   "name": "@autismjs/crypto",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "Crypto utilities for Autism",
   "main": "build/index.js",
   "types": "build/src/index.d.ts",
@@ -17,7 +17,6 @@
     "tsc": "tsc --noEmit",
     "lint": "concurrently npm:tsc npm:eslint"
   },
-  "browser": "dist/browser.js",
   "files": ["build/", "src/", "readme.md"],
   "author": "0xtsukino",
   "license": "MIT",

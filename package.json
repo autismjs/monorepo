@@ -11,7 +11,8 @@
     "packages/crypto",
     "packages/db",
     "packages/message",
-    "packages/protocol"
+    "packages/protocol",
+    "packages/web"
   ],
   "repository": {
     "type": "git",
