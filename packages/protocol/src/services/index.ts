@@ -10,7 +10,6 @@ import { DB } from './db';
 import { PubsubTopics } from '../utils/types';
 import { ECDSA, hexify } from '@autismjs/crypto';
 import { version } from '../../package.json';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import type { PeerId } from '@libp2p/interface/peer-id';
 import { Mutex } from 'async-mutex';

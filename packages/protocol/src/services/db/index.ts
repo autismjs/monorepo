@@ -1,5 +1,5 @@
 import EventEmitter2, { ConstructorOptions } from 'eventemitter2';
-import { LevelDBAdapter } from '@autismjs/db';
+import { LevelDBAdapter } from '../../../../db/src';
 import { Any } from '@autismjs/message';
 import NodeCache from 'node-cache';
 import { Merkle } from '../../utils/merkle';

@@ -1,8 +1,7 @@
 const webpack = require('webpack');
 const path = require('path');
 const isProd = process.env.NODE_ENV === 'production';
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const CopyPlugin = require("copy-webpack-plugin");
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { compilerOptions } = require('./tsconfig.json');
 
 const envPlugin = new webpack.EnvironmentPlugin({
@@ -61,15 +60,11 @@ module.exports = [
     entry: {
       app: path.join(__dirname, 'dev', 'index.ts'),
     },
-    externals: {
-      // '@autismjs/db': 'commonjs2 @autismjs/db',
-    },
+    // externals: {
+    //   'multicast-dns': 'import multicast-dns',
+    // },
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx', '.png', '.svg'],
-      modules: [
-        path.resolve('./node_modules'),
-        path.resolve(__dirname, compilerOptions.baseUrl),
-      ],
       fallback: {
         crypto: require.resolve('crypto-browserify'),
         os: require.resolve('os-browserify/browser'),
@@ -113,11 +108,11 @@ module.exports = [
       //   ]
       // }),
       new HtmlWebpackPlugin({
-        template: path.join(__dirname, "dev", "index.html"),
-        filename: "index.html",
-        chunks: ["index"],
+        template: path.join(__dirname, 'dev', 'index.html'),
+        filename: 'index.html',
+        chunks: ['index'],
         cache: false,
-        inject: true
+        inject: true,
       }),
     ],
     stats: 'minimal',

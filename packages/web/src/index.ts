@@ -1,6 +1,6 @@
 import { Post, PostSubtype, MessageType } from '@autismjs/message';
 import { ECDSA } from '@autismjs/crypto';
-import { Autism } from '@autismjs/protocol';
+import { Autism } from '../../protocol/src';
 //
 const p = new Post({
   type: MessageType.Post,
@@ -10,11 +10,11 @@ const p = new Post({
   createdAt: new Date(),
 });
 
-console.log(p.json);
+console.log('post', p.json);
 
 const ecdsa = new ECDSA();
 
-console.log(ecdsa);
+console.log('ecdsa', ecdsa);
 
 const node = new Autism();
 

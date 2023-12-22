@@ -37,9 +37,9 @@ module.exports = [
     resolve: {
       extensions: ['.ts', '.js'],
     },
-    node: {
-      __dirname: true,
-    },
+    // node: {
+    //   __dirname: true,
+    // },
     module: {
       rules: [...rules],
     },

@@ -61,15 +61,15 @@ module.exports = [
     entry: {
       app: path.join(__dirname, 'src', 'index.ts'),
     },
-    externals: {
-      'multicast-dns': 'commonjs2 multicast-dns',
-    },
+    // externals: {
+    //   'multicast-dns': 'commonjs2 multicast-dns',
+    // },
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx', '.png', '.svg'],
-      modules: [
-        path.resolve('./node_modules'),
-        path.resolve(__dirname, compilerOptions.baseUrl),
-      ],
+      // modules: [
+      //   path.resolve('./node_modules'),
+      //   path.resolve(__dirname, compilerOptions.baseUrl),
+      // ],
       fallback: {
         crypto: require.resolve('crypto-browserify'),
         os: require.resolve('os-browserify/browser'),
@@ -82,10 +82,10 @@ module.exports = [
         path: require.resolve('path-browserify'),
         vm: require.resolve('vm-browserify'),
         constants: require.resolve('constants-browserify'),
-        fs: false,
-        buffer: require.resolve('buffer/'),
+        // fs: false,
+        // buffer: require.resolve('buffer/'),
         process: require.resolve('process/browser'),
-        events: require.resolve("events/"),
+        events: require.resolve('events/'),
       },
     },
     // node: {

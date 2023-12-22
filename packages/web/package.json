@@ -7,10 +7,8 @@
     "test": "NODE_ENV=development TS_NODE_PROJECT='./tsconfig.json' tape -r ts-node/register './src/**/*.test.ts' | tap-spec",
     "build:web": "webpack --config webpack.config.js",
     "watch:web": "webpack --config webpack.config.js --watch",
-    "wds:web": "webpack-dev-server --config webpack.config.js --hot",
-    "serve:web": "serve build",
     "build": "NODE_ENV=production concurrently --kill-others-on-fail npm:build:web",
-    "dev": "NODE_ENV=development concurrently npm:watch:web npm:serve:web",
+    "dev": "NODE_ENV=development webpack-dev-server --config webpack.config.js --hot",
     "eslint": "eslint . --fix",
     "tsc": "tsc --noEmit",
     "lint": "concurrently npm:tsc npm:eslint"
@@ -18,9 +16,8 @@
   "author": "0xtsukino",
   "license": "MIT",
   "dependencies": {
-    "@autismjs/crypto": "file:../crypto",
-    "@autismjs/message": "file:../message",
-    "@autismjs/protocol": "file:../protocol",
+    "@autismjs/crypto": "^0.2.2",
+    "@autismjs/message": "^0.2.1",
     "@leichtgewicht/ip-codec": "^2.0.4",
     "base64-js": "^1.5.1",
     "ffjavascript": "^0.2.62",

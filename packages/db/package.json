@@ -13,6 +13,8 @@
     "build:web": "webpack --config webpack.browser.js",
     "watch:webdev": "webpack --config webpack.web-dev.config.js --watch",
     "serve:webdev": "serve ./dev-build",
+    "build:nodedev": "webpack --config webpack.node-dev.config.js",
+    "dev:node": "node ./dev-build/node/node.js",
     "build": "NODE_ENV=production concurrently --kill-others-on-fail npm:build:types npm:build:src npm:build:web",
     "dev:web": "NODE_ENV=development concurrently npm:watch:webdev npm:serve:webdev",
     "eslint": "eslint . --fix",

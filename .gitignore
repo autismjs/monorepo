@@ -6,3 +6,4 @@ build/
 coverage/
 *.log
 dev-build/
+bin/

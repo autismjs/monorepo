@@ -51,7 +51,7 @@ export class P2P extends EventEmitter2 {
     super(options);
     this.name = options.name || 'node';
     this.bootstrap = options.bootstrap || [];
-    this.port = options.port || 8080;
+    this.port = options.port || 6075;
 
     if (options.start) this.start();
   }
@@ -142,7 +142,7 @@ export class P2P extends EventEmitter2 {
     const { gossipsub } = await import('@chainsafe/libp2p-gossipsub');
     const { yamux } = await import('@chainsafe/libp2p-yamux');
     const { mplex } = await import('@libp2p/mplex');
-    const { mdns } = await import('@libp2p/mdns');
+    // const { mdns } = await import('@libp2p/mdns');
     const { bootstrap: _bootstrap } = await import('@libp2p/bootstrap');
     const { pubsubPeerDiscovery } = await import(
       '@libp2p/pubsub-peer-discovery'
@@ -150,7 +150,7 @@ export class P2P extends EventEmitter2 {
     const { webRTC } = await import('@libp2p/webrtc');
 
     const peerDiscovery: Libp2pInit['peerDiscovery'] = [
-      mdns({ interval: 1000 }),
+      // mdns({ interval: 1000 }),
       pubsubPeerDiscovery({
         interval: 1000,
       }) as any,
