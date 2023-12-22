@@ -8,7 +8,7 @@ import { randomPost, wait, loop } from './utils/test';
 import { ProofType } from '@autismjs/message';
 import { PubsubTopics } from './utils/types';
 
-fs.rmSync('./build/test', { recursive: true, force: true });
+fs.rmSync('./.autism/test', { recursive: true, force: true });
 
 tape('protocol', async (t) => {
   t.plan(18);

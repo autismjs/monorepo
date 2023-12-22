@@ -30,7 +30,7 @@ module.exports = [
   {
     mode: isProd ? 'production' : 'development',
     entry: {
-      browser: path.join(__dirname, 'src', 'index.ts'),
+      browser: path.join(__dirname, 'src', 'start.ts'),
     },
     target: 'web',
     devtool: 'source-map',

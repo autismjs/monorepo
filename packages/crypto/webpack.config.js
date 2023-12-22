@@ -31,7 +31,7 @@ module.exports = [
   {
     mode: isProd ? 'production' : 'development',
     entry: {
-      index: path.join(__dirname, 'src', 'index.ts'),
+      index: path.join(__dirname, 'src', 'start.ts'),
     },
     target: 'node',
     devtool: 'source-map',

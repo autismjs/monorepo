@@ -8,20 +8,32 @@ const envPlugin = new webpack.EnvironmentPlugin({
 
 const rules = [
   {
-    test: /\.tsx?$/,
-    exclude: [/(node_modules|.webpack)/],
-    rules: [
+    test: /\.(s[ac]ss|css)$/i,
+    use: [
+      // Creates `style` nodes from JS strings
+      'style-loader',
+      // Translates CSS into CommonJS
+      'css-loader',
+      // Compiles Sass to CSS
+      'sass-loader',
+    ],
+  },
+  {
+    test: /\.(gif|png|jpe?g|svg)$/i,
+    use: [
+      'file-loader',
       {
-        loader: 'ts-loader',
+        loader: 'image-webpack-loader',
         options: {
-          configFile: 'tsconfig.json',
-          transpileOnly: true,
+          publicPath: 'assets',
+          bypassOnDebug: true, // webpack@1.x
+          disable: true, // webpack@2.x and newer
         },
       },
     ],
   },
   {
-    test: /\.mjs$/,
+    test: /\.tsx?$/,
     exclude: [/(node_modules|.webpack)/],
     rules: [
       {
@@ -41,15 +53,15 @@ const rules = [
 
 module.exports = [
   {
+    target: 'node',
     mode: isProd ? 'production' : 'development',
     entry: {
-      index: path.join(__dirname, 'src', 'index.ts'),
+      start: path.join(__dirname, 'scripts', 'start.ts'),
     },
-    target: 'node',
-    devtool: 'source-map',
     resolve: {
-      extensions: ['.mjs', '.ts', '.js'],
+      extensions: ['.ts', '.tsx', '.js', '.jsx', '.png', '.svg', '.node'],
     },
+    // externals: [nodeExternals()],
     node: {
       __dirname: true,
     },
@@ -58,13 +70,12 @@ module.exports = [
     },
     output: {
       path: __dirname + '/build',
+      publicPath: '/',
       filename: `[name].js`,
-      libraryTarget: 'umd',
-      globalObject: 'this',
-      umdNamedDefine: true,
     },
     plugins: [
       envPlugin,
     ],
+    stats: 'minimal',
   },
 ];

@@ -7,6 +7,7 @@ const { compilerOptions } = require('./tsconfig.json');
 
 const envPlugin = new webpack.EnvironmentPlugin({
   NODE_ENV: 'development',
+  VERBOSE: '',
 });
 
 const rules = [
@@ -72,6 +73,7 @@ module.exports = [
       // ],
       fallback: {
         crypto: require.resolve('crypto-browserify'),
+        console: require.resolve('console-browserify'),
         os: require.resolve('os-browserify/browser'),
         stream: require.resolve('stream-browserify'),
         assert: require.resolve('assert'),
@@ -82,15 +84,16 @@ module.exports = [
         path: require.resolve('path-browserify'),
         vm: require.resolve('vm-browserify'),
         constants: require.resolve('constants-browserify'),
-        // fs: false,
+        fs: false,
+        readline: false,
         // buffer: require.resolve('buffer/'),
-        process: require.resolve('process/browser'),
+        // process: require.resolve('process/browser.ts'),
         events: require.resolve('events/'),
       },
     },
-    // node: {
-    //   __dirname: true,
-    // },
+    node: {
+      __dirname: true,
+    },
     module: {
       rules: [...rules],
     },

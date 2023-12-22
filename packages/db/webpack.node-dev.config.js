@@ -57,7 +57,7 @@ module.exports = [
     target: 'node',
     mode: isProd ? 'production' : 'development',
     entry: {
-      node: path.join(__dirname, 'dev', 'index.ts'),
+      node: path.join(__dirname, 'dev', 'start.ts'),
     },
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx', '.png', '.svg'],
@@ -69,7 +69,7 @@ module.exports = [
       rules: [...rules],
     },
     output: {
-      path: __dirname + '/dev-build/node',
+      path: __dirname + '/scripts-build/node',
       publicPath: '/',
       filename: `[name].js`,
     },

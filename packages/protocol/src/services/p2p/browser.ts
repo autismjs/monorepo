@@ -129,11 +129,9 @@ export class P2P extends EventEmitter2 {
       this.#startReject = reject;
     });
 
-    const { name = 'node', bootstrap, port } = this;
+    const { name = 'node', bootstrap } = this;
     const { createLibp2p } = await import('libp2p');
-    const { circuitRelayServer } = await import(
-      'libp2p/circuit-relay'
-    );
+    const { circuitRelayTransport } = await import('libp2p/circuit-relay');
     const { identifyService } = await import('libp2p/identify');
     const { webSockets } = await import('@libp2p/websockets');
     const { all } = await import('@libp2p/websockets/filters');
@@ -142,10 +140,8 @@ export class P2P extends EventEmitter2 {
     const { gossipsub } = await import('@chainsafe/libp2p-gossipsub');
     const { yamux } = await import('@chainsafe/libp2p-yamux');
     const { mplex } = await import('@libp2p/mplex');
-
-    const { tcp } = await import('@libp2p/tcp');
-    const { mdns } = await import('@libp2p/mdns');
     const { webTransport } = await import('@libp2p/webTransport');
+    // const { tcp } = await import('@libp2p/tcp');
 
     const { bootstrap: _bootstrap } = await import('@libp2p/bootstrap');
     const { pubsubPeerDiscovery } = await import(
@@ -154,7 +150,6 @@ export class P2P extends EventEmitter2 {
     const { webRTC, webRTCDirect } = await import('@libp2p/webrtc');
 
     const peerDiscovery: Libp2pInit['peerDiscovery'] = [
-      mdns({ interval: 1000 }),
       pubsubPeerDiscovery({
         interval: 1000,
       }) as any,
@@ -171,21 +166,30 @@ export class P2P extends EventEmitter2 {
     const node = await createLibp2p({
       addresses: {
         listen: [
-          `/ip4/0.0.0.0/tcp/0/ws`,
-          `/ip4/0.0.0.0/tcp/0`,
+          // create listeners for incoming WebRTC connection attempts on on all
+          // available Circuit Relay connections
+          '/webrtc',
         ],
       },
       transports: [
-        tcp(),
         webTransport(),
         webSockets({
+          // this allows non-secure WebSocket connections for purposes of the demo
           filter: all,
         }),
         webRTC(),
         webRTCDirect(),
+        circuitRelayTransport({
+          // allows the current node to make and accept relayed connections
+          discoverRelays: 1, // how many network relays to find
+          reservationConcurrency: 2, // how many relays to attempt to reserve slots on at once
+        }),
       ],
       streamMuxers: [yamux(), mplex()],
       connectionEncryption: [noise()],
+      connectionGater: {
+        denyDialMultiaddr: async () => false,
+      },
       connectionManager: {
         maxConnections: Infinity,
         minConnections: 1,
@@ -199,20 +203,6 @@ export class P2P extends EventEmitter2 {
           canRelayMessage: true,
         }),
         identify: identifyService(),
-        relay: circuitRelayServer({
-          // makes the node function as a relay server
-          // hopTimeout: 30 * 1000, // incoming relay requests must be resolved within this time limit
-          // advertise: true,
-          reservations: {
-            maxReservations: Infinity, // how many peers are allowed to reserve relay slots on this server
-            // reservationClearInterval: 300 * 1000, // how often to reclaim stale reservations
-            // applyDefaultLimit: true, // whether to apply default data/duration limits to each relayed connection
-            // defaultDurationLimit: 2 * 60 * 1000, // the default maximum amount of time a relayed connection can be open for
-            // defaultDataLimit: BigInt(2 << 7), // the default maximum number of bytes that can be transferred over a relayed connection
-            // maxInboundHopStreams: 32, // how many inbound HOP streams are allow simultaneously
-            // maxOutboundHopStreams: 64, // how many outbound HOP streams are allow simultaneously
-          },
-        }),
       },
     });
 

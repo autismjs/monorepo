@@ -60,7 +60,7 @@ module.exports = [
     target: 'web',
     mode: isProd ? 'production' : 'development',
     entry: {
-      app: path.join(__dirname, 'dev', 'index.ts'),
+      app: path.join(__dirname, 'dev', 'start.ts'),
     },
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx', '.png', '.svg'],
@@ -69,7 +69,7 @@ module.exports = [
       rules: [...rules],
     },
     output: {
-      path: __dirname + '/dev-build',
+      path: __dirname + '/scripts-build',
       publicPath: isProd ? '/' : 'http://localhost:8080/',
       filename: `[name].js`,
     },

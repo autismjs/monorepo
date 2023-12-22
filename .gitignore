@@ -7,3 +7,4 @@ coverage/
 *.log
 dev-build/
 bin/
+.autism/

@@ -32,7 +32,7 @@ module.exports = [
   {
     mode: isProd ? 'production' : 'development',
     entry: {
-      browser: path.join(__dirname, 'src', 'index.ts'),
+      browser: path.join(__dirname, 'src', 'start.ts'),
     },
     target: 'web',
     devtool: 'source-map',
@@ -45,7 +45,7 @@ module.exports = [
       extensions: ['.ts', '.js'],
       fallback: {
         crypto: require.resolve('crypto-browserify'),
-        os: require.resolve('os-browserify/browser'),
+        os: require.resolve('os-browserify/browser.ts'),
         stream: require.resolve('stream-browserify'),
         assert: require.resolve('assert'),
         url: require.resolve('url'),
@@ -56,7 +56,7 @@ module.exports = [
         fs: false,
         path: false,
         buffer: require.resolve('buffer/'),
-        process: require.resolve('process/browser'),
+        process: require.resolve('process/browser.ts'),
         // worker_threads: false,
         // readline: false,
       },

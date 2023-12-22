@@ -3,6 +3,7 @@ import { LevelDBAdapter } from '../../../../db/src';
 import { Any } from '@autismjs/message';
 import NodeCache from 'node-cache';
 import { Merkle } from '../../utils/merkle';
+import * as process from 'process';
 
 export class DB extends EventEmitter2 {
   #db: LevelDBAdapter;
@@ -15,6 +16,7 @@ export class DB extends EventEmitter2 {
   ) {
     super(options);
     this.#db = new LevelDBAdapter({
+      path: process.cwd() + '/.autism',
       prefix: options?.name,
     });
     this.#cache = new NodeCache({
