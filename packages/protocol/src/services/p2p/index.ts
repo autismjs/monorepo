@@ -129,11 +129,9 @@ export class P2P extends EventEmitter2 {
       this.#startReject = reject;
     });
 
-    const { name = 'node', bootstrap, port } = this;
+    const { name = 'node', bootstrap } = this;
     const { createLibp2p } = await import('libp2p');
-    const { circuitRelayServer } = await import(
-      'libp2p/circuit-relay'
-    );
+    const { circuitRelayServer } = await import('libp2p/circuit-relay');
     const { identifyService } = await import('libp2p/identify');
     const { webSockets } = await import('@libp2p/websockets');
     const { all } = await import('@libp2p/websockets/filters');
@@ -170,10 +168,7 @@ export class P2P extends EventEmitter2 {
 
     const node = await createLibp2p({
       addresses: {
-        listen: [
-          `/ip4/0.0.0.0/tcp/0/ws`,
-          `/ip4/0.0.0.0/tcp/0`,
-        ],
+        listen: [`/ip4/0.0.0.0/tcp/0/ws`, `/ip4/0.0.0.0/tcp/0`],
       },
       transports: [
         tcp(),

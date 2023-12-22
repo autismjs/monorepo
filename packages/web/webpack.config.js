@@ -101,6 +101,7 @@ module.exports = [
       path: __dirname + '/build',
       publicPath: isProd ? '/' : 'http://localhost:8080/',
       filename: `[name].js`,
+      globalObject: 'this'
     },
     plugins: [
       envPlugin,
