@@ -1,6 +1,7 @@
 import { MessageType, Post, PostSubtype, ProofType } from '@autismjs/message';
 import { ECDSA } from '../../crypto/src';
-import State from './state';
+import { getStore } from './state';
+import App from './pages/App';
 
 const ecdsa = new ECDSA();
 console.log('ecdsa', ecdsa);
@@ -15,12 +16,11 @@ const p = new Post({
 console.log('post', p.json);
 
 (async () => {
-  const state = new State();
+  const state = getStore();
+
   console.log('state', state);
 
-  state.subscribe((prev, next) => {
-    console.log(prev, next);
-  });
+  document.body.append(new App());
 
   state.dispatch({
     method: 'node/check',

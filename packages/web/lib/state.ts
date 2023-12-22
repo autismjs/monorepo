@@ -1,4 +1,4 @@
-export type StateOptions = { [key: string]: BaseState };
+export type StateOptions = { [key: string]: Store };
 
 export type RPC<Params = any> = {
   method: string;
@@ -11,14 +11,13 @@ export type RPC<Params = any> = {
 
 export type RPCHandler = (rpc: RPC) => void | Promise<void>;
 export type SubscriptionHandler = (
-  prevState: Map<string, BaseState | any>,
-  nextState: Map<string, BaseState | any>,
+  prevState: Map<string, Store | any>,
+  nextState: Map<string, Store | any>,
 ) => void | Promise<void>;
 
-export default class BaseState {
-  private states: Map<string, BaseState | any> = new Map();
+export default class Store {
+  private states: Map<string, Store | any> = new Map();
   private handlers: Map<string, RPCHandler> = new Map();
-  private subscriptions: SubscriptionHandler[] = [];
 
   constructor(states?: StateOptions) {
     Object.entries(states || {}).forEach(([key, value]) => {
@@ -26,7 +25,7 @@ export default class BaseState {
     });
   }
 
-  get(key: string): BaseState | undefined {
+  get<RetType = Store | undefined>(key: string): RetType {
     return this.states.get(key);
   }
 
@@ -35,8 +34,6 @@ export default class BaseState {
   }
 
   async dispatch(rpc: RPC) {
-    const prevState = new Map(this.states);
-
     const handler = this.handlers.get(rpc.method);
 
     if (handler) {
@@ -44,19 +41,76 @@ export default class BaseState {
     }
 
     for (const [, state] of this.states) {
-      if (state instanceof BaseState) {
+      if (state instanceof Store) {
         await state.dispatch(rpc);
       }
     }
+  }
+}
 
-    const nextState = this.states;
+export type Subscription<ValueType = any> =
+  | {
+      next?: (value: ValueType) => void;
+      error?: (err: Error) => void;
+      complete?: () => void;
+    }
+  | ((value: ValueType) => void);
 
-    for (const cb of this.subscriptions) {
-      await cb(prevState, nextState);
+export class Observables<ObservableValue = any> {
+  #state: ObservableValue;
+  #error: Error | null = null;
+  #subscriptions: Subscription[] = [];
+
+  get state() {
+    return this.#state;
+  }
+
+  set state(state: ObservableValue) {
+    this.#state = state;
+    for (const sub of this.#subscriptions) {
+      if (typeof sub === 'function') {
+        sub(state);
+      } else if (typeof sub !== 'function' && sub.next) {
+        sub.next(state);
+      }
     }
   }
 
-  subscribe(callback: SubscriptionHandler) {
-    this.subscriptions.push(callback);
+  get error(): Error | null {
+    return this.#error;
+  }
+
+  set error(error: Error) {
+    this.#error = error;
+    for (const sub of this.#subscriptions) {
+      if (typeof sub !== 'function' && sub.error) {
+        sub.error(error);
+      }
+    }
+  }
+
+  constructor(state: ObservableValue) {
+    this.#state = state;
+  }
+
+  done() {
+    for (const sub of this.#subscriptions) {
+      if (typeof sub !== 'function' && sub.complete) {
+        sub.complete();
+      }
+    }
+  }
+
+  subscribe<ValueType = any>(subscription: Subscription<ValueType>) {
+    const currIndex = this.#subscriptions.indexOf(subscription);
+    if (currIndex === -1) {
+      this.#subscriptions.push(subscription);
+    }
+    return () => {
+      const index = this.#subscriptions.indexOf(subscription);
+      if (index !== -1) {
+        this.#subscriptions.splice(index, 1);
+      }
+    };
   }
 }

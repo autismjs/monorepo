@@ -208,7 +208,7 @@ export default class LevelDBAdapter implements BaseDBAdapter {
     reverse?: boolean;
     limit?: number;
     offset?: string;
-  }): Promise<Any[]> {
+  }): Promise<Post[]> {
     const predicate = (msg: Any) => {
       switch (msg.subtype) {
         case PostSubtype.Default:
@@ -225,7 +225,7 @@ export default class LevelDBAdapter implements BaseDBAdapter {
 
     const db = this.#indices.global.sublevel(MessageType[MessageType.Post]);
 
-    return this.#query(db, predicate, options);
+    return this.#query(db, predicate, options) as Promise<Post[]>;
   }
 
   async getPostsByUser(
