@@ -1,20 +1,14 @@
 import { CustomElement, Q, register } from '../../../lib/ui.ts';
 import { getStore } from '../../state';
 import { default as NodeStore } from '../../state/node.ts';
+import css from './index.scss';
 
 export default class ProfileImage extends CustomElement {
   static get observedAttributes() {
     return ['address', 'width', 'height'];
   }
 
-  css = `
-    img {
-      display: var(--display, block);
-      width: var(--width, 2rem);
-      height: var(--height, 2rem);
-      border-radius: var(--border-radius, 2px);
-    }
-  `;
+  css = css.toString();
 
   html = `
     <img />

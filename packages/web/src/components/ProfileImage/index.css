@@ -1,0 +1,8 @@
+img {
+  display: var(--display, block);
+  width: var(--width, 2rem);
+  height: var(--height, 2rem);
+  border-radius: var(--border-radius, 2px);
+}
+
+/*# sourceMappingURL=index.css.map */

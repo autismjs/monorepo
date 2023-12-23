@@ -17,7 +17,7 @@ export function ellipsify(pubkey?: string, start = 6, end = 4) {
   return pubkey.slice(0, start) + '...' + pubkey.slice(-end);
 }
 
-export function fromNow(date?: Date) {
+export function fromNow(date?: Date, withoutSuffix = true) {
   if (!date) return null;
-  return dayjs(date).fromNow();
+  return dayjs(date).fromNow(withoutSuffix);
 }

@@ -14,8 +14,8 @@
   gap: 0.25rem;
   overflow-y: auto;
   flex: 1 1 auto;
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
@@ -32,3 +32,5 @@
   width: 12rem;
   flex: 1 0 auto;
 }
+
+/*# sourceMappingURL=index.css.map */

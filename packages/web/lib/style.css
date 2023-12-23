@@ -1,0 +1,76 @@
+html {
+    --white: #ffffff;
+    --slate-50: #F4F6F6;
+    --slate-100: #EAECEE;
+    --slate-200: #D5D8DC;
+    --slate-300: #ABB2B9;
+    --slate-400: #808B96;
+    --slate-500: #566573;
+    --slate-600: #2C3E50;
+    --slate-700: #273746;
+    --slate-800: #212F3D;
+    --slate-900: #1C2833;
+    --slate-1000: #17202A;
+    --black: #000000;
+
+    --blue-100: #EBF5FB;
+    --blue-200: #D6EAF8;
+    --blue-300: #AED6F1;
+    --blue-400: #85C1E9;
+    --blue-500: #5DADE2;
+    --blue-600: #3498DB;
+    --blue-700: #2E86C1;
+    --blue-800: #2874A6;
+    --blue-900: #21618C;
+    --blue-1000: #1B4F72;
+
+    --red-100: #FDEDEC;
+    --red-200: #FADBD8;
+    --red-300: #F5B7B1;
+    --red-400: #F1948A;
+    --red-500: #EC7063;
+    --red-600: #E74C3C;
+    --red-700: #CB4335;
+    --red-800: #B03A2E;
+    --red-900: #943126;
+    --red-1000: #78281F;
+
+    --green-100: #EAFAF1;
+    --green-200: #D5F5E3;
+    --green-300: #ABEBC6;
+    --green-400: #82E0AA;
+    --green-500: #58D68D;
+    --green-600: #2ECC71;
+    --green-700: #28B463;
+    --green-800: #239B56;
+    --green-900: #1D8348;
+    --green-1000: #186A3B;
+
+    --text-base: .875rem;
+    --root-size: 16px;
+}
+
+.button {
+    transition: opacity 200ms;
+    display: var(--display, flex);
+    flex-flow: var(--flex-flow, row);
+    align-items: var(--align-items, center);
+    padding: var(--padding, .25rem .5rem);
+    cursor: pointer;
+    border: var(--border, 1px solid var(--slate-200));
+    gap: var(--gap, 0);
+    font-family: var(--font-family, --font-sans);
+    font-size: var(--font-size, .875rem);
+    color: var(--color, var(--black));
+    background-color: var(--background-color, var(--slate-100));
+    opacity: .9;
+
+    &:hover {
+        opacity: .7;
+    }
+
+    &:active {
+        opacity: 1;
+
+    }
+}

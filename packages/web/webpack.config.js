@@ -15,7 +15,7 @@ const rules = [
     test: /\.(s[ac]ss|css)$/i,
     use: [
       // Creates `style` nodes from JS strings
-      'style-loader',
+      // 'style-loader',
       // Translates CSS into CommonJS
       'css-loader',
       // Compiles Sass to CSS
@@ -111,11 +111,11 @@ module.exports = [
       new webpack.ProvidePlugin({
         process: 'process',
       }),
-      // new CopyPlugin({
-      //   patterns: [
-      //     { from: "./node_modules/@autismjs/protocol/build", to: "./"}
-      //   ]
-      // }),
+      new CopyPlugin({
+        patterns: [
+          { from: "./lib/style.css", to: "./"}
+        ]
+      }),
       new HtmlWebpackPlugin({
         template: path.join(__dirname, "static", "index.html"),
         filename: "index.html",
