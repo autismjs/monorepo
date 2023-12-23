@@ -3,6 +3,9 @@ img {
   width: var(--width, 2rem);
   height: var(--height, 2rem);
   border-radius: var(--border-radius, 2px);
+  padding: var(--padding, 0);
+  margin: var(--margin, 0);
+  background-color: var(--slate-50);
 }
 
 /*# sourceMappingURL=index.css.map */

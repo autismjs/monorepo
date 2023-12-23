@@ -3,7 +3,7 @@ button {
   display: var(--display, flex);
   flex-flow: var(--flex-flow, row);
   align-items: var(--align-items, center);
-  padding: var(--padding, 0.25rem 0.5rem);
+  padding: var(--padding, 0.125rem 0.25rem);
   cursor: pointer;
   border: var(--border, 1px solid var(--slate-200));
   gap: var(--gap, 0);

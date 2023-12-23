@@ -46,31 +46,27 @@ html {
     --green-900: #1D8348;
     --green-1000: #186A3B;
 
-    --text-base: .875rem;
+    --text-3xs: .5rem;
+    --text-2xs: .625rem;
+    --text-xs: .75rem;
+    --text-sm: .875rem;
+    --text-base: .9375rem;
+    --text-md: 1rem;
+    --text-lg: 1.125rem;
+    --text-xl: 1.25rem;
+    --text-2xl: 1.5rem;
+    --text-3xl: 1.875rem;
+    --text-4xl: 2.25rem;
+
+    --font-thin: 100;
+    --font-extralight: 200;
+    --font-light: 300;
+    --font-normal: 400;
+    --font-medium: 500;
+    --font-semibold: 600;
+    --font-bold: 700;
+    --font-extrabold: 800;
+    --font-black: 900;
+
     --root-size: 16px;
-}
-
-.button {
-    transition: opacity 200ms;
-    display: var(--display, flex);
-    flex-flow: var(--flex-flow, row);
-    align-items: var(--align-items, center);
-    padding: var(--padding, .25rem .5rem);
-    cursor: pointer;
-    border: var(--border, 1px solid var(--slate-200));
-    gap: var(--gap, 0);
-    font-family: var(--font-family, --font-sans);
-    font-size: var(--font-size, .875rem);
-    color: var(--color, var(--black));
-    background-color: var(--background-color, var(--slate-100));
-    opacity: .9;
-
-    &:hover {
-        opacity: .7;
-    }
-
-    &:active {
-        opacity: 1;
-
-    }
 }
