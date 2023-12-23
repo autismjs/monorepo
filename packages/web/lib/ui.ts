@@ -24,9 +24,22 @@ export function register(name: string, el: CustomElementConstructor) {
   window.customElements.define(name, el);
 }
 
-export const Q = (root: ShadowRoot | Element) => {
-  return {
-    find: (str: string) => E(root.querySelector(str)),
+export const Q = (root: ShadowRoot | Element | null) => {
+  if (!root) return root;
+
+  const q = {
+    el: root,
+    attr: (key: string, value: string) => {
+      if (root instanceof Element) {
+        root.setAttribute(key, value);
+      }
+      return q;
+    },
+    content: (content: string) => {
+      root.textContent = content;
+      return q;
+    },
+    find: (str: string) => Q(root.querySelector(str)),
     findAll: (
       str: string,
     ): Element[] & {
@@ -38,7 +51,7 @@ export const Q = (root: ShadowRoot | Element) => {
     } => {
       const list: any[] = Array.prototype.map.call(
         root.querySelectorAll(str),
-        E,
+        Q,
       );
 
       // @ts-ignore
@@ -51,7 +64,7 @@ export const Q = (root: ShadowRoot | Element) => {
         for (let i = 0; i < max; i++) {
           const data = result[i];
           const last = list[i];
-          const lastKey = last?.getAttribute('key');
+          const lastKey = last?.el?.getAttribute('key');
           const currKey = mapKeyFn(data);
 
           if (!last && data) {
@@ -68,21 +81,5 @@ export const Q = (root: ShadowRoot | Element) => {
       return list;
     },
   };
-};
-
-const E = (el: Element | null) => {
-  if (!el) return el;
-
-  return {
-    el: el,
-    content: (content: string) => {
-      el.textContent = content;
-      return el;
-    },
-    attr: (key: string, value: string) => {
-      el.setAttribute(key, value);
-      return el;
-    },
-    getAttribute: el.getAttribute.bind(el),
-  };
+  return q;
 };

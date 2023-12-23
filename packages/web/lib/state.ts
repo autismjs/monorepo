@@ -59,7 +59,7 @@ export type Subscription<ValueType = any> =
 export class Observable<ObservableValue = any> {
   #state: ObservableValue;
   #error: Error | null = null;
-  #subscriptions: Subscription[] = [];
+  #subscriptions: Subscription<ObservableValue>[] = [];
 
   get state() {
     return this.#state;
@@ -101,10 +101,16 @@ export class Observable<ObservableValue = any> {
     }
   }
 
-  subscribe<ValueType = any>(subscription: Subscription<ValueType>) {
+  subscribe(subscription: Subscription<ObservableValue>) {
     const currIndex = this.#subscriptions.indexOf(subscription);
     if (currIndex === -1) {
       this.#subscriptions.push(subscription);
+      const sub = subscription;
+      if (typeof sub === 'function') {
+        sub(this.state);
+      } else if (typeof sub !== 'function' && sub.next) {
+        sub.next(this.state);
+      }
     }
     return () => {
       const index = this.#subscriptions.indexOf(subscription);
@@ -121,7 +127,7 @@ export class ObservableMap<keyType = string, ValueType = any> {
   get(key: keyType) {
     const exist = this.#map.get(key);
     if (!exist) {
-      this.#map.set(key, new Observable(null));
+      this.#map.set(key, new Observable<ValueType | null>(null));
     }
     return this.#map.get(key);
   }

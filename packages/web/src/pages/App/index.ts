@@ -1,7 +1,6 @@
 import { CustomElement, html, Q, register } from '../../../lib/ui.ts';
 import { getStore } from '../../state';
 import { default as NodeState } from '../../state/node.ts';
-import { Post as PostType } from '@autismjs/message';
 import '../../components/Post';
 
 export default class App extends CustomElement {
@@ -10,11 +9,20 @@ export default class App extends CustomElement {
       width: 100vw;
       height: 100vh;
     }
+    
+    .posts {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-flow: column nowrap;
+      gap: 0.25rem;
+      padding: 0.25rem;
+    }
   `;
 
   html = `
     <div class="app">
-      <slot></slot>
+      <div class="posts" />
     </div>
   `;
 
@@ -26,10 +34,9 @@ export default class App extends CustomElement {
   subscribeToPosts() {
     const state = getStore();
     const node = state.get<NodeState>('node');
-    node.$globalPosts.subscribe<string[]>((hashes) => {
-      const app = this.shadowRoot!.querySelector('div.app')!;
-      const q = Q(app);
-      const old = q.findAll('post-card');
+    node.$globalPosts.subscribe((hashes) => {
+      const app = Q(this.shadowRoot!)!.find('div.posts')!;
+      const old = Q(app.el)!.findAll('post-card');
 
       old.patch(
         hashes,
