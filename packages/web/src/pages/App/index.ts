@@ -2,27 +2,43 @@ import { CustomElement, html, Q, register } from '../../../lib/ui.ts';
 import { getStore } from '../../state';
 import { default as NodeState } from '../../state/node.ts';
 import '../../components/Post';
+import './index.scss';
 
 export default class App extends CustomElement {
   css = `
     .app {
-      width: 100vw;
-      height: 100vh;
+      display: flex;
+      flex-flow: column nowrap;
+      background: var(--slate-50);
+      width: calc(100% - 2rem);
+      height: calc(100% - 2rem);
+      overflow: hidden;
+      padding: 1rem;
     }
     
     .posts {
-      width: 100vw;
-      height: 100vh;
       display: flex;
       flex-flow: column nowrap;
       gap: 0.25rem;
-      padding: 0.25rem;
+      overflow-y: auto;
+      -ms-overflow-style: none;  /* IE and Edge */
+      scrollbar-width: none;  /* Firefox */
+    }
+    
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    .posts::-webkit-scrollbar {
+      display: none;
+    }
+    
+    .posts post-card {
+      flex: 0 0 auto;
+      border: 1px solid var(--slate-100);
     }
   `;
 
   html = `
     <div class="app">
-      <div class="posts" />
+      <div class="posts"></div>
     </div>
   `;
 

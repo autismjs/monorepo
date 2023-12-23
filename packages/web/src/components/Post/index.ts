@@ -1,18 +1,25 @@
 import { CustomElement, Q, register } from '../../../lib/ui.ts';
 import { getStore } from '../../state';
 import { default as NodeStore } from '../../state/node.ts';
-import { userId, userName } from '../../utils/misc.ts';
+import { fromNow, userId, userName } from '../../utils/misc.ts';
+import CommentIcon from '../../../static/icons/comment.svg';
+import RepostIcon from '../../../static/icons/repost.svg';
+import LikeIcon from '../../../static/icons/like.svg';
 import '../ProfileImage';
+import '../Button';
 
 export default class Post extends CustomElement {
   css = `
     .post {
       display: grid;
+      background: var(--white);
       grid-template-columns: 3rem auto;
       grid-template-rows: auto auto auto;
       padding: .5rem;
       grid-gap: .5rem;
-      font-size: var(--font-size, 15px);
+      font-size: var(--font-size, --root-size);
+      border: var(--border, none);
+      cursor: default;
     }
     
     profile-image {
@@ -44,6 +51,14 @@ export default class Post extends CustomElement {
       color: var(--slate-300);
     }
     
+    .createAt-top {
+      display: flex;
+      flex-flow: row nowrap;
+      align-items: center;
+      color: var(--slate-300);
+      gap: 0.25rem;
+    }
+    
     .content {
       display: flex;
       flex-flow: row nowrap;
@@ -51,6 +66,7 @@ export default class Post extends CustomElement {
       grid-column-end: 3;
       grid-row-start: 2;
       grid-row-end: 3;
+      padding-bottom: .25rem;
     }
     
     .bottom {
@@ -60,6 +76,36 @@ export default class Post extends CustomElement {
       grid-column-end: 3;
       grid-row-start: 3;
       grid-row-end: 4;
+      gap: .25rem;
+    }
+    
+    .bottom > c-button {
+      --gap: .5rem;
+      --font-family: var(--font-mono);
+      --font-size: var(--text-base);
+    }
+    
+    .bottom > c-button > img {
+      width: var(--text-base);
+      height: var(--text-base);
+    }
+    
+    .comment-btn {
+      --color: var(--blue-500);
+      --background-color: var(--blue-200);
+      --border: 1px solid var(--blue-300);
+    }
+    
+    .repost-btn {
+      --color: var(--green-500);
+      --background-color: var(--green-200);
+      --border: 1px solid var(--green-300);
+    }
+    
+    .like-btn {
+      --color: var(--red-500);
+      --background-color: var(--red-200);
+      --border: 1px solid var(--red-300);
     }
   `;
 
@@ -69,10 +115,22 @@ export default class Post extends CustomElement {
       <div class="top">
         <div class="creator"></div>
         <div class="userId"></div>
+        <div class="createAt-top"></div>
       </div>
       <div class="content"></div>
       <div class="bottom">
-      <div class="createdAt"></div>
+        <c-button class="comment-btn">
+          <img src="${CommentIcon}" />
+          <span></span>
+        </c-button>
+        <c-button class="repost-btn">
+          <img src="${RepostIcon}" />
+          <span></span>
+        </c-button>
+        <c-button class="like-btn">
+          <img src="${LikeIcon}" />
+          <span></span>
+        </c-button>
       </div>
     </div>
   `;
@@ -90,15 +148,31 @@ export default class Post extends CustomElement {
     const q = Q(this.shadowRoot!)!;
 
     post!.subscribe(async (p) => {
-      const user = await node.node.db.db.getProfile(p!.json.creator || '');
+      const user = await node.node.db.db.getProfile(p?.json.creator || '');
+      const meta = await node.node.db.db.getPostMeta(p?.messageId || '');
       const displayName = user.name || userName(p?.json.creator) || 'Anonymous';
       const userHandle = userId(p?.json.creator);
 
-      q.find('profile-image')?.attr('address', p?.json.creator || '');
+      q.find('profile-image')!.attr('address', p?.json.creator || '');
       q.find('div.creator')!.content(displayName);
       q.find('div.userId')!.content(userHandle || '');
       q.find('div.content')!.content(p?.json.content || '');
-      q.find('div.createdAt')!.content(p?.json.createdAt.toDateString() || '');
+
+      if (p?.json.createdAt) {
+        q.find('div.createAt-top')!.html(`
+          <span>&#183;</span>
+          <span>${fromNow(p.json.createdAt)}</span>
+        `);
+      }
+
+      if (typeof meta?.replies === 'number') {
+        q.find('c-button.comment-btn')!
+          .find('span')!
+          .content('' + meta.replies);
+      }
+
+      q.find('c-button.repost-btn')!.find('span')!.content('0');
+      q.find('c-button.like-btn')!.find('span')!.content('0');
     });
   }
 }

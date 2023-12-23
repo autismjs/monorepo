@@ -39,6 +39,11 @@ export const Q = (root: ShadowRoot | Element | null) => {
       root.textContent = content;
       return q;
     },
+    html: (htmlStr: string) => {
+      root.innerHTML = '';
+      root.append(html(htmlStr));
+      return q;
+    },
     find: (str: string) => Q(root.querySelector(str)),
     findAll: (
       str: string,
