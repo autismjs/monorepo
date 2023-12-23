@@ -36,10 +36,10 @@ export const Q = (root: ShadowRoot | Element) => {
         renderFn: (data: any) => Element | DocumentFragment,
       ) => void;
     } => {
-      const list = Array.prototype.map.call(
+      const list: any[] = Array.prototype.map.call(
         root.querySelectorAll(str),
         E,
-      ) as Element[];
+      );
 
       // @ts-ignore
       list.patch = (
@@ -58,8 +58,8 @@ export const Q = (root: ShadowRoot | Element) => {
             root.append(renderFn(data));
           } else if (last && !data) {
             root.removeChild(last);
-          } else if (lastKey !== currKey) {
-            root.replaceChild(renderFn(data), last);
+          } else if (last && lastKey !== currKey) {
+            root.replaceChild(renderFn(data), last.el);
           }
         }
       };
@@ -74,6 +74,7 @@ const E = (el: Element | null) => {
   if (!el) return el;
 
   return {
+    el: el,
     content: (content: string) => {
       el.textContent = content;
       return el;

@@ -1,11 +1,17 @@
-import Store, { Observables, type StateOptions } from '../../lib/state.ts';
+import Store, {
+  ObservableMap,
+  Observable,
+  type StateOptions,
+} from '../../lib/state.ts';
 import { Autism } from '@autismjs/protocol/src/services/browser.ts';
 import { Post } from '@autismjs/message';
 
 export default class Node extends Store {
   node: Autism;
-  wait: Promise<void>;
-  posts = new Observables<Post[]>([]);
+  #wait: Promise<void>;
+
+  $globalPosts = new Observable<string[]>([]);
+  $posts = new ObservableMap<string, Post>();
 
   constructor(options?: StateOptions) {
     super(options);
@@ -33,15 +39,23 @@ export default class Node extends Store {
 
     this.updatePosts();
 
-    this.wait = new Promise(async (r) => {
+    this.#wait = new Promise(async (r) => {
       await this.node.start();
       this.updatePosts();
       r();
     });
   }
 
+  async waitForStart() {
+    return this.#wait;
+  }
+
   updatePosts = async () => {
-    this.posts.state = await this.node.db.db.getPosts();
+    const posts = await this.node.db.db.getPosts();
+    this.$globalPosts.state = posts.map((p) => {
+      this.$posts.set(p.hash, p);
+      return p.hash;
+    });
   };
 
   getPost = async (hash: string): Promise<Post | null> => {

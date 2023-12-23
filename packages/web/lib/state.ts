@@ -56,7 +56,7 @@ export type Subscription<ValueType = any> =
     }
   | ((value: ValueType) => void);
 
-export class Observables<ObservableValue = any> {
+export class Observable<ObservableValue = any> {
   #state: ObservableValue;
   #error: Error | null = null;
   #subscriptions: Subscription[] = [];
@@ -112,5 +112,22 @@ export class Observables<ObservableValue = any> {
         this.#subscriptions.splice(index, 1);
       }
     };
+  }
+}
+
+export class ObservableMap<keyType = string, ValueType = any> {
+  #map: Map<keyType, Observable<ValueType | null>> = new Map();
+
+  get(key: keyType) {
+    const exist = this.#map.get(key);
+    if (!exist) {
+      this.#map.set(key, new Observable(null));
+    }
+    return this.#map.get(key);
+  }
+
+  set(key: keyType, value: ValueType) {
+    const post = this.get(key)!;
+    post.state = value;
   }
 }

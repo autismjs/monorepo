@@ -19,14 +19,21 @@ export default class Post extends CustomElement {
 
   async connectedCallback() {
     super.connectedCallback();
+    this.loadPost();
+  }
+
+  async loadPost() {
     const store = getStore();
     const node = store.get<NodeStore>('node');
     const hash = this.dataset.hash!;
-    const post = await node.getPost(hash);
+    const post = await node.$posts.get(hash);
     const q = Q(this.shadowRoot!);
-    q.find('div#creator')!.content(post?.json.creator || '');
-    q.find('div#content')!.content(post?.json.content || '');
-    q.find('div#createdAt')!.content(post?.json.createdAt.toDateString() || '');
+
+    post!.subscribe((p) => {
+      q.find('div#creator')!.content(p.json.creator || '');
+      q.find('div#content')!.content(p.json.content || '');
+      q.find('div#createdAt')!.content(p.json.createdAt.toDateString() || '');
+    });
   }
 }
 

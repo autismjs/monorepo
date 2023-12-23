@@ -20,21 +20,25 @@ export default class App extends CustomElement {
 
   async connectedCallback() {
     super.connectedCallback();
+    this.subscribeToPosts();
+  }
+
+  subscribeToPosts() {
     const state = getStore();
     const node = state.get<NodeState>('node');
-    const app = this.shadowRoot!.querySelector('div.app')!;
-    const q = Q(app);
-
-    node.posts.subscribe<PostType[]>((posts) => {
+    node.$globalPosts.subscribe<string[]>((hashes) => {
+      const app = this.shadowRoot!.querySelector('div.app')!;
+      const q = Q(app);
       const old = q.findAll('post-card');
+
       old.patch(
-        posts,
-        (post: PostType) => post.messageId,
-        (post: PostType) =>
+        hashes,
+        (hash: string) => hash,
+        (hash: string) =>
           html(`
             <post-card
-              key="${post.messageId}"
-              data-hash="${post.hash}"
+              key="${hash}"
+              data-hash="${hash}"
             />
           `),
       );
