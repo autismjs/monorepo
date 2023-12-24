@@ -11,18 +11,32 @@ interface CustomElementConstructor {
 
 interface ICustomElement extends HTMLElement {
   state: any;
-  render(): void;
+  render: () => VTree;
+  onmount(): Promise<void>;
+  onupdate(): Promise<void>;
+  onupdated(): Promise<void>;
 }
 
 export class CustomElement extends HTMLElement implements ICustomElement {
   css: string;
   html: string;
-
   #tree?: VTree;
   #approot?: any;
 
+  onmount(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  onupdate(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  onupdated(): Promise<void> {
+    return Promise.resolve();
+  }
+
   render(): VTree {
-    return hpx``;
+    return hx`<div></div>`;
   }
 
   get state() {
@@ -35,24 +49,34 @@ export class CustomElement extends HTMLElement implements ICustomElement {
     );
   }
 
-  connectedCallback() {
+  async connectedCallback() {
     this.attachShadow({ mode: 'open' });
+    await this.onmount();
     this.patch();
   }
 
-  patch = () => {
-    if (!this.#approot) {
-      this.#tree = this.render();
-      this.#approot = createElement(this.#tree as VText);
-      this.shadowRoot?.appendChild(html(`<style>${this.css}</style>`));
-      this.shadowRoot?.appendChild(this.#approot);
-    } else if (this.#tree) {
-      const newTree = this.render();
-      const patches = diff(this.#tree!, newTree);
-      this.#approot = patch(this.#approot, patches);
-      this.#tree = newTree;
-    }
-  };
+  async attributeChangedCallback() {
+    this.patch();
+  }
+
+  patch = () =>
+    requestAnimationFrame(async () => {
+      await this.onupdate();
+
+      if (!this.#approot) {
+        this.#tree = this.render();
+        this.#approot = createElement(this.#tree as VText);
+        this.shadowRoot?.appendChild(html(`<style>${this.css}</style>`));
+        this.shadowRoot?.appendChild(this.#approot);
+      } else if (this.#tree) {
+        const newTree = this.render();
+        const patches = diff(this.#tree!, newTree);
+        this.#approot = patch(this.#approot, patches);
+        this.#tree = newTree;
+      }
+
+      this.onupdated();
+    });
 }
 
 export function html(htmlString: string) {
@@ -68,6 +92,51 @@ export function hx(...args: any[]) {
 export function register(name: string, el: CustomElementConstructor) {
   window.customElements.define(name, el);
 }
+
+type VNodeProps = {
+  tagName: string;
+  classList: string[];
+  id?: string;
+  attributes: Map<string, string>;
+  children?: VNode[];
+};
+
+export class VNode {
+  #id?: string;
+  #tagName: string;
+  #classList: string[] = [];
+  #attributes = new Map<string, string>();
+  #children: VNode[] = [];
+
+  constructor(options: VNodeProps) {
+    this.#tagName = options.tagName;
+    this.#classList = options.classList;
+    this.#id = options.id;
+    this.#attributes = options.attributes;
+    this.#children = options.children || [];
+  }
+}
+
+export const $ = (name: string) => {
+  const tagName = name.match(/^[^.|#|\[]*/g);
+  const classList = name.match(/(?<=[.*])([^.#\[\]]*)+?(?=[(#.\s\[)*])?/g);
+  const id = name.match(/(?<=[#*])([^.#\[\]]*)+?(?=[(#.\s\[)*])?/g);
+  const attributes = name.match(/(?<=[\[])([^.#\[\]]*)+?(?=[\]*])?/g) || [];
+
+  const vnode = new VNode({
+    tagName: tagName![0],
+    classList: classList || [],
+    id: id ? id[0] : undefined,
+    attributes: new Map(
+      attributes.map((attr) => {
+        const [key, value] = attr.split('=');
+        return [key, value || ''];
+      }),
+    ),
+  });
+
+  return vnode;
+};
 
 export const Q = (root: ShadowRoot | Element | null) => {
   if (!root) return root;

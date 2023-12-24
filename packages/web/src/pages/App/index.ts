@@ -3,13 +3,19 @@ import { getStore } from '../../state';
 import { default as NodeState } from '../../state/node.ts';
 import '../../components/Post';
 import css from './index.scss';
+import * as console from 'console';
 
 export default class App extends CustomElement {
   css = css.toString();
 
-  async connectedCallback() {
-    super.connectedCallback();
-    this.subscribeToPosts();
+  async onupdate(): Promise<void> {
+    await super.onupdate();
+    console.time('app-container');
+  }
+
+  async onupdated(): Promise<void> {
+    await super.onupdated();
+    console.timeEnd('app-container');
   }
 
   render() {
@@ -32,7 +38,7 @@ export default class App extends CustomElement {
     `;
   }
 
-  subscribeToPosts() {
+  async onmount() {
     const state = getStore();
     const node = state.get<NodeState>('node');
     node.$globalPosts.subscribe(this.patch);

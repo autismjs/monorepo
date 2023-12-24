@@ -24,9 +24,11 @@ export default class Post extends CustomElement {
   render() {
     const { creator, name, handle, createat, content } = this.state;
 
+    if (!creator) return hx`<div></div>`;
+
     return hx`
       <div class="post">
-        <profile-image address="${creator}"></profile-image>
+        ${hx`<profile-image id="${creator}" creator="${creator}"></profile-image>`}
         <div class="top">
           <div class="creator">${name}</div>
           <div class="userId">${handle}</div>
