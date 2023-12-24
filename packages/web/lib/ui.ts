@@ -19,9 +19,9 @@ export class CustomElement extends HTMLElement implements ICustomElement {
   html: string;
 
   #tree?: VTree;
-  #root?: any;
+  #approot?: any;
 
-  async render(): Promise<VTree> {
+  render(): VTree {
     return hpx``;
   }
 
@@ -35,23 +35,22 @@ export class CustomElement extends HTMLElement implements ICustomElement {
     );
   }
 
-  async connectedCallback() {
+  connectedCallback() {
     this.attachShadow({ mode: 'open' });
-    await this.patch();
+    this.patch();
   }
 
-  patch = async () => {
-    if (!this.#root) {
-      this.#tree = await this.render();
-      this.#root = createElement(this.#tree as VText);
+  patch = () => {
+    if (!this.#approot) {
+      this.#tree = this.render();
+      this.#approot = createElement(this.#tree as VText);
       this.shadowRoot?.appendChild(html(`<style>${this.css}</style>`));
-      this.shadowRoot?.appendChild(this.#root);
+      this.shadowRoot?.appendChild(this.#approot);
     } else if (this.#tree) {
-      const newTree = await this.render();
+      const newTree = this.render();
       const patches = diff(this.#tree!, newTree);
-      console.log(patches);
-      this.#root = patch(this.#root, patches);
-      // this.#tree = newTree;
+      this.#approot = patch(this.#approot, patches);
+      this.#tree = newTree;
     }
   };
 }

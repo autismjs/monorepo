@@ -10,6 +10,10 @@ import '../Button';
 import css from './index.scss';
 
 export default class Post extends CustomElement {
+  static get observedAttributes() {
+    return ['hash', 'creator', 'createat', 'content', 'name', 'handle'];
+  }
+
   css = css.toString();
 
   async connectedCallback() {
@@ -17,28 +21,21 @@ export default class Post extends CustomElement {
     this.subscribe();
   }
 
-  async render() {
-    const node = getStore().get<NodeStore>('node');
-    const hash = this.dataset.hash!;
-    const post = await node.$posts.get(hash);
-    const p = post?.state;
-    const user = await node.node.db.db.getProfile(p?.json.creator || '');
-    // const meta = await node.node.db.db.getPostMeta(p?.messageId || '');
-    const displayName = user.name || userName(p?.json.creator) || 'Anonymous';
-    const userHandle = userId(p?.json.creator);
+  render() {
+    const { creator, name, handle, createat, content } = this.state;
 
     return hx`
       <div class="post">
-        <profile-image address="${p?.json.creator || ''}"></profile-image>
+        <profile-image address="${creator}"></profile-image>
         <div class="top">
-          <div class="creator">${displayName}</div>
-          <div class="userId">${userHandle || ''}</div>
+          <div class="creator">${name}</div>
+          <div class="userId">${handle}</div>
           <div class="createAt-top">
             <span>&#183;</span>
-            <span>${fromNow(p?.json.createdAt)}</span>
+            <span>${createat}</span>
           </div>
         </div>
-        <div class="content">${p?.json.content || ''}</div>
+        <div class="content">${content}</div>
         <div class="bottom">
           <c-button class="comment-btn">
             <img src="${CommentIcon}" />
@@ -60,10 +57,29 @@ export default class Post extends CustomElement {
   async subscribe() {
     const store = getStore();
     const node = store.get<NodeStore>('node');
-    const hash = this.dataset.hash!;
+    const hash = this.state.id;
     const post = await node.$posts.get(hash);
 
-    post!.subscribe(this.patch);
+    post!.subscribe(async (p) => {
+      const user = await node.node.db.db.getProfile(p?.json.creator || '');
+
+      const creator = p?.json.creator || '';
+      const createat = fromNow(p?.json.createdAt);
+      const content = p?.json.content || '';
+      const name = user.name || userName(p?.json.creator) || 'Anonymous';
+      const handle = userId(p?.json.creator);
+
+      this.setAttribute('hash', hash);
+      this.setAttribute('creator', creator);
+      this.setAttribute('createat', createat || '');
+      this.setAttribute('content', content);
+      this.setAttribute('name', name);
+      this.setAttribute('handle', handle || '');
+    });
+  }
+
+  async attributeChangedCallback() {
+    this.patch();
   }
 }
 

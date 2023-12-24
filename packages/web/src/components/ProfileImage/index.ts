@@ -12,10 +12,16 @@ export default class ProfileImage extends CustomElement {
 
   css = css.toString();
 
-  async render() {
+  render() {
+    const { src } = this.state;
     return hx`
-      <img src="${await this.getSrc()}" />
+      <img src="${src}" />
     `;
+  }
+
+  async connectedCallback() {
+    super.connectedCallback();
+    this.setAttribute('src', await this.getSrc());
   }
 
   async getSrc() {
@@ -32,8 +38,10 @@ export default class ProfileImage extends CustomElement {
     }
   }
 
-  async attributeChangedCallback(key: string, oldVal: string, newVal: string) {
+  attributeChangedCallback(key: string, oldVal: string, newVal: string) {
+    console.log(key);
     this.patch();
+    // this.setAttribute('src', await this.getSrc());
   }
 }
 

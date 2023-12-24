@@ -12,7 +12,7 @@ export default class App extends CustomElement {
     this.subscribeToPosts();
   }
 
-  async render() {
+  render() {
     const state = getStore();
     const node = state.get<NodeState>('node');
     const posts = node.$globalPosts.state;
@@ -22,10 +22,7 @@ export default class App extends CustomElement {
         <div class="posts">
           ${posts.map((hash) => {
             return hx`
-              <post-card
-                key="${hash}"
-                data-hash="${hash}"
-              />
+              <post-card id="${hash}" />
             `;
           })}
         </div>
