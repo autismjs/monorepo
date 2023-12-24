@@ -1,7 +1,7 @@
 import { CustomElement, hx, register } from '../../../lib/ui.ts';
 import { getStore } from '../../state';
 import { default as NodeStore } from '../../state/node.ts';
-import { fromNow, userId, userName } from '../../utils/misc.ts';
+import { debugClass, fromNow, userId, userName } from '../../utils/misc.ts';
 import CommentIcon from '../../../static/icons/comment.svg';
 import RepostIcon from '../../../static/icons/repost.svg';
 import LikeIcon from '../../../static/icons/like.svg';
@@ -9,17 +9,13 @@ import '../ProfileImage';
 import '../Button';
 import css from './index.scss';
 
+@debugClass
 export default class Post extends CustomElement {
   static get observedAttributes() {
     return ['hash', 'creator', 'createat', 'content', 'name', 'handle'];
   }
 
   css = css.toString();
-
-  async connectedCallback() {
-    super.connectedCallback();
-    this.subscribe();
-  }
 
   render() {
     const { creator, name, handle, createat, content } = this.state;
@@ -33,7 +29,7 @@ export default class Post extends CustomElement {
           <div class="creator">${name}</div>
           <div class="userId">${handle}</div>
           <div class="createAt-top">
-            <span>&#183;</span>
+            <span>·</span>
             <span>${createat}</span>
           </div>
         </div>
@@ -56,7 +52,7 @@ export default class Post extends CustomElement {
     `;
   }
 
-  async subscribe() {
+  async onmount() {
     const store = getStore();
     const node = store.get<NodeStore>('node');
     const hash = this.state.id;
@@ -78,10 +74,6 @@ export default class Post extends CustomElement {
       this.setAttribute('name', name);
       this.setAttribute('handle', handle || '');
     });
-  }
-
-  async attributeChangedCallback() {
-    this.patch();
   }
 }
 

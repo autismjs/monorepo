@@ -3,20 +3,9 @@ import { getStore } from '../../state';
 import { default as NodeState } from '../../state/node.ts';
 import '../../components/Post';
 import css from './index.scss';
-import * as console from 'console';
 
 export default class App extends CustomElement {
   css = css.toString();
-
-  async onupdate(): Promise<void> {
-    await super.onupdate();
-    console.time('app-container');
-  }
-
-  async onupdated(): Promise<void> {
-    await super.onupdated();
-    console.timeEnd('app-container');
-  }
 
   render() {
     const state = getStore();
