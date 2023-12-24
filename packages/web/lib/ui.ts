@@ -22,6 +22,8 @@ export class CustomElement extends HTMLElement implements ICustomElement {
   html: string;
   #tree?: VTree;
   #approot?: any;
+  #lastAttrUpdated = 0;
+  #attrUpdateTimeout: any;
 
   onmount(): Promise<void> {
     return Promise.resolve();
@@ -55,28 +57,53 @@ export class CustomElement extends HTMLElement implements ICustomElement {
     this.patch();
   }
 
-  async attributeChangedCallback() {
-    this.patch();
+  attributeChangedCallback() {
+    requestAnimationFrame(() => {
+      const now = Date.now();
+      const timeSince = now - this.#lastAttrUpdated;
+      const wait = 100;
+
+      const later = () => {
+        if (this.#attrUpdateTimeout) {
+          clearTimeout(this.#attrUpdateTimeout);
+          this.#attrUpdateTimeout = null;
+        }
+        this.#lastAttrUpdated = now;
+        this.patch();
+      };
+
+      if (timeSince > wait) {
+        later();
+      } else {
+        if (this.#attrUpdateTimeout) {
+          clearTimeout(this.#attrUpdateTimeout);
+        }
+        this.#attrUpdateTimeout = setTimeout(
+          later,
+          Math.max(0, wait - timeSince),
+        );
+      }
+      this.#lastAttrUpdated = now;
+    });
   }
 
-  patch = () =>
-    requestAnimationFrame(async () => {
-      await this.onupdate();
+  patch = async () => {
+    await this.onupdate();
 
-      if (!this.#approot) {
-        this.#tree = this.render();
-        this.#approot = createElement(this.#tree as VText);
-        this.shadowRoot?.appendChild(html(`<style>${this.css}</style>`));
-        this.shadowRoot?.appendChild(this.#approot);
-      } else if (this.#tree) {
-        const newTree = this.render();
-        const patches = diff(this.#tree!, newTree);
-        this.#approot = patch(this.#approot, patches);
-        this.#tree = newTree;
-      }
+    if (!this.#approot) {
+      this.#tree = this.render();
+      this.#approot = createElement(this.#tree as VText);
+      this.shadowRoot?.appendChild(html(`<style>${this.css}</style>`));
+      this.shadowRoot?.appendChild(this.#approot);
+    } else if (this.#tree) {
+      const newTree = this.render();
+      const patches = diff(this.#tree!, newTree);
+      this.#approot = patch(this.#approot, patches);
+      this.#tree = newTree;
+    }
 
-      this.onupdated();
-    });
+    this.onupdated();
+  };
 }
 
 export function html(htmlString: string) {

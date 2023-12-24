@@ -1,7 +1,7 @@
 import { CustomElement, hx, register } from '../../../lib/ui.ts';
 import { getStore } from '../../state';
 import { default as NodeStore } from '../../state/node.ts';
-import { debugClass, fromNow, userId, userName } from '../../utils/misc.ts';
+import { fromNow, userId, userName } from '../../utils/misc.ts';
 import CommentIcon from '../../../static/icons/comment.svg';
 import RepostIcon from '../../../static/icons/repost.svg';
 import LikeIcon from '../../../static/icons/like.svg';
@@ -9,7 +9,6 @@ import '../ProfileImage';
 import '../Button';
 import css from './index.scss';
 
-@debugClass
 export default class Post extends CustomElement {
   static get observedAttributes() {
     return ['hash', 'creator', 'createat', 'content', 'name', 'handle'];
