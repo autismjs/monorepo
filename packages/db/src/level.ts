@@ -274,14 +274,16 @@ export default class LevelDBAdapter implements BaseDBAdapter {
     return this.#query(db, predicate, options);
   }
 
-  async getReplies(
+  getReplies = async (
     reference: string,
     options?: {
       reverse?: boolean;
       limit?: number;
       offset?: string;
     },
-  ): Promise<Any[]> {
+  ): Promise<Any[]> => {
+    if (!reference) return [];
+
     const predicate = (msg: Any) => {
       switch (msg.subtype) {
         case PostSubtype.Default:
@@ -301,7 +303,7 @@ export default class LevelDBAdapter implements BaseDBAdapter {
       .sublevel(MessageType[MessageType.Post]);
 
     return this.#query(db, predicate, options);
-  }
+  };
 
   async getModerations(
     reference: string,

@@ -1,4 +1,4 @@
-import { CustomElement, Q, register } from '../../../lib/ui.ts';
+import { CustomElement, hx, register } from '../../../lib/ui.ts';
 import { getStore } from '../../state';
 import { default as NodeStore } from '../../state/node.ts';
 import { fromNow, userId, userName } from '../../utils/misc.ts';
@@ -12,71 +12,58 @@ import css from './index.scss';
 export default class Post extends CustomElement {
   css = css.toString();
 
-  html = `
-    <div class="post">
-      <profile-image></profile-image>
-      <div class="top">
-        <div class="creator"></div>
-        <div class="userId"></div>
-        <div class="createAt-top"></div>
-      </div>
-      <div class="content"></div>
-      <div class="bottom">
-        <c-button class="comment-btn">
-          <img src="${CommentIcon}" />
-          <span></span>
-        </c-button>
-        <c-button class="repost-btn">
-          <img src="${RepostIcon}" />
-          <span></span>
-        </c-button>
-        <c-button class="like-btn">
-          <img src="${LikeIcon}" />
-          <span></span>
-        </c-button>
-      </div>
-    </div>
-  `;
-
   async connectedCallback() {
     super.connectedCallback();
-    this.loadPost();
+    this.subscribe();
   }
 
-  async loadPost() {
+  async render() {
+    const node = getStore().get<NodeStore>('node');
+    const hash = this.dataset.hash!;
+    const post = await node.$posts.get(hash);
+    const p = post?.state;
+    const user = await node.node.db.db.getProfile(p?.json.creator || '');
+    // const meta = await node.node.db.db.getPostMeta(p?.messageId || '');
+    const displayName = user.name || userName(p?.json.creator) || 'Anonymous';
+    const userHandle = userId(p?.json.creator);
+
+    return hx`
+      <div class="post">
+        <profile-image address="${p?.json.creator || ''}"></profile-image>
+        <div class="top">
+          <div class="creator">${displayName}</div>
+          <div class="userId">${userHandle || ''}</div>
+          <div class="createAt-top">
+            <span>&#183;</span>
+            <span>${fromNow(p?.json.createdAt)}</span>
+          </div>
+        </div>
+        <div class="content">${p?.json.content || ''}</div>
+        <div class="bottom">
+          <c-button class="comment-btn">
+            <img src="${CommentIcon}" />
+            <span>${0}</span>
+          </c-button>
+          <c-button class="repost-btn">
+            <img src="${RepostIcon}" />
+            <span>0</span>
+          </c-button>
+          <c-button class="like-btn">
+            <img src="${LikeIcon}" />
+            <span>0</span>
+          </c-button>
+        </div>
+      </div>
+    `;
+  }
+
+  async subscribe() {
     const store = getStore();
     const node = store.get<NodeStore>('node');
     const hash = this.dataset.hash!;
     const post = await node.$posts.get(hash);
-    const q = Q(this.shadowRoot!)!;
 
-    post!.subscribe(async (p) => {
-      const user = await node.node.db.db.getProfile(p?.json.creator || '');
-      const meta = await node.node.db.db.getPostMeta(p?.messageId || '');
-      const displayName = user.name || userName(p?.json.creator) || 'Anonymous';
-      const userHandle = userId(p?.json.creator);
-
-      q.find('profile-image')!.attr('address', p?.json.creator || '');
-      q.find('div.creator')!.content(displayName);
-      q.find('div.userId')!.content(userHandle || '');
-      q.find('div.content')!.content(p?.json.content || '');
-
-      if (p?.json.createdAt) {
-        q.find('div.createAt-top')!.html(`
-          <span>&#183;</span>
-          <span>${fromNow(p.json.createdAt)}</span>
-        `);
-      }
-
-      if (typeof meta?.replies === 'number') {
-        q.find('c-button.comment-btn')!
-          .find('span')!
-          .content('' + meta.replies);
-      }
-
-      q.find('c-button.repost-btn')!.find('span')!.content('0');
-      q.find('c-button.like-btn')!.find('span')!.content('0');
-    });
+    post!.subscribe(this.patch);
   }
 }
 

@@ -1,23 +1,69 @@
+import vdom, { VText, VTree } from 'virtual-dom';
+import createElement from 'virtual-dom/create-element';
+import diff from 'virtual-dom/diff';
+import patch from 'virtual-dom/patch';
+const hyperx = require('hyperx');
+const hpx = hyperx(vdom.h);
+
 interface CustomElementConstructor {
   new (): CustomElement;
 }
-export class CustomElement extends HTMLElement {
+
+interface ICustomElement extends HTMLElement {
+  state: any;
+  render(): void;
+}
+
+export class CustomElement extends HTMLElement implements ICustomElement {
   css: string;
   html: string;
 
-  connectedCallback() {
-    this.attachShadow({ mode: 'open' });
-    const temp = document.createElement('template');
-    temp.innerHTML = `<style>${this.css}</style>${this.html}`;
-    this.shadowRoot?.appendChild(temp.content);
+  #tree?: VTree;
+  #root?: any;
+
+  async render(): Promise<VTree> {
+    return hpx``;
   }
+
+  get state() {
+    return Array.from(this.attributes).reduce(
+      (map: { [key: string]: string }, { name, value }) => {
+        map[name] = value;
+        return map;
+      },
+      {},
+    );
+  }
+
+  async connectedCallback() {
+    this.attachShadow({ mode: 'open' });
+    await this.patch();
+  }
+
+  patch = async () => {
+    if (!this.#root) {
+      this.#tree = await this.render();
+      this.#root = createElement(this.#tree as VText);
+      this.shadowRoot?.appendChild(html(`<style>${this.css}</style>`));
+      this.shadowRoot?.appendChild(this.#root);
+    } else if (this.#tree) {
+      const newTree = await this.render();
+      const patches = diff(this.#tree!, newTree);
+      console.log(patches);
+      this.#root = patch(this.#root, patches);
+      // this.#tree = newTree;
+    }
+  };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function html(htmlString: string) {
   const temp = document.createElement('template');
   temp.innerHTML = htmlString;
   return temp.content;
+}
+
+export function hx(...args: any[]) {
+  return hpx.apply(hpx, args);
 }
 
 export function register(name: string, el: CustomElementConstructor) {

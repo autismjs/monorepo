@@ -1,4 +1,4 @@
-import { CustomElement, html, Q, register } from '../../../lib/ui.ts';
+import { CustomElement, hx, register } from '../../../lib/ui.ts';
 import { getStore } from '../../state';
 import { default as NodeState } from '../../state/node.ts';
 import '../../components/Post';
@@ -7,39 +7,38 @@ import css from './index.scss';
 export default class App extends CustomElement {
   css = css.toString();
 
-  html = `
-    <div class="app">
-      <div class="posts"></div>
-      <div class="sidebar">
-        hi
-      </div>
-    </div>
-  `;
-
   async connectedCallback() {
     super.connectedCallback();
     this.subscribeToPosts();
   }
 
+  async render() {
+    const state = getStore();
+    const node = state.get<NodeState>('node');
+    const posts = node.$globalPosts.state;
+
+    return hx`
+      <div class="app">
+        <div class="posts">
+          ${posts.map((hash) => {
+            return hx`
+              <post-card
+                key="${hash}"
+                data-hash="${hash}"
+              />
+            `;
+          })}
+        </div>
+        <div class="sidebar">
+        </div>
+      </div>
+    `;
+  }
+
   subscribeToPosts() {
     const state = getStore();
     const node = state.get<NodeState>('node');
-    node.$globalPosts.subscribe((hashes) => {
-      const app = Q(this.shadowRoot!)!.find('div.posts')!;
-      const old = Q(app.el)!.findAll('post-card');
-
-      old.patch(
-        hashes,
-        (hash: string) => hash,
-        (hash: string) =>
-          html(`
-            <post-card
-              key="${hash}"
-              data-hash="${hash}"
-            />
-          `),
-      );
-    });
+    node.$globalPosts.subscribe(this.patch);
   }
 }
 
