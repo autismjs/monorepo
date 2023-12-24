@@ -144,7 +144,7 @@ export class VNode {
   }
 }
 
-export const $ = (name: string) => {
+export const h = (name: string) => {
   const tagName = name.match(/^[^.|#|\[]*/g);
   const classList = name.match(/(?<=[.*])([^.#\[\]]*)+?(?=[(#.\s\[)*])?/g);
   const id = name.match(/(?<=[#*])([^.#\[\]]*)+?(?=[(#.\s\[)*])?/g);

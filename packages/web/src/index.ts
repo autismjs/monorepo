@@ -2,7 +2,7 @@ import { MessageType, Post, PostSubtype, ProofType } from '@autismjs/message';
 import { ECDSA } from '../../crypto/src';
 import { getStore } from './state';
 import App from './pages/App';
-import { $ } from '../lib/ui.ts';
+import { h } from '../lib/ui.ts';
 
 const ecdsa = new ECDSA();
 console.log('ecdsa', ecdsa);
@@ -19,7 +19,7 @@ console.log('post', p.json);
 (async () => {
   const state = getStore();
 
-  console.log($('button#submit-btn[type=text].button.button-primary'));
+  console.log(h('button#submit-btn[type=text].button.button-primary'));
   console.log('state', state);
 
   document.body.append(new App());
