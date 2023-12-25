@@ -1,4 +1,4 @@
-import vdom, { VText, VTree } from 'virtual-dom';
+import vdom, { VText as VDText, VTree } from 'virtual-dom';
 import createElement from 'virtual-dom/create-element';
 import diff from 'virtual-dom/diff';
 import patch from 'virtual-dom/patch';
@@ -92,7 +92,7 @@ export class CustomElement extends HTMLElement implements ICustomElement {
 
     if (!this.#approot) {
       this.#tree = this.render();
-      this.#approot = createElement(this.#tree as VText);
+      this.#approot = createElement(this.#tree as VDText);
       this.shadowRoot?.appendChild(html(`<style>${this.css}</style>`));
       this.shadowRoot?.appendChild(this.#approot);
     } else if (this.#tree) {
@@ -122,35 +122,55 @@ export function register(name: string, el: CustomElementConstructor) {
 
 type VNodeProps = {
   tagName: string;
-  classList: string[];
+  classList?: string[];
   id?: string;
-  attributes: Map<string, string>;
+  attributes?: Map<string, string>;
   children?: VNode[];
+  style?: CSSStyleDeclaration;
+  content?: string;
 };
 
 export class VNode {
-  #id?: string;
-  #tagName: string;
-  #classList: string[] = [];
-  #attributes = new Map<string, string>();
-  #children: VNode[] = [];
+  id?: string;
+  tagName: string;
+  classList: string[] = [];
+  attributes = new Map<string, string>();
+  children: VNode[] = [];
+  style?: CSSStyleDeclaration;
+  parentNode?: VNode;
+  content?: string;
 
   constructor(options: VNodeProps) {
-    this.#tagName = options.tagName;
-    this.#classList = options.classList;
-    this.#id = options.id;
-    this.#attributes = options.attributes;
-    this.#children = options.children || [];
+    this.tagName = options.tagName;
+    this.classList = options.classList || [];
+    this.id = options.id;
+    this.attributes = options.attributes || new Map();
+    this.style = options.style;
+    this.content = options.content;
+    this.children = options.children || [];
+    for (const node of this.children) {
+      node.parentNode = this;
+    }
   }
 }
 
-export const h = (name: string) => {
+type DOMOptions = {
+  style?: CSSStyleDeclaration;
+  className?: string;
+  children?: VNode[];
+} & { [key: string]: string };
+
+export const h = (
+  name: string,
+  optionOrNodes?: DOMOptions | string | VNode | VNode[],
+  ...args: (VNode | string)[]
+) => {
   const tagName = name.match(/^[^.|#|\[]*/g);
   const classList = name.match(/(?<=[.*])([^.#\[\]]*)+?(?=[(#.\s\[)*])?/g);
   const id = name.match(/(?<=[#*])([^.#\[\]]*)+?(?=[(#.\s\[)*])?/g);
   const attributes = name.match(/(?<=[\[])([^.#\[\]]*)+?(?=[\]*])?/g) || [];
 
-  const vnode = new VNode({
+  const nodeOpts: VNodeProps = {
     tagName: tagName![0],
     classList: classList || [],
     id: id ? id[0] : undefined,
@@ -160,72 +180,77 @@ export const h = (name: string) => {
         return [key, value || ''];
       }),
     ),
-  });
+  };
+
+  nodeOpts.children = [];
+  nodeOpts.classList = nodeOpts.classList || [];
+  nodeOpts.attributes = nodeOpts.attributes || new Map();
+
+  if (typeof optionOrNodes === 'object') {
+    const opts = optionOrNodes as DOMOptions;
+    const { children, className, style, id, ...rest } = opts;
+    if (className)
+      nodeOpts.classList = nodeOpts.classList.concat(className.split(' '));
+    if (style) nodeOpts.style = style;
+    if (id) nodeOpts.id = id;
+    if (children) nodeOpts.children = children.concat(children);
+
+    for (const [key, value] of Object.entries(rest)) {
+      nodeOpts.attributes.set(key, value);
+    }
+  } else {
+    if (Array.isArray(optionOrNodes)) {
+      nodeOpts.children = nodeOpts.children.concat(
+        optionOrNodes.map((o) => {
+          if (typeof o === 'string') {
+            return new VNode({
+              tagName: 'text',
+              content: o,
+            });
+          }
+          return o;
+        }),
+      );
+    } else if (optionOrNodes) {
+      if (typeof optionOrNodes === 'string') {
+        nodeOpts.children = nodeOpts.children.concat(
+          new VNode({
+            tagName: 'text',
+            content: optionOrNodes,
+          }),
+        );
+      } else {
+        nodeOpts.children = nodeOpts.children.concat(optionOrNodes);
+      }
+    }
+  }
+
+  if (Array.isArray(args)) {
+    nodeOpts.children = nodeOpts.children.concat(
+      args.map((o) => {
+        if (typeof o === 'string') {
+          return new VNode({
+            tagName: 'text',
+            content: o,
+          });
+        }
+        return o;
+      }),
+    );
+  } else if (args) {
+    if (typeof args === 'string') {
+      nodeOpts.children = nodeOpts.children.concat(
+        new VNode({
+          tagName: 'text',
+          content: args,
+        }),
+      );
+    } else {
+      nodeOpts.children = nodeOpts.children.concat(args);
+    }
+  }
+
+  const vnode = new VNode(nodeOpts);
 
   return vnode;
-};
-
-export const Q = (root: ShadowRoot | Element | null) => {
-  if (!root) return root;
-
-  const q = {
-    el: root,
-    attr: (key: string, value: string) => {
-      if (root instanceof Element) {
-        root.setAttribute(key, value);
-      }
-      return q;
-    },
-    content: (content: string) => {
-      root.textContent = content;
-      return q;
-    },
-    html: (htmlStr: string) => {
-      root.innerHTML = '';
-      root.append(html(htmlStr));
-      return q;
-    },
-    find: (str: string) => Q(root.querySelector(str)),
-    findAll: (
-      str: string,
-    ): Element[] & {
-      patch: (
-        result: any[],
-        mapKeyFn: (data: any) => string,
-        renderFn: (data: any) => Element | DocumentFragment,
-      ) => void;
-    } => {
-      const list: any[] = Array.prototype.map.call(
-        root.querySelectorAll(str),
-        Q,
-      );
-
-      // @ts-ignore
-      list.patch = (
-        result: any[],
-        mapKeyFn: (data: any) => string,
-        renderFn: (data: any) => Element,
-      ) => {
-        const max = Math.max(list.length, result.length);
-        for (let i = 0; i < max; i++) {
-          const data = result[i];
-          const last = list[i];
-          const lastKey = last?.el?.getAttribute('key');
-          const currKey = mapKeyFn(data);
-
-          if (!last && data) {
-            root.append(renderFn(data));
-          } else if (last && !data) {
-            root.removeChild(last);
-          } else if (last && lastKey !== currKey) {
-            root.replaceChild(renderFn(data), last.el);
-          }
-        }
-      };
-
-      // @ts-ignore
-      return list;
-    },
-  };
-  return q;
 };

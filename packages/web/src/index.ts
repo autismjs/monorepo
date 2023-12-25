@@ -19,7 +19,18 @@ console.log('post', p.json);
 (async () => {
   const state = getStore();
 
-  console.log(h('button#submit-btn[type=text].button.button-primary'));
+  const tree = h(
+    'button#submit-btn[type=text].button.button-primary',
+    {
+      className: 'test1 test2',
+      id: 'testing',
+      customattr: 'custom',
+    },
+    h('div.hi', 'hello'),
+    h('div.hi2', 'hello2'),
+  );
+
+  console.log(tree);
   console.log('state', state);
 
   document.body.append(new App());

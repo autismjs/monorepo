@@ -137,3 +137,26 @@ export class ObservableMap<keyType = string, ValueType = any> {
     post.state = value;
   }
 }
+
+export function obervable(target: any, key: string) {
+  const currentValue = target[key];
+  let currentStore = new Observable(currentValue);
+
+  Object.defineProperty(target, `$${key}`, {
+    set: (newValue: Observable<typeof currentValue>) => {
+      currentStore = newValue;
+    },
+    get: () => {
+      return currentStore;
+    },
+  });
+
+  Object.defineProperty(target, key, {
+    set: (newValue: string) => {
+      currentStore.state = newValue;
+    },
+    get: () => {
+      return currentStore.state;
+    },
+  });
+}
