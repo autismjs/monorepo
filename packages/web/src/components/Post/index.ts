@@ -59,7 +59,6 @@ export default class Post extends CustomElement {
       const name = user.name || userName(p?.json.creator) || 'Anonymous';
       const handle = userId(p?.json.creator);
 
-      console.log('updating attributes');
       this.setAttribute('hash', hash);
       this.setAttribute('creator', creator);
       this.setAttribute('createat', createat || '');

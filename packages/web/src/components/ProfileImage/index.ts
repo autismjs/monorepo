@@ -21,6 +21,7 @@ export default class ProfileImage extends CustomElement {
     super.attributeChangedCallback(key, ov, nv);
     // console.log('changing profile-image attr', key, nv);
   }
+
   async onmount() {
     const { creator } = this.state;
     const store = getStore();

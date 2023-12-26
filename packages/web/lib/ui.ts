@@ -55,7 +55,7 @@ export class CustomElement extends HTMLElement implements ICustomElement {
 
   async connectedCallback() {
     this.attachShadow({ mode: 'open' });
-    await this.update();
+    this.refresh();
     await this.onmount();
   }
 
