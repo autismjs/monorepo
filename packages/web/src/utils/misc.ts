@@ -1,6 +1,5 @@
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import console from 'console';
 dayjs.extend(relativeTime);
 
 export function userId(pubkey?: string) {
@@ -70,7 +69,6 @@ export function debounce(delay: number) {
       fn = rootArgs[2].value;
     }
 
-    console.log(rootArgs);
     return {
       configurable: true,
       enumerable: false,
@@ -115,5 +113,38 @@ export function debounce(delay: number) {
         fn = newFn;
       },
     };
+  };
+}
+
+export function perf(...rootArgs: any[]): any {
+  let fn: any;
+  let patchedFn: any;
+
+  if (rootArgs[2]) {
+    fn = rootArgs[2].value;
+  }
+
+  return {
+    configurable: true,
+    enumerable: false,
+    get() {
+      if (!patchedFn) {
+        patchedFn = async function (...args: any[]) {
+          const t0 = performance.now();
+          // @ts-ignore
+          const res = await fn.call(this, ...args);
+          const t1 = performance.now();
+          console.log(
+            `Execution time: ${t1 - t0} milliseconds (${rootArgs[1]})`,
+          );
+          return res;
+        };
+      }
+      return patchedFn;
+    },
+    set(newFn: any) {
+      patchedFn = undefined;
+      fn = newFn;
+    },
   };
 }

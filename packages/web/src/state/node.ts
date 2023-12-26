@@ -1,6 +1,6 @@
 import Store, {
-  ObservableMap,
   Observable,
+  ObservableMap,
   type StateOptions,
 } from '../../lib/state.ts';
 import { Autism } from '@autismjs/protocol/src/services/browser.ts';
