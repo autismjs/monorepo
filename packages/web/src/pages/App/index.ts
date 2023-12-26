@@ -1,4 +1,4 @@
-import { CustomElement, hx, register } from '../../../lib/ui.ts';
+import { CustomElement, h, register, xh } from '../../../lib/ui.ts';
 import { getStore } from '../../state';
 import { default as NodeState } from '../../state/node.ts';
 import '../../components/Post';
@@ -10,27 +10,22 @@ export default class App extends CustomElement {
   render() {
     const state = getStore();
     const node = state.get<NodeState>('node');
-    const posts = node.$globalPosts.state;
 
-    return hx`
-      <div class="app">
-        <div class="posts">
-          ${posts.map((hash) => {
-            return hx`
-              <post-card id="${hash}" />
-            `;
-          })}
-        </div>
-        <div class="sidebar">
-        </div>
-      </div>
-    `;
+    return h(
+      'div.app',
+      h('div.posts', () => {
+        return node.$globalPosts.state.map((hash) => {
+          return h(`post-card#${hash}`);
+        });
+      }),
+      h('div.sidebar'),
+    );
   }
 
   async onmount() {
     const state = getStore();
     const node = state.get<NodeState>('node');
-    node.$globalPosts.subscribe(this.patch);
+    node.$globalPosts.subscribe(this.update);
   }
 }
 

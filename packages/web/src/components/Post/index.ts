@@ -1,4 +1,4 @@
-import { CustomElement, hx, register } from '../../../lib/ui.ts';
+import { CustomElement, h, register, xh } from '../../../lib/ui.ts';
 import { getStore } from '../../state';
 import { default as NodeStore } from '../../state/node.ts';
 import { fromNow, userId, userName } from '../../utils/misc.ts';
@@ -17,38 +17,31 @@ export default class Post extends CustomElement {
   css = css.toString();
 
   render() {
-    const { creator, name, handle, createat, content } = this.state;
-
-    if (!creator) return hx`<div></div>`;
-
-    return hx`
-      <div class="post">
-        ${hx`<profile-image id="${creator}" creator="${creator}"></profile-image>`}
-        <div class="top">
-          <div class="creator">${name}</div>
-          <div class="userId">${handle}</div>
-          <div class="createAt-top">
-            <span>·</span>
-            <span>${createat}</span>
-          </div>
-        </div>
-        <div class="content">${content}</div>
-        <div class="bottom">
-          <c-button class="comment-btn">
-            <img src="${CommentIcon}" />
-            <span>${0}</span>
-          </c-button>
-          <c-button class="repost-btn">
-            <img src="${RepostIcon}" />
-            <span>0</span>
-          </c-button>
-          <c-button class="like-btn">
-            <img src="${LikeIcon}" />
-            <span>0</span>
-          </c-button>
-        </div>
-      </div>
-    `;
+    return h(
+      'div.post',
+      () => {
+        return h('profile-image', {
+          creator: this.state.creator,
+        });
+      },
+      h(
+        'div.top',
+        xh('div.creator', this.state.name),
+        xh('div.userId', this.state.handle),
+        h('div.createAt-top', h('span', '·'), h('span', this.state.createat)),
+      ),
+      h('div.content', this.state.content),
+      h(
+        'div.bottom',
+        h(
+          'c-button.comment-btn',
+          h('img', { src: CommentIcon }),
+          h('span', '0'),
+        ),
+        h('c-button.repost-btn', h('img', { src: RepostIcon }), h('span', '0')),
+        h('c-button.like-btn', h('img', { src: LikeIcon }), h('span', '0')),
+      ),
+    );
   }
 
   async onmount() {
@@ -66,6 +59,7 @@ export default class Post extends CustomElement {
       const name = user.name || userName(p?.json.creator) || 'Anonymous';
       const handle = userId(p?.json.creator);
 
+      console.log('updating attributes');
       this.setAttribute('hash', hash);
       this.setAttribute('creator', creator);
       this.setAttribute('createat', createat || '');

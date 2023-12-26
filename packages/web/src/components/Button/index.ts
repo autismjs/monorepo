@@ -1,15 +1,11 @@
-import { CustomElement, hx, register } from '../../../lib/ui.ts';
+import { CustomElement, h, register } from '../../../lib/ui.ts';
 import css from './index.scss';
 
 export default class Button extends CustomElement {
   css = css.toString();
 
   render() {
-    return hx`
-      <button>
-        <slot></slot>
-      </button>
-    `;
+    return h('button', h('slot'));
   }
 }
 

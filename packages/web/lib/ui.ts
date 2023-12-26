@@ -1,17 +1,10 @@
-import vdom, { VText as VDText, VTree } from 'virtual-dom';
-import createElement from 'virtual-dom/create-element';
-import diff from 'virtual-dom/diff';
-import patch from 'virtual-dom/patch';
-const hyperx = require('hyperx');
-const hpx = hyperx(vdom.h);
-
 interface CustomElementConstructor {
   new (): CustomElement;
 }
 
 interface ICustomElement extends HTMLElement {
   state: any;
-  render: () => VTree;
+  render: () => VNode;
   onmount(): Promise<void>;
   onupdate(): Promise<void>;
   onupdated(): Promise<void>;
@@ -20,7 +13,7 @@ interface ICustomElement extends HTMLElement {
 export class CustomElement extends HTMLElement implements ICustomElement {
   css: string;
   html: string;
-  #tree?: VTree;
+  #tree?: VNode;
   #approot?: any;
   #lastAttrUpdated = 0;
   #attrUpdateTimeout: any;
@@ -37,8 +30,17 @@ export class CustomElement extends HTMLElement implements ICustomElement {
     return Promise.resolve();
   }
 
-  render(): VTree {
-    return hx`<div></div>`;
+  render(): VNode {
+    return h('div');
+  }
+
+  refresh() {
+    if (this.shadowRoot) {
+      this.#tree = this.render();
+      this.shadowRoot.innerHTML = '';
+      this.shadowRoot.appendChild(html(`<style>${this.css}</style>`));
+      this.#tree.append(this.shadowRoot);
+    }
   }
 
   get state() {
@@ -53,27 +55,29 @@ export class CustomElement extends HTMLElement implements ICustomElement {
 
   async connectedCallback() {
     this.attachShadow({ mode: 'open' });
+    await this.update();
     await this.onmount();
-    this.patch();
   }
 
-  attributeChangedCallback() {
-    requestAnimationFrame(() => {
+  attributeChangedCallback(key: string, ov: string, nv: string) {
+    if (nv === ov) return;
+
+    requestAnimationFrame(async () => {
       const now = Date.now();
       const timeSince = now - this.#lastAttrUpdated;
       const wait = 100;
 
-      const later = () => {
+      const later = async () => {
         if (this.#attrUpdateTimeout) {
           clearTimeout(this.#attrUpdateTimeout);
           this.#attrUpdateTimeout = null;
         }
         this.#lastAttrUpdated = now;
-        this.patch();
+        this.refresh();
       };
 
       if (timeSince > wait) {
-        later();
+        await later();
       } else {
         if (this.#attrUpdateTimeout) {
           clearTimeout(this.#attrUpdateTimeout);
@@ -87,22 +91,16 @@ export class CustomElement extends HTMLElement implements ICustomElement {
     });
   }
 
-  patch = async () => {
-    await this.onupdate();
+  update = async () => {
+    if (!this.shadowRoot) return;
 
-    if (!this.#approot) {
-      this.#tree = this.render();
-      this.#approot = createElement(this.#tree as VDText);
-      this.shadowRoot?.appendChild(html(`<style>${this.css}</style>`));
-      this.shadowRoot?.appendChild(this.#approot);
+    if (!this.#tree) {
+      this.refresh();
     } else if (this.#tree) {
-      const newTree = this.render();
-      const patches = diff(this.#tree!, newTree);
-      this.#approot = patch(this.#approot, patches);
-      this.#tree = newTree;
+      await this.onupdate();
+      this.#tree.update();
+      this.onupdated();
     }
-
-    this.onupdated();
   };
 }
 
@@ -110,10 +108,6 @@ export function html(htmlString: string) {
   const temp = document.createElement('template');
   temp.innerHTML = htmlString;
   return temp.content;
-}
-
-export function hx(...args: any[]) {
-  return hpx.apply(hpx, args);
 }
 
 export function register(name: string, el: CustomElementConstructor) {
@@ -128,6 +122,7 @@ type VNodeProps = {
   children?: VNode[];
   style?: CSSStyleDeclaration;
   content?: string;
+  cache?: boolean;
 };
 
 export class VNode {
@@ -139,6 +134,9 @@ export class VNode {
   style?: CSSStyleDeclaration;
   parentNode?: VNode;
   content?: string;
+  #patches: (() => any)[] = [];
+  #updates: (() => any)[] = [];
+  #el?: any;
 
   constructor(options: VNodeProps) {
     this.tagName = options.tagName;
@@ -148,9 +146,89 @@ export class VNode {
     this.style = options.style;
     this.content = options.content;
     this.children = options.children || [];
+    this.#updates = [];
+
     for (const node of this.children) {
       node.parentNode = this;
     }
+  }
+
+  get el() {
+    return this.#el;
+  }
+
+  get rootNode(): VNode {
+    if (this.parentNode) {
+      return this.parentNode;
+    }
+
+    return this;
+  }
+
+  addPatch(patchFn: () => void) {
+    this.#patches.push(patchFn);
+  }
+
+  append(root: ShadowRoot) {
+    return new Promise(() => {
+      const frag = this.createElement();
+      root.append(frag);
+      return frag;
+    });
+  }
+
+  update() {
+    for (const update of this.#updates) {
+      update();
+    }
+  }
+
+  createElement() {
+    const frag = document.createDocumentFragment();
+
+    const el = document.createElement(this.tagName);
+
+    if (this.classList.length) el.classList.add(...this.classList);
+
+    if (this.id) el.id = this.id;
+
+    if (this.style) {
+      for (const [k, v] of Object.entries(this.style)) {
+        el.style[k as any] = v;
+      }
+    }
+
+    if (this.attributes) {
+      for (const [k, v] of this.attributes) {
+        el.setAttribute(k, v);
+      }
+    }
+
+    if (this.content) {
+      el.textContent = this.content;
+    }
+
+    frag.append(el);
+
+    for (const child of this.children) {
+      const childFrag = child.createElement();
+
+      el.appendChild(childFrag);
+    }
+
+    if (this.#patches.length) {
+      const patch = () => {
+        this.#patches.forEach((fn) => {
+          fn();
+        });
+      };
+
+      this.rootNode.#updates.push(patch);
+    }
+
+    this.#el = el;
+
+    return frag;
   }
 }
 
@@ -158,19 +236,25 @@ type DOMOptions = {
   style?: CSSStyleDeclaration;
   className?: string;
   children?: VNode[];
+  cache?: boolean;
 } & { [key: string]: string };
+
+type VNodeOption = VNode | string | (() => VNode | VNode[]);
+type VNodeOptions = VNodeOption | VNodeOption[];
 
 export const h = (
   name: string,
-  optionOrNodes?: DOMOptions | string | VNode | VNode[],
-  ...args: (VNode | string)[]
+  optionOrNodes?: DOMOptions | VNodeOptions,
+  ...args: VNodeOption[]
 ) => {
   const tagName = name.match(/^[^.|#|\[]*/g);
   const classList = name.match(/(?<=[.*])([^.#\[\]]*)+?(?=[(#.\s\[)*])?/g);
   const id = name.match(/(?<=[#*])([^.#\[\]]*)+?(?=[(#.\s\[)*])?/g);
   const attributes = name.match(/(?<=[\[])([^.#\[\]]*)+?(?=[\]*])?/g) || [];
 
-  const nodeOpts: VNodeProps = {
+  const patches: (() => { from: VNode | VNode[]; to: VNode | VNode[] })[] = [];
+
+  let options: VNodeProps = {
     tagName: tagName![0],
     classList: classList || [],
     id: id ? id[0] : undefined,
@@ -182,75 +266,126 @@ export const h = (
     ),
   };
 
-  nodeOpts.children = [];
-  nodeOpts.classList = nodeOpts.classList || [];
-  nodeOpts.attributes = nodeOpts.attributes || new Map();
-
-  if (typeof optionOrNodes === 'object') {
-    const opts = optionOrNodes as DOMOptions;
-    const { children, className, style, id, ...rest } = opts;
-    if (className)
-      nodeOpts.classList = nodeOpts.classList.concat(className.split(' '));
-    if (style) nodeOpts.style = style;
-    if (id) nodeOpts.id = id;
-    if (children) nodeOpts.children = children.concat(children);
-
-    for (const [key, value] of Object.entries(rest)) {
-      nodeOpts.attributes.set(key, value);
-    }
-  } else {
-    if (Array.isArray(optionOrNodes)) {
-      nodeOpts.children = nodeOpts.children.concat(
-        optionOrNodes.map((o) => {
-          if (typeof o === 'string') {
-            return new VNode({
-              tagName: 'text',
-              content: o,
-            });
-          }
-          return o;
-        }),
-      );
-    } else if (optionOrNodes) {
-      if (typeof optionOrNodes === 'string') {
-        nodeOpts.children = nodeOpts.children.concat(
-          new VNode({
-            tagName: 'text',
-            content: optionOrNodes,
-          }),
-        );
-      } else {
-        nodeOpts.children = nodeOpts.children.concat(optionOrNodes);
-      }
-    }
-  }
-
-  if (Array.isArray(args)) {
-    nodeOpts.children = nodeOpts.children.concat(
-      args.map((o) => {
-        if (typeof o === 'string') {
-          return new VNode({
-            tagName: 'text',
-            content: o,
-          });
-        }
-        return o;
-      }),
-    );
-  } else if (args) {
-    if (typeof args === 'string') {
-      nodeOpts.children = nodeOpts.children.concat(
-        new VNode({
-          tagName: 'text',
-          content: args,
-        }),
-      );
+  if (optionOrNodes) {
+    if (
+      !(optionOrNodes instanceof VNode) &&
+      !Array.isArray(optionOrNodes) &&
+      typeof optionOrNodes === 'object'
+    ) {
+      options = reduceOption(options, optionOrNodes);
     } else {
-      nodeOpts.children = nodeOpts.children.concat(args);
+      options = reduceChildren(options, optionOrNodes);
     }
   }
 
-  const vnode = new VNode(nodeOpts);
+  if (args) {
+    options = reduceChildren(options, args);
+  }
+
+  const vnode = new VNode({
+    ...options,
+  });
+
+  for (const patch of patches) {
+    vnode.addPatch(() => {
+      if (!vnode.el) return;
+
+      const { from, to } = patch();
+
+      if (Array.isArray(to)) {
+        vnode.el.append(...to.map((n) => n.createElement()));
+      } else if (!Array.isArray(from)) {
+        from.el.replaceWith(to.createElement());
+      }
+    });
+  }
 
   return vnode;
+
+  function reduceChildren(
+    props: VNodeProps,
+    nodeOrStrings: VNodeOptions,
+  ): VNodeProps {
+    let newProps = { ...props };
+    if (Array.isArray(nodeOrStrings)) {
+      newProps = {
+        ...options,
+        children: (newProps.children || []).concat(
+          nodeOrStrings
+            .map(mapNodeText)
+            .reduce((list, node) => list.concat(node), []),
+        ),
+      };
+    } else if (nodeOrStrings) {
+      newProps = {
+        ...options,
+        children: (newProps.children || []).concat(mapNodeText(nodeOrStrings)),
+      };
+    }
+
+    return newProps;
+  }
+
+  function mapNodeText(nodeOrText: VNodeOption): VNode[] {
+    if (nodeOrText instanceof VNode) {
+      return [nodeOrText];
+    }
+
+    if (typeof nodeOrText === 'string') {
+      return [new VNode({ tagName: 'text', content: nodeOrText })];
+    }
+
+    const nodes = nodeOrText();
+    let retNodes = nodes;
+
+    if (!Array.isArray(nodes)) {
+      retNodes = [nodes];
+    }
+
+    const oldNodes = nodes;
+
+    patches.push(() => {
+      const newNodes = nodeOrText();
+      return {
+        from: oldNodes,
+        to: newNodes,
+      };
+    });
+
+    return retNodes as VNode[];
+  }
+
+  function reduceOption(props: VNodeProps, opts: DOMOptions): VNodeProps {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { content, cache, children, className, style, id, ...rest } = opts;
+
+    const newProps = { ...props };
+
+    newProps.classList = newProps.classList || [];
+    newProps.attributes = newProps.attributes || new Map();
+
+    if (className)
+      newProps.classList = newProps.classList.concat(className.split(' '));
+    if (style) newProps.style = style;
+    if (id) newProps.id = id;
+    if (children) newProps.children = children.concat(children);
+    if (cache) newProps.cache = cache;
+    if (content) newProps.content = content;
+
+    for (const [key, value] of Object.entries(rest)) {
+      newProps.attributes.set(key, value || '');
+    }
+
+    return newProps;
+  }
+};
+
+export const xh = (
+  name: string,
+  optionOrNodes?: DOMOptions | string | VNode | VNode[],
+  ...args: (VNode | string)[]
+) => {
+  return () => {
+    return h(name, optionOrNodes, ...args);
+  };
 };

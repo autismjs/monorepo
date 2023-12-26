@@ -1,4 +1,4 @@
-import { CustomElement, hx, register } from '../../../lib/ui.ts';
+import { CustomElement, h, register } from '../../../lib/ui.ts';
 import { getStore } from '../../state';
 import { default as NodeStore } from '../../state/node.ts';
 import css from './index.scss';
@@ -14,14 +14,15 @@ export default class ProfileImage extends CustomElement {
 
   render() {
     const { src } = this.state;
-
-    return hx`
-      <img src="${src}" />
-    `;
+    return h('img', { src: src });
   }
 
+  attributeChangedCallback(key: string, ov: string, nv: string) {
+    super.attributeChangedCallback(key, ov, nv);
+    // console.log('changing profile-image attr', key, nv);
+  }
   async onmount() {
-    const { id: creator } = this.state;
+    const { creator } = this.state;
     const store = getStore();
     const node: NodeStore = store.get('node');
     const user = await node.node.db.db.getProfile(creator || '');
@@ -34,6 +35,7 @@ export default class ProfileImage extends CustomElement {
       url = 'data:image/svg+xml;utf8,' + minidenticon(creator, 50, 50);
     }
 
+    // console.log('setting src', url);
     this.setAttribute('src', url);
   }
 }

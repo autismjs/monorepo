@@ -117,18 +117,3 @@ export function debounce(delay: number) {
     };
   };
 }
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function debugClass(ctr: any, ctx: ClassDecoratorContext) {
-  const oldonupdate = ctr.prototype.onupdate;
-  ctr.prototype.onupdate = async (): Promise<void> => {
-    await oldonupdate();
-    console.time(ctx.name);
-  };
-
-  const oldonupdated = ctr.prototype.onupdated;
-  ctr.prototype.onupdated = async (): Promise<void> => {
-    await oldonupdated();
-    console.timeEnd(ctx.name);
-  };
-}
