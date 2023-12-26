@@ -14,7 +14,6 @@ export class CustomElement extends HTMLElement implements ICustomElement {
   css: string;
   html: string;
   #tree?: VNode;
-  #approot?: any;
   #lastAttrUpdated = 0;
   #attrUpdateTimeout: any;
 
@@ -34,14 +33,14 @@ export class CustomElement extends HTMLElement implements ICustomElement {
     return h('div');
   }
 
-  refresh() {
-    if (this.shadowRoot) {
-      this.#tree = this.render();
-      this.shadowRoot.innerHTML = '';
-      this.shadowRoot.appendChild(html(`<style>${this.css}</style>`));
-      this.#tree.append(this.shadowRoot);
-    }
-  }
+  create = () => {
+    if (!this.shadowRoot) return;
+
+    this.#tree = this.render();
+    this.shadowRoot.innerHTML = '';
+    this.shadowRoot.appendChild(html(`<style>${this.css}</style>`));
+    this.#tree.append(this.shadowRoot);
+  };
 
   get state() {
     return Array.from(this.attributes).reduce(
@@ -55,8 +54,8 @@ export class CustomElement extends HTMLElement implements ICustomElement {
 
   async connectedCallback() {
     this.attachShadow({ mode: 'open' });
-    this.refresh();
     await this.onmount();
+    this.create();
   }
 
   attributeChangedCallback(key: string, ov: string, nv: string) {
@@ -73,7 +72,7 @@ export class CustomElement extends HTMLElement implements ICustomElement {
           this.#attrUpdateTimeout = null;
         }
         this.#lastAttrUpdated = now;
-        this.refresh();
+        await this.update();
       };
 
       if (timeSince > wait) {
@@ -95,10 +94,13 @@ export class CustomElement extends HTMLElement implements ICustomElement {
     if (!this.shadowRoot) return;
 
     if (!this.#tree) {
-      this.refresh();
+      this.create();
     } else if (this.#tree) {
       await this.onupdate();
-      this.#tree.update();
+
+      const oldTree = this.#tree;
+      const newTree = this.render();
+      newTree.patch(oldTree.el);
       this.onupdated();
     }
   };
@@ -134,8 +136,6 @@ export class VNode {
   style?: CSSStyleDeclaration;
   parentNode?: VNode;
   content?: string;
-  #patches: (() => any)[] = [];
-  #updates: (() => any)[] = [];
   #el?: any;
 
   constructor(options: VNodeProps) {
@@ -146,7 +146,6 @@ export class VNode {
     this.style = options.style;
     this.content = options.content;
     this.children = options.children || [];
-    this.#updates = [];
 
     for (const node of this.children) {
       node.parentNode = this;
@@ -165,21 +164,67 @@ export class VNode {
     return this;
   }
 
-  addPatch(patchFn: () => void) {
-    this.#patches.push(patchFn);
-  }
-
   append(root: ShadowRoot) {
-    return new Promise(() => {
-      const frag = this.createElement();
-      root.append(frag);
-      return frag;
-    });
+    const frag = this.createElement();
+    root.append(frag);
+    return frag;
   }
 
-  update() {
-    for (const update of this.#updates) {
-      update();
+  patch(rootElement: Element) {
+    const frag = this.createElement();
+
+    const lastEl = rootElement;
+    const newEl = frag.children[0];
+    this._patchOne(lastEl, newEl);
+  }
+
+  _patchOne(lastEl: Element, newEl: Element) {
+    if (lastEl.tagName !== newEl.tagName) {
+      lastEl.replaceWith(newEl);
+      return;
+    }
+
+    if (newEl.attributes.length) {
+      for (const attr of Array.from(newEl.attributes)) {
+        if (lastEl.getAttribute(attr.name) !== attr.value) {
+          lastEl?.setAttribute(attr.name, attr.value);
+        }
+      }
+    }
+
+    if (newEl.classList.length) {
+      for (const name of Array.from(newEl.classList)) {
+        if (!lastEl.classList.contains(name)) {
+          lastEl?.classList.add(name);
+        }
+      }
+    }
+
+    if (lastEl.classList.length) {
+      for (const name of Array.from(newEl.classList)) {
+        if (!newEl.classList.contains(name)) {
+          lastEl?.classList.remove(name);
+        }
+      }
+    }
+
+    if (lastEl.tagName === 'TEXT' && lastEl.textContent !== newEl.textContent) {
+      lastEl.textContent = newEl.textContent;
+    }
+
+    const maxlength = Math.max(newEl.children.length, lastEl.children.length);
+
+    for (let i = 0; i < maxlength; i++) {
+      const lastChild = lastEl.children[i];
+      const newChild = newEl.children[i];
+
+      if (lastChild && newChild) {
+        this._patchOne(lastChild, newChild);
+      } else if (!lastChild && newChild) {
+        lastEl.append(newChild);
+      } else if (lastChild && !newChild) {
+        lastEl.removeChild(lastChild);
+      }
     }
   }
 
@@ -216,16 +261,6 @@ export class VNode {
       el.appendChild(childFrag);
     }
 
-    if (this.#patches.length) {
-      const patch = () => {
-        this.#patches.forEach((fn) => {
-          fn();
-        });
-      };
-
-      this.rootNode.#updates.push(patch);
-    }
-
     this.#el = el;
 
     return frag;
@@ -251,8 +286,6 @@ export const h = (
   const classList = name.match(/(?<=[.*])([^.#\[\]]*)+?(?=[(#.\s\[)*])?/g);
   const id = name.match(/(?<=[#*])([^.#\[\]]*)+?(?=[(#.\s\[)*])?/g);
   const attributes = name.match(/(?<=[\[])([^.#\[\]]*)+?(?=[\]*])?/g) || [];
-
-  const patches: (() => { from: VNode | VNode[]; to: VNode | VNode[] })[] = [];
 
   let options: VNodeProps = {
     tagName: tagName![0],
@@ -285,20 +318,6 @@ export const h = (
   const vnode = new VNode({
     ...options,
   });
-
-  for (const patch of patches) {
-    vnode.addPatch(() => {
-      if (!vnode.el) return;
-
-      const { from, to } = patch();
-
-      if (Array.isArray(to)) {
-        vnode.el.append(...to.map((n) => n.createElement()));
-      } else if (!Array.isArray(from)) {
-        from.el.replaceWith(to.createElement());
-      }
-    });
-  }
 
   return vnode;
 
@@ -341,16 +360,6 @@ export const h = (
     if (!Array.isArray(nodes)) {
       retNodes = [nodes];
     }
-
-    const oldNodes = nodes;
-
-    patches.push(() => {
-      const newNodes = nodeOrText();
-      return {
-        from: oldNodes,
-        to: newNodes,
-      };
-    });
 
     return retNodes as VNode[];
   }

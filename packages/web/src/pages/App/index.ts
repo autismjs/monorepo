@@ -1,4 +1,4 @@
-import { CustomElement, h, register, xh } from '../../../lib/ui.ts';
+import { CustomElement, h, register } from '../../../lib/ui.ts';
 import { getStore } from '../../state';
 import { default as NodeState } from '../../state/node.ts';
 import '../../components/Post';

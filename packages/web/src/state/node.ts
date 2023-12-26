@@ -12,6 +12,7 @@ export default class Node extends Store {
 
   $globalPosts = new Observable<string[]>([]);
   $posts = new ObservableMap<string, Post>();
+  $users = new ObservableMap<string, any>();
 
   constructor(options?: StateOptions) {
     super(options);
@@ -20,7 +21,7 @@ export default class Node extends Store {
       bootstrap: [
         '/ip4/127.0.0.1/tcp/64029/ws/p2p/12D3KooWG1yjigfXNQtfkLC8TbzoSreeDx8User1Q5wo49MUK1NB',
         '/ip4/192.168.86.30/tcp/64029/ws/p2p/12D3KooWG1yjigfXNQtfkLC8TbzoSreeDx8User1Q5wo49MUK1NB',
-        '/ip4/192.168.86.24/tcp/64029/ws/p2p/12D3KooWG1yjigfXNQtfkLC8TbzoSreeDx8User1Q5wo49MUK1NB'
+        '/ip4/192.168.86.24/tcp/64029/ws/p2p/12D3KooWG1yjigfXNQtfkLC8TbzoSreeDx8User1Q5wo49MUK1NB',
       ],
     });
     this.node = node;
@@ -62,5 +63,11 @@ export default class Node extends Store {
 
   getPost = async (hash: string): Promise<Post | null> => {
     return this.node.db.db.getMessage(hash) as Promise<Post | null>;
+  };
+
+  getUser = async (creator = '') => {
+    const profile = await this.node.db.db.getProfile(creator);
+    this.$users.set(creator, profile);
+    return this.$users.get(creator);
   };
 }
