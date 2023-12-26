@@ -175,25 +175,26 @@ export class VNode {
   }
 
   patch(rootElement: Element) {
-    const frag = this.createElement();
-    const lastEl = rootElement;
-    const newEl = frag.children[0];
-    this._patchOne(lastEl, newEl);
+    this.#patchOne(rootElement, this);
   }
 
-  _patchOne(lastEl: Element, newEl: Element) {
+  #patchOne(lastEl: Element, newNode: VNode) {
     let dirty = false;
 
-    if (newEl.attributes.length) {
-      for (const attr of Array.from(newEl.attributes)) {
-        if (lastEl.getAttribute(attr.name) !== attr.value) {
+    if (lastEl.tagName !== newNode.tagName.toUpperCase()) {
+      dirty = true;
+    }
+
+    if (!dirty && newNode.attributes.size) {
+      for (const [name, value] of Array.from(newNode.attributes)) {
+        if (lastEl.getAttribute(name) !== value) {
           dirty = true;
         }
       }
     }
 
-    if (newEl.classList.length) {
-      for (const name of Array.from(newEl.classList)) {
+    if (newNode.classList.length) {
+      for (const name of newNode.classList) {
         if (!lastEl.classList.contains(name)) {
           lastEl?.classList.add(name);
         }
@@ -201,34 +202,34 @@ export class VNode {
     }
 
     if (lastEl.classList.length) {
-      for (const name of Array.from(newEl.classList)) {
-        if (!newEl.classList.contains(name)) {
+      for (const name of Array.from(lastEl.classList)) {
+        if (!newNode.classList.includes(name)) {
           lastEl?.classList.remove(name);
         }
       }
     }
 
-    if (lastEl.tagName === 'TEXT' && newEl.textContent !== lastEl.textContent) {
-      lastEl.textContent = newEl.textContent;
+    if (lastEl.tagName === 'TEXT' && newNode.content !== newNode.content) {
+      lastEl.textContent = newNode.content || '';
     }
 
     if (dirty) {
-      lastEl.replaceWith(newEl);
+      lastEl.replaceWith(newNode.createElement());
       return;
     }
 
-    const maxlength = Math.max(newEl.children.length, lastEl.children.length);
+    const maxlength = Math.max(newNode.children.length, lastEl.children.length);
 
     const lastChildren = Array.from(lastEl.children).slice();
-    const newChildren = Array.from(newEl.children).slice();
+    const newChildren = newNode.children.slice();
     for (let i = 0; i < maxlength; i++) {
       const lastChild = lastChildren[i];
       const newChild = newChildren[i];
 
       if (lastChild && newChild) {
-        this._patchOne(lastChild, newChild);
+        this.#patchOne(lastChild, newChild);
       } else if (!lastChild && newChild) {
-        lastEl.appendChild(newChild);
+        lastEl.appendChild(newChild.createElement());
       } else if (lastChild && !newChild) {
         lastEl.removeChild(lastChild);
       }
