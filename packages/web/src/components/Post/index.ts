@@ -1,4 +1,4 @@
-import { CustomElement, h, register, xh } from '../../../lib/ui.ts';
+import { CustomElement, h, register } from '../../../lib/ui.ts';
 import { getStore } from '../../state';
 import { default as NodeStore } from '../../state/node.ts';
 import { fromNow, userId, userName } from '../../utils/misc.ts';
@@ -19,15 +19,13 @@ export default class Post extends CustomElement {
   render() {
     return h(
       'div.post',
-      () => {
-        return h('profile-image', {
-          creator: this.state.creator,
-        });
-      },
+      h('profile-image', {
+        creator: this.state.creator,
+      }),
       h(
         'div.top',
-        xh('div.creator', this.state.name),
-        xh('div.userId', this.state.handle),
+        h('div.creator', this.state.name),
+        h('div.userId', this.state.handle),
         h('div.createAt-top', h('span', '·'), h('span', this.state.createat)),
       ),
       h('div.content', this.state.content),

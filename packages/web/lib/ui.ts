@@ -176,10 +176,8 @@ export class VNode {
 
   patch(rootElement: Element) {
     const frag = this.createElement();
-
     const lastEl = rootElement;
     const newEl = frag.children[0];
-    // lastEl.replaceWith(frag);
     this._patchOne(lastEl, newEl);
   }
 
@@ -396,14 +394,4 @@ export const h = (
 
     return newProps;
   }
-};
-
-export const xh = (
-  name: string,
-  optionOrNodes?: DOMOptions | string | VNode | VNode[],
-  ...args: (VNode | string)[]
-) => {
-  return () => {
-    return h(name, optionOrNodes, ...args);
-  };
 };

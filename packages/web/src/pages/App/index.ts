@@ -13,11 +13,12 @@ export default class App extends CustomElement {
 
     return h(
       'div.app',
-      h('div.posts', () => {
-        return node.$globalPosts.state.map((hash) => {
+      h(
+        'div.posts',
+        node.$globalPosts.state.map((hash) => {
           return h(`post-card#${hash}`);
-        });
-      }),
+        }),
+      ),
       h('div.sidebar'),
     );
   }
