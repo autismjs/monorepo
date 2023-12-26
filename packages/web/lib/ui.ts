@@ -210,10 +210,8 @@ export class VNode {
       }
     }
 
-    if (lastEl.textContent !== newEl.textContent) {
-      // console.log(lastEl.textContent, newEl.textContent);
-      // lastEl.textContent = newEl.textContent;
-      dirty = true;
+    if (lastEl.tagName === 'TEXT' && newEl.textContent !== lastEl.textContent) {
+      lastEl.textContent = newEl.textContent;
     }
 
     if (dirty) {
@@ -223,13 +221,16 @@ export class VNode {
 
     const maxlength = Math.max(newEl.children.length, lastEl.children.length);
 
+    const lastChildren = Array.from(lastEl.children).slice();
+    const newChildren = Array.from(newEl.children).slice();
     for (let i = 0; i < maxlength; i++) {
-      const lastChild = lastEl.children[i];
-      const newChild = newEl.children[i];
+      const lastChild = lastChildren[i];
+      const newChild = newChildren[i];
+
       if (lastChild && newChild) {
         this._patchOne(lastChild, newChild);
       } else if (!lastChild && newChild) {
-        lastEl.append(newChild);
+        lastEl.appendChild(newChild);
       } else if (lastChild && !newChild) {
         lastEl.removeChild(lastChild);
       }
