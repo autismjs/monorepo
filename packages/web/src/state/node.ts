@@ -19,9 +19,9 @@ export default class Node extends Store {
 
     const node = new Autism({
       bootstrap: [
-        '/ip4/127.0.0.1/tcp/64029/ws/p2p/12D3KooWG1yjigfXNQtfkLC8TbzoSreeDx8User1Q5wo49MUK1NB',
-        '/ip4/192.168.86.30/tcp/64029/ws/p2p/12D3KooWG1yjigfXNQtfkLC8TbzoSreeDx8User1Q5wo49MUK1NB',
-        '/ip4/192.168.86.24/tcp/64029/ws/p2p/12D3KooWG1yjigfXNQtfkLC8TbzoSreeDx8User1Q5wo49MUK1NB',
+        '/ip4/127.0.0.1/tcp/55930/ws/p2p/12D3KooWEDTaZTcNqxVAcktCgauzcLzRxpiwb7wi1zxReWaR88KR',
+        '/ip4/192.168.86.30/tcp/55930/ws/p2p/12D3KooWEDTaZTcNqxVAcktCgauzcLzRxpiwb7wi1zxReWaR88KR',
+        '/ip4/192.168.86.24/tcp/55930/ws/p2p/12D3KooWEDTaZTcNqxVAcktCgauzcLzRxpiwb7wi1zxReWaR88KR',
       ],
     });
     this.node = node;

@@ -99,6 +99,7 @@ export class P2P extends EventEmitter2 {
     const { pipe } = await import('it-pipe');
 
     this.#node!.handle(protocol, ({ stream, connection }) => {
+      console.log(protocol);
       pipe(stream, async (source) => {
         for await (const msg of source) {
           const body = msg.subarray();

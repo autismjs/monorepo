@@ -48,7 +48,7 @@ export default class Post extends CustomElement {
     const store = getStore();
     const node = store.get<NodeStore>('node');
     const hash = this.state.id;
-    const post = await node.$posts.get(hash);
+    const post = node.$posts.get(hash);
 
     post!.subscribe(async (p) => {
       const user = await node.node.db.db.getProfile(p?.json.creator || '');

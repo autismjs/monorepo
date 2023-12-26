@@ -18,7 +18,6 @@ console.log('post', p.json);
 
 (async () => {
   const state = getStore();
-  // console.log('state', state);
 
   document.body.append(new App());
 

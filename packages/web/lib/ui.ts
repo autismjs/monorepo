@@ -17,6 +17,10 @@ export class CustomElement extends HTMLElement implements ICustomElement {
   #lastAttrUpdated = 0;
   #attrUpdateTimeout: any;
 
+  get tree() {
+    return this.#tree;
+  }
+
   onmount(): Promise<void> {
     return Promise.resolve();
   }
@@ -64,7 +68,7 @@ export class CustomElement extends HTMLElement implements ICustomElement {
     requestAnimationFrame(async () => {
       const now = Date.now();
       const timeSince = now - this.#lastAttrUpdated;
-      const wait = 100;
+      const wait = 0;
 
       const later = async () => {
         if (this.#attrUpdateTimeout) {
@@ -175,19 +179,17 @@ export class VNode {
 
     const lastEl = rootElement;
     const newEl = frag.children[0];
+    // lastEl.replaceWith(frag);
     this._patchOne(lastEl, newEl);
   }
 
   _patchOne(lastEl: Element, newEl: Element) {
-    if (lastEl.tagName !== newEl.tagName) {
-      lastEl.replaceWith(newEl);
-      return;
-    }
+    let dirty = false;
 
     if (newEl.attributes.length) {
       for (const attr of Array.from(newEl.attributes)) {
         if (lastEl.getAttribute(attr.name) !== attr.value) {
-          lastEl?.setAttribute(attr.name, attr.value);
+          dirty = true;
         }
       }
     }
@@ -208,8 +210,15 @@ export class VNode {
       }
     }
 
-    if (lastEl.tagName === 'TEXT' && lastEl.textContent !== newEl.textContent) {
-      lastEl.textContent = newEl.textContent;
+    if (lastEl.textContent !== newEl.textContent) {
+      // console.log(lastEl.textContent, newEl.textContent);
+      // lastEl.textContent = newEl.textContent;
+      dirty = true;
+    }
+
+    if (dirty) {
+      lastEl.replaceWith(newEl);
+      return;
     }
 
     const maxlength = Math.max(newEl.children.length, lastEl.children.length);
@@ -217,7 +226,6 @@ export class VNode {
     for (let i = 0; i < maxlength; i++) {
       const lastChild = lastEl.children[i];
       const newChild = newEl.children[i];
-
       if (lastChild && newChild) {
         this._patchOne(lastChild, newChild);
       } else if (!lastChild && newChild) {

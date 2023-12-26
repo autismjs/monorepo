@@ -116,6 +116,7 @@ export class Autism extends EventEmitter2 {
 
       const children = merkle.checkHash(depth, index, BigInt(root));
 
+      console.log(children);
       if (!children) {
         const message = await this.db.getMessage(
           hexify(merkle.leaves[index]).padStart(64, '0'),
