@@ -64,6 +64,29 @@ export default class LevelDBAdapter implements BaseDBAdapter {
     await this.#db.close();
   }
 
+  async reindex() {
+    console.log('clearing indices');
+    await this.#indices.user.clear();
+    await this.#indices.global.clear();
+    await this.#indices.thread.clear();
+
+    console.log('cleared indices');
+    const values = await this.#db.values();
+    let i = 1;
+    for await (const value of values) {
+      console.log(`inserting messages ${i++}`);
+      const { createdAt, ...json } = value;
+
+      const msg = Message.fromJSON({
+        ...json,
+        createdAt: new Date(createdAt),
+      });
+
+      await this.#db.del(msg!.hash);
+      await this.insertMessage(msg!);
+    }
+  }
+
   async insertMessage(message: Any): Promise<Any | null> {
     const exist = await this.getMessage(message.hash);
 

@@ -4,6 +4,7 @@ interface CustomElementConstructor {
   new (): CustomElement;
 }
 
+const count = 0;
 interface ICustomElement extends HTMLElement {
   state: any;
   render: () => VNode;
@@ -64,40 +65,7 @@ export class CustomElement extends HTMLElement implements ICustomElement {
     this.create();
   }
 
-  attributeChangedCallback(key: string, ov: string, nv: string) {
-    if (nv === ov) return;
-
-    requestAnimationFrame(async () => {
-      const now = Date.now();
-      const timeSince = now - this.#lastAttrUpdated;
-      const wait = 0;
-
-      const later = async () => {
-        if (this.#attrUpdateTimeout) {
-          clearTimeout(this.#attrUpdateTimeout);
-          this.#attrUpdateTimeout = null;
-        }
-        this.#lastAttrUpdated = now;
-        await this.update();
-      };
-
-      if (timeSince > wait) {
-        await later();
-      } else {
-        if (this.#attrUpdateTimeout) {
-          clearTimeout(this.#attrUpdateTimeout);
-        }
-        this.#attrUpdateTimeout = setTimeout(
-          later,
-          Math.max(0, wait - timeSince),
-        );
-      }
-      this.#lastAttrUpdated = now;
-    });
-  }
-
   update = async () => {
-    console.trace('update..');
     if (!this.shadowRoot) return;
 
     if (!this.#tree) {
@@ -182,58 +150,32 @@ export class VNode {
   }
 
   #patchOne(lastEl: Element, newNode: VNode) {
-    const dirty = false;
-    //
-    // if (lastEl.tagName !== newNode.tagName.toUpperCase()) {
-    //   console.log({
-    //     old: lastEl.tagName,
-    //     new: newNode.tagName.toUpperCase(),
-    //   });
-    //   dirty = true;
-    // }
-    //
-    // if (!dirty && newNode.attributes.size) {
-    //   for (const [name, value] of Array.from(newNode.attributes)) {
-    //     if (lastEl.getAttribute(name) !== value) {
-    //       console.log({
-    //         old: lastEl.getAttribute(name),
-    //         new: value,
-    //       });
-    //       dirty = true;
-    //     }
-    //   }
-    // }
-    //
-    // if (newNode.classList.length) {
-    //   for (const name of newNode.classList) {
-    //     if (!lastEl.classList.contains(name)) {
-    //       lastEl?.classList.add(name);
-    //     }
-    //   }
-    // }
-    //
-    // if (lastEl.classList.length) {
-    //   for (const name of Array.from(lastEl.classList)) {
-    //     if (!newNode.classList.includes(name)) {
-    //       lastEl?.classList.remove(name);
-    //     }
-    //   }
-    // }
-    //
-    // if (lastEl.tagName === 'TEXT' && lastEl.textContent !== newNode.content) {
-    //   lastEl.textContent = newNode.content || '';
-    // }
-    //
-    // // console.log('patched one', dirty, lastEl, newNode);
-    // if (dirty) {
-    //   console.log('dirty update');
-    //   lastEl.replaceWith(newNode.createElement());
-    //   return;
-    // }
+    let dirty = false;
+
+    if (lastEl.tagName === 'TEXT' && lastEl.textContent !== newNode.content) {
+      lastEl.textContent = newNode.content || '';
+      dirty = true;
+    }
+
+    if (newNode.attributes.size) {
+      for (const [name, value] of newNode.attributes) {
+        if (lastEl.getAttribute(name) !== value) {
+          lastEl.setAttribute(name, value);
+          dirty = true;
+        }
+      }
+    }
+
+    if (dirty) {
+      lastEl.replaceWith(newNode.createElement());
+      return;
+    }
 
     const maxlength = Math.max(newNode.children.length, lastEl.children.length);
 
-    if (!maxlength) return;
+    if (!maxlength) {
+      return;
+    }
 
     const lastChildren = Array.from(lastEl.children).slice();
     const newChildren = newNode.children.slice();
@@ -242,16 +184,11 @@ export class VNode {
       const newChild = newChildren[i];
 
       if (lastChild && newChild) {
-        console.log('patching', lastChild, newChild);
         newChild.patch(lastChild);
-        // lastChild.replaceWith(newChild.createElement());
       } else if (!lastChild && newChild) {
-        console.log('appending');
-        // newChild.append(lastEl);
         lastEl.appendChild(newChild.createElement());
       } else if (lastChild && !newChild) {
-        console.log('removing');
-        // lastEl.removeChild(lastChild);
+        lastEl.removeChild(lastChild);
       }
     }
   }

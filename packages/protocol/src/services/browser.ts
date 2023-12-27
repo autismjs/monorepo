@@ -14,8 +14,6 @@ import { version } from '../../package.json';
 import type { PeerId } from '@libp2p/interface/peer-id';
 import { Mutex } from 'async-mutex';
 
-let i = 0;
-
 export class Autism extends EventEmitter2 {
   p2p: P2P;
   db: DB;
@@ -210,10 +208,8 @@ export class Autism extends EventEmitter2 {
     if (json.messages) {
       for (const hex of json.messages) {
         const msg = Message.fromHex(hex);
-        console.log(`adding msg ${i++} ${hex}`);
         if (msg) {
           if (await this.db.insertMessage(msg)) {
-            console.log(`sync:new_message ${i}`);
             this.emit('sync:new_message', msg);
           }
         }

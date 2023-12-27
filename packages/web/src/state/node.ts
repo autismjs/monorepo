@@ -14,7 +14,7 @@ export class NodeStore {
   constructor() {
     const node = new Autism({
       bootstrap: [
-        '/ip4/192.168.86.24/tcp/56218/ws/p2p/12D3KooWLHV2ti9mAZMG4kKm1uaahaNyf57MXnTDLLtpW8yjX9tb',
+        '/ip4/192.168.86.24/tcp/60513/ws/p2p/12D3KooWBQns6iojm1whaL4VrrGvMsg2kMmqoxNMCwEGDg27G6Pq',
       ],
     });
 
@@ -32,19 +32,12 @@ export class NodeStore {
 
     node.on('sync:new_message', (post) => {
       console.log('sync:new_message', post);
-      // this.#updatePosts();
-      // updateTimeout = setTimeout(() => {
-      //   if (updateTimeout) clearTimeout(updateTimeout);
-      //   updateTimeout = null;
-      //   this.#updatePosts();
-      // }, 1000);
-      // this.$posts.set(post.hash, post);
-      // this.$globalPosts.$ = this.$globalPosts.$.concat(post.hash);
+      this.#updatePosts();
     });
 
     this.#wait = new Promise(async (r) => {
       await this.node.start();
-      this.#updatePosts();
+      await this.#updatePosts();
       r();
     });
   }
@@ -53,14 +46,14 @@ export class NodeStore {
     return this.#wait;
   }
 
-  #updatePosts = () => {
-    requestAnimationFrame(async () => {
-      const posts = await this.node.db.db.getPosts();
-      console.log('updating posts: ', posts);
-      this.$globalPosts.$ = posts.map((p) => {
+  #updatePosts = async () => {
+    const posts = await this.node.db.db.getPosts();
+    console.log(`updating ${posts.length} posts...`);
+    this.$globalPosts.$ = posts.map((p) => {
+      if (this.$posts.get(p.hash).$?.hex !== p.hex) {
         this.$posts.set(p.hash, p);
-        return p.hash;
-      });
+      }
+      return p.hash;
     });
   };
 

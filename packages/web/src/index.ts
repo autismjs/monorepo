@@ -1,3 +1,7 @@
 import App from './pages/App';
+import $node from './state/node.ts';
 
-document.body.append(new App());
+(async () => {
+  document.body.append(new App());
+  await $node.waitForStart();
+})();

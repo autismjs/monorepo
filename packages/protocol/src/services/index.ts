@@ -14,7 +14,7 @@ import { version } from '../../package.json';
 import type { PeerId } from '@libp2p/interface/peer-id';
 import { Mutex } from 'async-mutex';
 
-let i = 0;
+const i = 0;
 
 export class Autism extends EventEmitter2 {
   p2p: P2P;
@@ -119,11 +119,14 @@ export class Autism extends EventEmitter2 {
       const children = merkle.checkHash(depth, index, BigInt(root));
 
       if (!children) {
+        console.log(`sending message depth: ${depth} index: ${index}`);
+
         const message = await this.db.getMessage(
           hexify(merkle.leaves[index]).padStart(64, '0'),
         );
+
+        console.log(user, message?.hash);
         if (message) {
-          console.log(`sending message ${i++}:  ${message.hex}`);
           res.send(
             Buffer.from(
               JSON.stringify({
