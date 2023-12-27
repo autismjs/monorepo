@@ -260,11 +260,8 @@ export class Autism extends EventEmitter2 {
     this.p2p.on(`pubsub:${PubsubTopics.Global}`, this.#onGlobalPubSub);
     this.p2p.once('peer:connect', this.#startSync);
 
-    console.log('starting db');
     await this.db.start();
-    console.log('starting p2p');
     await this.p2p.start();
-    console.log('started');
 
     this.p2p.handle(ProtocolType.V1Info, this.#handleGetInfo);
     this.p2p.handle(ProtocolType.V1Sync, this.#handleSync);

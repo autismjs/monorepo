@@ -46,6 +46,11 @@ html {
     --green-900: #1D8348;
     --green-1000: #186A3B;
 
+    --shadow-sm: 0 1px 2px 0 rgb var(--slate-100);
+    --shadow: 0 1px 3px 0 var(--slate-200), 0 1px 2px -1px var(--slate-200);
+    --shadow-md: 0 4px 6px -1px var(--slate-200), 0 2px 4px -2px var(--slate-200);
+    --shadow-lg: 0 10px 15px -3px var(--slate-200), 0 4px 6px -4px var(--slate-200);
+
     --text-3xs: .5rem;
     --text-2xs: .625rem;
     --text-xs: .75rem;

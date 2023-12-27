@@ -6,6 +6,7 @@
   height: calc(100% - 2rem);
   overflow: hidden;
   padding: 1rem;
+  gap: 0.5rem;
 }
 
 .posts {
@@ -26,11 +27,6 @@
 .posts post-card {
   flex: 0 0 auto;
   border: 1px solid var(--slate-100);
-}
-
-.sidebar {
-  width: 12rem;
-  flex: 1 0 auto;
 }
 
 /*# sourceMappingURL=index.css.map */

@@ -14,7 +14,7 @@ export class NodeStore {
   constructor() {
     const node = new Autism({
       bootstrap: [
-        '/ip4/192.168.86.24/tcp/60513/ws/p2p/12D3KooWBQns6iojm1whaL4VrrGvMsg2kMmqoxNMCwEGDg27G6Pq',
+        '/ip4/192.168.86.24/tcp/56199/ws/p2p/12D3KooWFYeg3L3ew9tboKrQPxtMDyTEs77cJKJkYp2YLhuvZ21M',
       ],
     });
 

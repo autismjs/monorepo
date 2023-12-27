@@ -25,8 +25,8 @@ export default class Post extends CustomElement {
   css = css.toString();
 
   render() {
-    const p = $node.getPost(this.state.hash);
-    const u = $node.getUser(p?.creator || '');
+    const p = this.$.post?.$;
+    const u = this.$.user?.$;
 
     const creator = p?.json.creator || '';
     const createat = fromNow(p?.json.createdAt) || '';

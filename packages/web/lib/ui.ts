@@ -4,7 +4,6 @@ interface CustomElementConstructor {
   new (): CustomElement;
 }
 
-const count = 0;
 interface ICustomElement extends HTMLElement {
   state: any;
   render: () => VNode;
@@ -17,8 +16,7 @@ export class CustomElement extends HTMLElement implements ICustomElement {
   css: string;
   html: string;
   #tree?: VNode;
-  #lastAttrUpdated = 0;
-  #attrUpdateTimeout: any;
+  $?: any;
 
   get tree() {
     return this.#tree;
@@ -99,6 +97,7 @@ type VNodeProps = {
   children?: VNode[];
   style?: CSSStyleDeclaration;
   content?: string;
+  oninput?: () => void;
   cache?: boolean;
 };
 
@@ -109,6 +108,7 @@ export class VNode {
   attributes = new Map<string, string>();
   children: VNode[] = [];
   style?: CSSStyleDeclaration;
+  oninput?: () => void;
   parentNode?: VNode;
   content?: string;
   #el?: any;
@@ -120,6 +120,7 @@ export class VNode {
     this.attributes = options.attributes || new Map();
     this.style = options.style;
     this.content = options.content;
+    this.oninput = options.oninput;
     this.children = options.children || [];
 
     for (const node of this.children) {
@@ -218,6 +219,12 @@ export class VNode {
       el.textContent = this.content;
     }
 
+    if (this.oninput) {
+      // @ts-ignore
+      // el.oninput = onchange;
+      el.addEventListener('input', this.oninput);
+    }
+
     frag.append(el);
 
     for (const child of this.children) {
@@ -236,7 +243,7 @@ type DOMOptions = {
   style?: CSSStyleDeclaration;
   className?: string;
   children?: VNode[];
-  cache?: boolean;
+  oninput?(): void;
 } & { [key: string]: string };
 
 type VNodeOption = VNode | string | (() => VNode | VNode[]);
@@ -331,7 +338,7 @@ export const h = (
 
   function reduceOption(props: VNodeProps, opts: DOMOptions): VNodeProps {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { content, cache, children, className, style, id, ...rest } = opts;
+    const { oninput, content, children, className, style, id, ...rest } = opts;
 
     const newProps = { ...props };
 
@@ -343,8 +350,9 @@ export const h = (
     if (style) newProps.style = style;
     if (id) newProps.id = id;
     if (children) newProps.children = children.concat(children);
-    if (cache) newProps.cache = cache;
     if (content) newProps.content = content;
+
+    if (oninput) newProps.oninput = oninput;
 
     for (const [key, value] of Object.entries(rest)) {
       newProps.attributes.set(key, value || '');
@@ -369,10 +377,12 @@ export function connect(
       oldonmount.call(this);
 
       if (getStore instanceof Observable) {
+        this.$ = getStore;
         getStore.subscribe(this.update);
       } else if (typeof getStore === 'function') {
         const stores = getStore(this);
 
+        this.$ = stores;
         if (stores instanceof Observable) {
           stores.subscribe(this.update);
         } else {

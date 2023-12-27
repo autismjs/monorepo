@@ -1,6 +1,8 @@
 import { connect, CustomElement, h, register } from '../../../lib/ui.ts';
 import $node from '../../state/node.ts';
 import '../../components/Post';
+import '../../components/LeftSidebar';
+
 import css from './index.scss';
 
 @connect($node.$globalPosts)
@@ -10,9 +12,10 @@ export default class App extends CustomElement {
   render() {
     return h(
       'div.app',
+      h('left-sidebar'),
       h(
         'div.posts',
-        $node.$globalPosts.$.map((hash) => {
+        this.$.$?.map((hash: string) => {
           return h(`post-card`, { hash });
         }),
       ),

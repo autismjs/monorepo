@@ -2,8 +2,10 @@ img {
   display: var(--display, block);
   width: var(--width, 2rem);
   height: var(--height, 2rem);
+  border: var(--border, none);
   border-radius: var(--border-radius, 2px);
   padding: var(--padding, 0);
   margin: var(--margin, 0);
-  background-color: var(--slate-50);
+  background-color: var(--background-color, var(--slate-50));
+  box-shadow: var(--box-shadow);
 }
