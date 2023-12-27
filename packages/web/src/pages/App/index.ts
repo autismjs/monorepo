@@ -1,32 +1,23 @@
-import { CustomElement, h, register } from '../../../lib/ui.ts';
-import { getStore } from '../../state';
-import { default as NodeState } from '../../state/node.ts';
+import { connect, CustomElement, h, register } from '../../../lib/ui.ts';
+import $node from '../../state/node.ts';
 import '../../components/Post';
 import css from './index.scss';
 
+@connect($node.$globalPosts)
 export default class App extends CustomElement {
   css = css.toString();
 
   render() {
-    const state = getStore();
-    const node = state.get<NodeState>('node');
-
     return h(
       'div.app',
       h(
         'div.posts',
-        node.$globalPosts.state.map((hash) => {
-          return h(`post-card#${hash}`);
+        $node.$globalPosts.$.map((hash) => {
+          return h(`post-card`, { hash });
         }),
       ),
       h('div.sidebar'),
     );
-  }
-
-  async onmount() {
-    const state = getStore();
-    const node = state.get<NodeState>('node');
-    node.$globalPosts.subscribe(this.update);
   }
 }
 

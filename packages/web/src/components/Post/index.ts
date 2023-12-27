@@ -1,6 +1,4 @@
-import { CustomElement, h, register } from '../../../lib/ui.ts';
-import { getStore } from '../../state';
-import { default as NodeStore } from '../../state/node.ts';
+import { connect, CustomElement, h, register } from '../../../lib/ui.ts';
 import { fromNow, userId, userName } from '../../utils/misc.ts';
 import CommentIcon from '../../../static/icons/comment.svg';
 import RepostIcon from '../../../static/icons/repost.svg';
@@ -8,7 +6,17 @@ import LikeIcon from '../../../static/icons/like.svg';
 import '../ProfileImage';
 import '../Button';
 import css from './index.scss';
+import $node from '../../state/node.ts';
 
+@connect((el) => {
+  const hash = el.state.hash;
+  const post = $node.$posts.get(hash);
+  const user = $node.$users.get(post.$?.creator || '');
+  return {
+    post,
+    user,
+  };
+})
 export default class Post extends CustomElement {
   static get observedAttributes() {
     return ['hash', 'creator', 'createat', 'content', 'name', 'handle'];
@@ -17,18 +25,27 @@ export default class Post extends CustomElement {
   css = css.toString();
 
   render() {
+    const p = $node.getPost(this.state.hash);
+    const u = $node.getUser(p?.creator || '');
+
+    const creator = p?.json.creator || '';
+    const createat = fromNow(p?.json.createdAt) || '';
+    const content = p?.json.content || '';
+    const name = u?.name || userName(p?.json.creator) || 'Anonymous';
+    const handle = userId(p?.json.creator) || '';
+
     return h(
       'div.post',
       h('profile-image', {
-        creator: this.state.creator,
+        creator: creator,
       }),
       h(
         'div.top',
-        h('div.creator', this.state.name),
-        h('div.userId', this.state.handle),
-        h('div.createAt-top', h('span', '·'), h('span', this.state.createat)),
+        h('div.creator', name),
+        h('div.userId', handle),
+        h('div.createAt-top', h('span', '·'), h('span', createat)),
       ),
-      h('div.content', this.state.content),
+      h('div.content', content),
       h(
         'div.bottom',
         h(
@@ -40,30 +57,6 @@ export default class Post extends CustomElement {
         h('c-button.like-btn', h('img', { src: LikeIcon }), h('span', '0')),
       ),
     );
-  }
-
-  async onmount() {
-    const store = getStore();
-    const node = store.get<NodeStore>('node');
-    const hash = this.state.id;
-    const post = node.$posts.get(hash);
-
-    post!.subscribe(async (p) => {
-      const user = await node.node.db.db.getProfile(p?.json.creator || '');
-
-      const creator = p?.json.creator || '';
-      const createat = fromNow(p?.json.createdAt);
-      const content = p?.json.content || '';
-      const name = user.name || userName(p?.json.creator) || 'Anonymous';
-      const handle = userId(p?.json.creator);
-
-      this.setAttribute('hash', hash);
-      this.setAttribute('creator', creator);
-      this.setAttribute('createat', createat || '');
-      this.setAttribute('content', content);
-      this.setAttribute('name', name);
-      this.setAttribute('handle', handle || '');
-    });
   }
 }
 

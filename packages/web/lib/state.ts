@@ -1,52 +1,4 @@
-export type StateOptions = { [key: string]: Store };
-
-export type RPC<Params = any> = {
-  method: string;
-  params?: Params;
-  error?: {
-    code: number;
-    message: string;
-  };
-};
-
-export type RPCHandler = (rpc: RPC) => void | Promise<void>;
-export type SubscriptionHandler = (
-  prevState: Map<string, Store | any>,
-  nextState: Map<string, Store | any>,
-) => void | Promise<void>;
-
-export default class Store {
-  private states: Map<string, Store | any> = new Map();
-  private handlers: Map<string, RPCHandler> = new Map();
-
-  constructor(states?: StateOptions) {
-    Object.entries(states || {}).forEach(([key, value]) => {
-      this.states.set(key, value);
-    });
-  }
-
-  get<RetType = Store | undefined>(key: string): RetType {
-    return this.states.get(key);
-  }
-
-  rpc(rpcType: string, handler: RPCHandler) {
-    this.handlers.set(rpcType, handler);
-  }
-
-  async dispatch(rpc: RPC) {
-    const handler = this.handlers.get(rpc.method);
-
-    if (handler) {
-      await handler(rpc);
-    }
-
-    for (const [, state] of this.states) {
-      if (state instanceof Store) {
-        await state.dispatch(rpc);
-      }
-    }
-  }
-}
+import { equal } from '../src/utils/misc.ts';
 
 export type Subscription<ValueType = any> =
   | {
@@ -61,11 +13,14 @@ export class Observable<ObservableValue = any> {
   #error: Error | null = null;
   #subscriptions: Subscription<ObservableValue>[] = [];
 
-  get state() {
+  get $() {
     return this.#state;
   }
 
-  set state(state: ObservableValue) {
+  set $(state: ObservableValue) {
+    if (this.#state === state || equal(this.#state, state)) {
+      return;
+    }
     this.#state = state;
     for (const sub of this.#subscriptions) {
       if (typeof sub === 'function') {
@@ -107,9 +62,9 @@ export class Observable<ObservableValue = any> {
       this.#subscriptions.push(subscription);
       const sub = subscription;
       if (typeof sub === 'function') {
-        sub(this.state);
+        sub(this.$);
       } else if (typeof sub !== 'function' && sub.next) {
-        sub.next(this.state);
+        sub.next(this.$);
       }
     }
     return () => {
@@ -129,12 +84,14 @@ export class ObservableMap<keyType = string, ValueType = any> {
     if (!exist) {
       this.#map.set(key, new Observable<ValueType | null>(null));
     }
-    return this.#map.get(key);
+    return this.#map.get(key) as Observable<ValueType | null>;
   }
 
   set(key: keyType, value: ValueType) {
     const post = this.get(key)!;
-    post.state = value;
+    if (post.$ !== value) {
+      post.$ = value;
+    }
   }
 }
 
@@ -153,10 +110,10 @@ export function obervable(target: any, key: string) {
 
   Object.defineProperty(target, key, {
     set: (newValue: string) => {
-      currentStore.state = newValue;
+      currentStore.$ = newValue;
     },
     get: () => {
-      return currentStore.state;
+      return currentStore.$;
     },
   });
 }

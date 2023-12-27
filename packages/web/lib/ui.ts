@@ -1,3 +1,5 @@
+import { Observable } from './state.ts';
+
 interface CustomElementConstructor {
   new (): CustomElement;
 }
@@ -95,6 +97,7 @@ export class CustomElement extends HTMLElement implements ICustomElement {
   }
 
   update = async () => {
+    console.trace('update..');
     if (!this.shadowRoot) return;
 
     if (!this.#tree) {
@@ -179,46 +182,58 @@ export class VNode {
   }
 
   #patchOne(lastEl: Element, newNode: VNode) {
-    let dirty = false;
-
-    if (lastEl.tagName !== newNode.tagName.toUpperCase()) {
-      dirty = true;
-    }
-
-    if (!dirty && newNode.attributes.size) {
-      for (const [name, value] of Array.from(newNode.attributes)) {
-        if (lastEl.getAttribute(name) !== value) {
-          dirty = true;
-        }
-      }
-    }
-
-    if (newNode.classList.length) {
-      for (const name of newNode.classList) {
-        if (!lastEl.classList.contains(name)) {
-          lastEl?.classList.add(name);
-        }
-      }
-    }
-
-    if (lastEl.classList.length) {
-      for (const name of Array.from(lastEl.classList)) {
-        if (!newNode.classList.includes(name)) {
-          lastEl?.classList.remove(name);
-        }
-      }
-    }
-
-    if (lastEl.tagName === 'TEXT' && newNode.content !== newNode.content) {
-      lastEl.textContent = newNode.content || '';
-    }
-
-    if (dirty) {
-      lastEl.replaceWith(newNode.createElement());
-      return;
-    }
+    const dirty = false;
+    //
+    // if (lastEl.tagName !== newNode.tagName.toUpperCase()) {
+    //   console.log({
+    //     old: lastEl.tagName,
+    //     new: newNode.tagName.toUpperCase(),
+    //   });
+    //   dirty = true;
+    // }
+    //
+    // if (!dirty && newNode.attributes.size) {
+    //   for (const [name, value] of Array.from(newNode.attributes)) {
+    //     if (lastEl.getAttribute(name) !== value) {
+    //       console.log({
+    //         old: lastEl.getAttribute(name),
+    //         new: value,
+    //       });
+    //       dirty = true;
+    //     }
+    //   }
+    // }
+    //
+    // if (newNode.classList.length) {
+    //   for (const name of newNode.classList) {
+    //     if (!lastEl.classList.contains(name)) {
+    //       lastEl?.classList.add(name);
+    //     }
+    //   }
+    // }
+    //
+    // if (lastEl.classList.length) {
+    //   for (const name of Array.from(lastEl.classList)) {
+    //     if (!newNode.classList.includes(name)) {
+    //       lastEl?.classList.remove(name);
+    //     }
+    //   }
+    // }
+    //
+    // if (lastEl.tagName === 'TEXT' && lastEl.textContent !== newNode.content) {
+    //   lastEl.textContent = newNode.content || '';
+    // }
+    //
+    // // console.log('patched one', dirty, lastEl, newNode);
+    // if (dirty) {
+    //   console.log('dirty update');
+    //   lastEl.replaceWith(newNode.createElement());
+    //   return;
+    // }
 
     const maxlength = Math.max(newNode.children.length, lastEl.children.length);
+
+    if (!maxlength) return;
 
     const lastChildren = Array.from(lastEl.children).slice();
     const newChildren = newNode.children.slice();
@@ -227,11 +242,16 @@ export class VNode {
       const newChild = newChildren[i];
 
       if (lastChild && newChild) {
-        this.#patchOne(lastChild, newChild);
+        console.log('patching', lastChild, newChild);
+        newChild.patch(lastChild);
+        // lastChild.replaceWith(newChild.createElement());
       } else if (!lastChild && newChild) {
+        console.log('appending');
+        // newChild.append(lastEl);
         lastEl.appendChild(newChild.createElement());
       } else if (lastChild && !newChild) {
-        lastEl.removeChild(lastChild);
+        console.log('removing');
+        // lastEl.removeChild(lastChild);
       }
     }
   }
@@ -396,3 +416,37 @@ export const h = (
     return newProps;
   }
 };
+
+/**
+ *
+ * @param getStore
+ */
+export function connect(
+  getStore:
+    | ((element: CustomElement) => { [key: string]: Observable } | Observable)
+    | Observable,
+): any {
+  return function (ctx: () => CustomElement) {
+    const oldonmount = ctx.prototype.onmount;
+    ctx.prototype.onmount = function () {
+      oldonmount.call(this);
+
+      if (getStore instanceof Observable) {
+        getStore.subscribe(this.update);
+      } else if (typeof getStore === 'function') {
+        const stores = getStore(this);
+
+        if (stores instanceof Observable) {
+          stores.subscribe(this.update);
+        } else {
+          for (const key in stores) {
+            if (stores.hasOwnProperty(key)) {
+              const store = stores[key];
+              store.subscribe(this.update);
+            }
+          }
+        }
+      }
+    };
+  };
+}

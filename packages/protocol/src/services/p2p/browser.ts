@@ -141,7 +141,6 @@ export class P2P extends EventEmitter2 {
     const { yamux } = await import('@chainsafe/libp2p-yamux');
     const { mplex } = await import('@libp2p/mplex');
     const { webTransport } = await import('@libp2p/webTransport');
-    // const { tcp } = await import('@libp2p/tcp');
 
     const { bootstrap: _bootstrap } = await import('@libp2p/bootstrap');
     const { pubsubPeerDiscovery } = await import(
@@ -151,7 +150,7 @@ export class P2P extends EventEmitter2 {
 
     const peerDiscovery: Libp2pInit['peerDiscovery'] = [
       pubsubPeerDiscovery({
-        interval: 1000,
+        interval: 30000,
       }) as any,
     ];
 
@@ -191,7 +190,7 @@ export class P2P extends EventEmitter2 {
         denyDialMultiaddr: async () => false,
       },
       connectionManager: {
-        maxConnections: Infinity,
+        maxConnections: 4,
         minConnections: 1,
       },
       peerDiscovery,
@@ -200,7 +199,7 @@ export class P2P extends EventEmitter2 {
         pubsub: gossipsub({
           allowPublishToZeroPeers: true,
           emitSelf: true,
-          canRelayMessage: true,
+          canRelayMessage: false,
         }),
         identify: identifyService(),
       },

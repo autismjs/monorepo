@@ -34,7 +34,8 @@ export class DB extends EventEmitter2 {
 
   async insertMessage(message: Any) {
     await this.#cache.del(message.creator);
-    return this.#db.insertMessage(message);
+    const res = await this.#db.insertMessage(message);
+    return res;
   }
 
   async start() {

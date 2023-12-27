@@ -9,15 +9,13 @@ const argv = yargs(hideBin(process.argv)).argv;
   const node = new Autism({
     name,
     relay: true,
-    bootstrap: typeof bootstrap === 'string'
-      ? [bootstrap]
-      : bootstrap,
+    bootstrap: typeof bootstrap === 'string' ? [bootstrap] : bootstrap,
     port,
   });
 
-  node.on('p2p:peer:discovery', (peer) => {
-    console.log('peer discovered', peer);
-  });
+  // node.on('p2p:peer:discovery', (peer) => {
+  //   console.log('peer discovered', peer);
+  // });
 
   node.on('p2p:peer:connect', (peer) => {
     console.log('peer connected', peer);
@@ -29,5 +27,5 @@ const argv = yargs(hideBin(process.argv)).argv;
 
   await node.start();
   console.log(node.p2p.node!.getMultiaddrs().map((d) => d.toString()));
-  console.log(await node.db.db.getPosts());
+  console.log('there are ' + (await node.db.db.getPosts()).length + ' post(s)');
 })();
