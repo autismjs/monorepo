@@ -1,6 +1,6 @@
 import { Observable, ObservableMap } from '../../lib/state.ts';
-import { Autism } from '@autismjs/protocol/src/services/browser.ts';
-import { Post } from '@autismjs/message';
+import { Autism } from '@protocol/browser';
+import { Post } from '@message';
 import { UserProfileData } from '@autismjs/db/src/base.ts';
 
 export class NodeStore {
@@ -14,7 +14,7 @@ export class NodeStore {
   constructor() {
     const node = new Autism({
       bootstrap: [
-        '/ip4/192.168.86.24/tcp/56199/ws/p2p/12D3KooWFYeg3L3ew9tboKrQPxtMDyTEs77cJKJkYp2YLhuvZ21M',
+        '/ip4/192.168.86.24/tcp/63482/ws/p2p/12D3KooWJ4guEVPUD1zLBvbevx7h5aJHXfN9xokhUMKj4dM2pvUG',
       ],
     });
 

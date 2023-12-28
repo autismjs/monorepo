@@ -24,6 +24,10 @@ export default class Post extends CustomElement {
 
   css = css.toString();
 
+  comment = () => {
+    console.log('comment button clicked: ', this.state.hash);
+  };
+
   render() {
     const p = this.$.post?.$;
     const u = this.$.user?.$;
@@ -50,6 +54,10 @@ export default class Post extends CustomElement {
         'div.bottom',
         h(
           'c-button.comment-btn',
+          // @ts-ignore
+          {
+            onclick: this.comment,
+          },
           h('img', { src: CommentIcon }),
           h('span', '0'),
         ),

@@ -1,8 +1,8 @@
 const webpack = require('webpack');
 const path = require('path');
 const isProd = process.env.NODE_ENV === 'production';
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const CopyPlugin = require("copy-webpack-plugin");
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 const { compilerOptions } = require('./tsconfig.json');
 
 const envPlugin = new webpack.EnvironmentPlugin({
@@ -57,7 +57,7 @@ const rules = [
 
 module.exports = [
   {
-    target: "web",
+    target: 'web',
     mode: isProd ? 'production' : 'development',
     entry: {
       app: path.join(__dirname, 'src', 'index.ts'),
@@ -66,6 +66,12 @@ module.exports = [
     //   'multicast-dns': 'commonjs2 multicast-dns',
     // },
     resolve: {
+      alias: {
+        '@message': path.join(__dirname, '..', 'message', 'src'),
+        '@crypto': path.join(__dirname, '..', 'crypto', 'src'),
+        '@db': path.join(__dirname, '..', 'db', 'src'),
+        '@protocol': path.join(__dirname, '..', 'protocol', 'src'),
+      },
       extensions: ['.ts', '.tsx', '.js', '.jsx', '.png', '.svg'],
       // modules: [
       //   path.resolve('./node_modules'),
@@ -101,7 +107,7 @@ module.exports = [
       path: __dirname + '/build',
       publicPath: isProd ? '/' : 'http://localhost:8080/',
       filename: `[name].js`,
-      globalObject: 'this'
+      globalObject: 'this',
     },
     plugins: [
       envPlugin,
@@ -112,16 +118,14 @@ module.exports = [
         process: 'process',
       }),
       new CopyPlugin({
-        patterns: [
-          { from: "./lib/style.css", to: "./"}
-        ]
+        patterns: [{ from: './lib/style.css', to: './' }],
       }),
       new HtmlWebpackPlugin({
-        template: path.join(__dirname, "static", "index.html"),
-        filename: "index.html",
-        chunks: ["index"],
+        template: path.join(__dirname, 'static', 'index.html'),
+        filename: 'index.html',
+        chunks: ['index'],
         cache: false,
-        inject: true
+        inject: true,
       }),
     ],
     stats: 'minimal',

@@ -16,6 +16,10 @@ export default class ECDSA {
     }
   }
 
+  toString() {
+    return this.privateKey || '';
+  }
+
   get privateKey(): string | null {
     const key = this.#key.getPrivate();
     return key ? '0x' + key.toString('hex') : null;

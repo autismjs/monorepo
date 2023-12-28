@@ -34,6 +34,9 @@ module.exports = [
     },
     devtool: 'source-map',
     resolve: {
+      alias: {
+        '@message': path.join(__dirname, '..', 'message', 'src'),
+      },
       extensions: ['.ts', '.js'],
       fallback: {
         crypto: require.resolve('crypto-browserify'),

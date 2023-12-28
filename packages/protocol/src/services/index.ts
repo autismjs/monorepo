@@ -1,5 +1,5 @@
 import { EventEmitter2, ConstructorOptions } from 'eventemitter2';
-import { Any, Message, ProofType } from '@autismjs/message';
+import { Any, Message, ProofType } from '@message';
 import {
   P2P,
   ProtocolType,
@@ -8,13 +8,11 @@ import {
 } from './p2p';
 import { DB } from './db';
 import { PubsubTopics } from '../utils/types';
-import { ECDSA, hexify } from '@autismjs/crypto';
+import { ECDSA, hexify } from '@crypto';
 import { version } from '../../package.json';
 // @ts-ignore
 import type { PeerId } from '@libp2p/interface/peer-id';
 import { Mutex } from 'async-mutex';
-
-const i = 0;
 
 export class Autism extends EventEmitter2 {
   p2p: P2P;

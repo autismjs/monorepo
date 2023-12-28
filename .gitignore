@@ -8,3 +8,5 @@ coverage/
 dev-build/
 bin/
 .autism/
+#**/src/**/*.css
+#**/src/**/*.css.map

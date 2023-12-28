@@ -1,6 +1,6 @@
 import EventEmitter2, { ConstructorOptions } from 'eventemitter2';
-import { LevelDBAdapter } from '../../../../db/src';
-import { Any } from '@autismjs/message';
+import { LevelDBAdapter } from '@db';
+import { Any } from '@message';
 import NodeCache from 'node-cache';
 import { Merkle } from '../../utils/merkle';
 import * as process from 'process';

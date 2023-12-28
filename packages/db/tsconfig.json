@@ -1,5 +1,15 @@
 {
   "compilerOptions": {
+    "paths": {
+      "@message": ["../message/src"],
+      "@crypto": ["../crypto/src"],
+      "@db": ["../db/src"],
+      "@protocol": ["../protocol/src"],
+      "@message/*": ["../message/src/*"],
+      "@crypto/*": ["../crypto/src/*"],
+      "@db/*": ["../db/src/*"],
+      "@protocol/*": ["../protocol/src/*"]
+    },
     "noEmit": true,
     "baseUrl": ".",
     "allowJs": true,

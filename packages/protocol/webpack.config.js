@@ -59,6 +59,12 @@ module.exports = [
       start: path.join(__dirname, 'scripts', 'start.ts'),
     },
     resolve: {
+      alias: {
+        '@message': path.join(__dirname, '..', 'message', 'src'),
+        '@crypto': path.join(__dirname, '..', 'crypto', 'src'),
+        '@db': path.join(__dirname, '..', 'db', 'src'),
+        '@protocol': path.join(__dirname, '..', 'protocol', 'src'),
+      },
       extensions: ['.ts', '.tsx', '.js', '.jsx', '.png', '.svg', '.node'],
     },
     // externals: [nodeExternals()],
@@ -73,9 +79,7 @@ module.exports = [
       publicPath: '/',
       filename: `[name].js`,
     },
-    plugins: [
-      envPlugin,
-    ],
+    plugins: [envPlugin],
     stats: 'minimal',
   },
 ];

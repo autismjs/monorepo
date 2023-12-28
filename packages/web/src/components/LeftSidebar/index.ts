@@ -1,46 +1,45 @@
-import { connect, CustomElement, h, register } from '../../../lib/ui.ts';
+import { CustomElement, h, register } from '../../../lib/ui.ts';
 import css from './index.scss';
-import { Observable } from '../../../lib/state.ts';
+import $signer from '../../state/signer.ts';
+import '../Editor';
+import { ProofType } from '@message';
+import $node from '../../state/node.ts';
 
-@connect(() => {
-  const content = new Observable('');
-  return {
-    content,
-  };
-})
 export default class LeftSidebar extends CustomElement {
   css = css.toString();
 
   render() {
-    const creator = '';
-    const name = 'Anonymous';
-    const handle = '0x1234';
-    const content = this.$.content.$;
-
     return h(
       `div.left-sidebar`,
+      // @ts-ignore
+      h('post-editor', {
+        onsubmit: async (e: CustomEvent) => {
+          const { post, reset } = e.detail;
+
+          if (post) {
+            if ($signer.$ecdsa.$?.privateKey) {
+              post.commit({
+                type: ProofType.ECDSA,
+                value: $signer.$ecdsa.$.sign(post.hash),
+              });
+
+              await $node.node.publish(post);
+              reset();
+            }
+          }
+        },
+      }),
+      h('c-button[disabled=true]', 'Import Private Key'),
       h(
-        'div.editor',
-        h(
-          'div.post',
-          h('profile-image', {
-            creator: creator,
-          }),
-          h('div.top', h('div.creator', name), h('div.userId', handle)),
-          //@ts-ignore
-          h('textarea.content', {
-            content: content,
-            rows: '6',
-            placeholder: 'Say something here',
-            onchange: (event: any) => {
-              this.$.content.$ = event.target.value;
-            },
-          }),
-          h('div.bottom', h('c-button', {}, 'Submit')),
-        ),
+        'c-button',
+        // @ts-ignore
+        {
+          onclick: () => {
+            $signer.generateRandomPrivateKey();
+          },
+        },
+        'Generate Private Key',
       ),
-      h('c-button', 'Import Private Key'),
-      h('c-button', 'Generate Private Key'),
     );
   }
 }

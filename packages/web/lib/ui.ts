@@ -12,10 +12,13 @@ interface ICustomElement extends HTMLElement {
   onupdated(): Promise<void>;
 }
 
+const excludedAttributes = new Set(['class', 'id']);
 export class CustomElement extends HTMLElement implements ICustomElement {
   css: string;
   html: string;
   #tree?: VNode;
+  #lastAttrUpdated = 0;
+  #attrUpdateTimeout: any;
   $?: any;
 
   get tree() {
@@ -77,6 +80,38 @@ export class CustomElement extends HTMLElement implements ICustomElement {
       this.onupdated();
     }
   };
+
+  attributeChangedCallback(key: string, ov: string, nv: string) {
+    if (nv === ov) return;
+
+    requestAnimationFrame(async () => {
+      const now = Date.now();
+      const timeSince = now - this.#lastAttrUpdated;
+      const wait = 100;
+
+      const later = async () => {
+        if (this.#attrUpdateTimeout) {
+          clearTimeout(this.#attrUpdateTimeout);
+          this.#attrUpdateTimeout = null;
+        }
+        this.#lastAttrUpdated = now;
+        await this.update();
+      };
+
+      if (timeSince > wait) {
+        await later();
+      } else {
+        if (this.#attrUpdateTimeout) {
+          clearTimeout(this.#attrUpdateTimeout);
+        }
+        this.#attrUpdateTimeout = setTimeout(
+          later,
+          Math.max(0, wait - timeSince),
+        );
+      }
+      this.#lastAttrUpdated = now;
+    });
+  }
 }
 
 export function html(htmlString: string) {
@@ -98,7 +133,8 @@ type VNodeProps = {
   style?: CSSStyleDeclaration;
   content?: string;
   oninput?: () => void;
-  cache?: boolean;
+  onsubmit?: () => void;
+  onclick?: () => void;
 };
 
 export class VNode {
@@ -109,6 +145,8 @@ export class VNode {
   children: VNode[] = [];
   style?: CSSStyleDeclaration;
   oninput?: () => void;
+  onsubmit?: () => void;
+  onclick?: () => void;
   parentNode?: VNode;
   content?: string;
   #el?: any;
@@ -121,6 +159,8 @@ export class VNode {
     this.style = options.style;
     this.content = options.content;
     this.oninput = options.oninput;
+    this.onsubmit = options.onsubmit;
+    this.onclick = options.onclick;
     this.children = options.children || [];
 
     for (const node of this.children) {
@@ -160,9 +200,34 @@ export class VNode {
 
     if (newNode.attributes.size) {
       for (const [name, value] of newNode.attributes) {
+        if (excludedAttributes.has(name)) continue;
+
         if (lastEl.getAttribute(name) !== value) {
           lastEl.setAttribute(name, value);
-          dirty = true;
+
+          if (name === 'value') {
+            //@ts-ignore
+            lastEl.value = value;
+          } else {
+            dirty = true;
+          }
+        }
+      }
+    }
+
+    if (lastEl.attributes.length) {
+      for (const { name, value } of Array.from(lastEl.attributes)) {
+        if (excludedAttributes.has(name)) continue;
+
+        if (value && !newNode.attributes.get(name)) {
+          lastEl.removeAttribute(name);
+
+          if (name === 'value') {
+            //@ts-ignore
+            lastEl.value = '';
+          } else {
+            dirty = true;
+          }
         }
       }
     }
@@ -219,11 +284,9 @@ export class VNode {
       el.textContent = this.content;
     }
 
-    if (this.oninput) {
-      // @ts-ignore
-      // el.oninput = onchange;
-      el.addEventListener('input', this.oninput);
-    }
+    if (this.oninput) el.addEventListener('input', this.oninput, true);
+    if (this.onclick) el.addEventListener('click', this.onclick, true);
+    if (this.onsubmit) el.addEventListener('submit', this.onsubmit, true);
 
     frag.append(el);
 
@@ -244,6 +307,8 @@ type DOMOptions = {
   className?: string;
   children?: VNode[];
   oninput?(): void;
+  onsubmit?(): void;
+  onclick?(): void;
 } & { [key: string]: string };
 
 type VNodeOption = VNode | string | (() => VNode | VNode[]);
@@ -338,7 +403,17 @@ export const h = (
 
   function reduceOption(props: VNodeProps, opts: DOMOptions): VNodeProps {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { oninput, content, children, className, style, id, ...rest } = opts;
+    const {
+      onclick,
+      oninput,
+      onsubmit,
+      content,
+      children,
+      className,
+      style,
+      id,
+      ...rest
+    } = opts;
 
     const newProps = { ...props };
 
@@ -353,6 +428,8 @@ export const h = (
     if (content) newProps.content = content;
 
     if (oninput) newProps.oninput = oninput;
+    if (onclick) newProps.onclick = onclick;
+    if (onsubmit) newProps.onsubmit = onsubmit;
 
     for (const [key, value] of Object.entries(rest)) {
       newProps.attributes.set(key, value || '');
@@ -396,4 +473,10 @@ export function connect(
       }
     };
   };
+}
+
+export function disabled(bool?: any): { disabled?: 'true' } {
+  const obj: { disabled?: 'true' } = {};
+  if (!!bool) obj.disabled = 'true';
+  return obj;
 }

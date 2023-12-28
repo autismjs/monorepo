@@ -14,7 +14,7 @@ import {
   ModerationSubtype,
   ConnectionSubtype,
   ProfileSubtype,
-} from '@autismjs/message';
+} from '@message';
 import { Mutex } from 'async-mutex';
 
 const charwise = require('charwise');

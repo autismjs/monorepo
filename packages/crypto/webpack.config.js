@@ -36,6 +36,12 @@ module.exports = [
     target: 'node',
     devtool: 'source-map',
     resolve: {
+      alias: {
+        '@message': path.join(__dirname, '..', 'message', 'src'),
+        '@crypto': path.join(__dirname, '..', 'crypto', 'src'),
+        '@db': path.join(__dirname, '..', 'db', 'src'),
+        '@protocol': path.join(__dirname, '..', 'protocol', 'src'),
+      },
       extensions: ['.ts', '.js'],
     },
     node: {
