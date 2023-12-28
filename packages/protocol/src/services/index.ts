@@ -198,7 +198,13 @@ export class Autism extends EventEmitter2 {
           continue;
         }
 
-        this.#syncUserWithPeer(peerId, user, '0x1a2b3cc', _depth, indices[i]);
+        await this.#syncUserWithPeer(
+          peerId,
+          user,
+          '0x1a2b3cc',
+          _depth,
+          indices[i],
+        );
         i++;
       }
     }

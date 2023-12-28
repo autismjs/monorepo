@@ -9,6 +9,9 @@ export type UserProfileData = {
 };
 
 export type PostMeta = {
+  moderated: {
+    [key in ModerationSubtype]?: boolean;
+  };
   moderations: { [subtype: string]: number };
   replies: number;
 };

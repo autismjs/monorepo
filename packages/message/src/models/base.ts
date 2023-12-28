@@ -57,6 +57,7 @@ export class Base {
         decodeString(0xff),
       ]);
 
+      console.log(values);
       if (values[1]) {
         this.#proof = {
           type: values[0] as ProofType,

@@ -2,6 +2,7 @@ import {
   boolAttr,
   connect,
   CustomElement,
+  disabled,
   h,
   register,
 } from '../../../lib/ui.ts';
@@ -14,6 +15,13 @@ import '../Button';
 import css from './index.scss';
 import $node from '../../state/node.ts';
 import $editor from '../../state/editor.ts';
+import {
+  MessageType,
+  Moderation,
+  ModerationSubtype,
+  ProofType,
+} from '@message';
+import $signer from '../../state/signer.ts';
 
 @connect((el) => {
   const hash = el.state.hash;
@@ -23,6 +31,7 @@ import $editor from '../../state/editor.ts';
   return {
     post,
     user,
+    ecdsa: $signer.$ecdsa,
     reference: $editor.reference,
     postmeta: $node.$postmetas.get(hash),
   };
@@ -42,10 +51,36 @@ export default class Post extends CustomElement {
         : p.$?.messageId || '';
   };
 
+  toggleLike = () => {
+    const p = $node.$posts.get(this.state.hash);
+
+    if (!p.$?.messageId) return;
+
+    if (!$signer.$ecdsa.$ || !$signer.$ecdsa.$.publicKey) return;
+
+    const mod = new Moderation({
+      type: MessageType.Moderation,
+      subtype: ModerationSubtype.Like,
+      reference: p.$.messageId,
+      creator: $signer.$ecdsa.$.publicKey,
+      createdAt: new Date(),
+    });
+
+    mod.commit({
+      type: ProofType.ECDSA,
+      value: $signer.$ecdsa.$.sign(mod.hash),
+    });
+
+    $node.node.publish(mod);
+  };
+
   render() {
     const p = $node.$posts.get(this.state.hash);
     const u = $node.$users.get(p.$?.creator || '');
-    const postmeta = $node.getPostMeta(this.state.hash);
+    const postmeta = $node.getPostMeta(
+      this.state.hash,
+      $signer.$ecdsa.$?.publicKey,
+    );
 
     const creator = p.$?.json.creator || '';
     const createat = fromNow(p.$?.json.createdAt) || '';
@@ -74,13 +109,31 @@ export default class Post extends CustomElement {
           // @ts-ignore
           {
             ...boolAttr('active', refHash === this.state.hash),
+            ...disabled(!$signer.$ecdsa.$?.privateKey),
             onclick: this.comment,
           },
           h('img', { src: CommentIcon }),
           h('span', `${postmeta?.replies || 0}`),
         ),
-        h('c-button.repost-btn', h('img', { src: RepostIcon }), h('span', '0')),
-        h('c-button.like-btn', h('img', { src: LikeIcon }), h('span', '0')),
+        h(
+          'c-button.repost-btn',
+          {
+            ...disabled(!$signer.$ecdsa.$?.privateKey),
+          },
+          h('img', { src: RepostIcon }),
+          h('span', '0'),
+        ),
+        h(
+          'c-button.like-btn',
+          // @ts-ignore
+          {
+            ...boolAttr('active', postmeta?.moderated[ModerationSubtype.Like]),
+            ...disabled(!$signer.$ecdsa.$?.privateKey),
+            onclick: this.toggleLike,
+          },
+          h('img', { src: LikeIcon }),
+          h('span', `${postmeta?.moderations[ModerationSubtype.Like] || 0}`),
+        ),
       ),
     );
   }

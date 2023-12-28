@@ -16,7 +16,7 @@ export class NodeStore {
   constructor() {
     const node = new Autism({
       bootstrap: [
-        '/ip4/192.168.86.24/tcp/60336/ws/p2p/12D3KooWAeyUxK9NAudYufT2yadwDqK1KE5MTEYhkq2XMvzyFqs7',
+        '/ip4/192.168.86.24/tcp/51279/ws/p2p/12D3KooWL9Um7kUczwNgJ8WBNapYkJdggNVLpBMuSWTx7166oBfd',
       ],
     });
 
@@ -59,12 +59,12 @@ export class NodeStore {
     });
   };
 
-  getPostMeta(messageId?: string) {
+  getPostMeta(messageId?: string, own?: string | null) {
     if (!messageId) return null;
 
     const store = this.$postmetas.get(messageId);
 
-    this.node.db.db.getPostMeta(messageId).then((meta) => {
+    this.node.db.db.getPostMeta(messageId, own).then((meta) => {
       if (!equal(store.$, meta)) {
         store.$ = meta;
       }

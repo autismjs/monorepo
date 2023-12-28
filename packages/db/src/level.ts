@@ -1,6 +1,6 @@
 import { Level } from 'level';
 import { AbstractSublevel, AbstractValueIteratorOptions } from 'abstract-level';
-import { BaseDBAdapter, UserProfileData } from './base';
+import { BaseDBAdapter, PostMeta, UserProfileData } from './base';
 import {
   Any,
   AnyJSON,
@@ -453,15 +453,25 @@ export default class LevelDBAdapter implements BaseDBAdapter {
     return profile;
   }
 
-  async getPostMeta(reference: string): Promise<{
-    moderations: { [subtype: string]: number };
-    replies: number;
-  }> {
+  async getPostMeta(reference: string, own?: string | null): Promise<PostMeta> {
     const replies = await this.getReplies(reference);
     const mods = await this.getModerations(reference);
 
+    const moderated: {
+      [key in ModerationSubtype]?: boolean;
+    } = {};
+
+    if (own) {
+      for (const mod of mods) {
+        if (mod.creator === own) {
+          moderated[mod.subtype] = true;
+        }
+      }
+    }
+
     return {
       moderations: flattenByCreatorSubtype(mods),
+      moderated,
       replies: replies.length,
     };
   }

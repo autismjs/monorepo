@@ -25,7 +25,7 @@ button,
   }
 
   &:disabled {
-    opacity: .3;
+    opacity: var(--opacity, .3);
     cursor: default;
     color: var(--color, var(--slate-500));
   }
