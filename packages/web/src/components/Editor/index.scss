@@ -1,11 +1,14 @@
 @import "../Post/index.scss";
 
 .editor {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.5rem;
   background-color: var(--white);
 
   &__post {
-    grid-template-columns: 4.5rem auto;
-    grid-template-rows: 4.5rem auto auto auto;
+    grid-template-columns: 5rem auto;
+    grid-template-rows: 5rem auto auto auto;
     padding: 0;
 
     profile-image {
@@ -13,8 +16,8 @@
       grid-column-end: 2;
       grid-row-start: 1;
       grid-row-end: 2;
-      --margin: 0 .5rem .5rem 0;
-      padding: 1rem 0 0 1rem;
+      --margin: 0 .5rem .5rem 0rem;
+      padding: 1rem 0 0 1.5rem;
     }
 
     .top {
@@ -25,7 +28,7 @@
       grid-column-end: 3;
       grid-row-start: 1;
       grid-row-end: 3;
-      padding: 1rem 0;
+      padding: 1rem 0 .5rem;
     }
 
     .bottom {
@@ -49,7 +52,7 @@
       background-color: var(--white);
       font-size: var(--text-sm);
       font-family: var(--font-sans);
-      margin: 1rem .5rem .5rem;
+      margin: 0 1rem .5rem;
       border: 1px solid var(--slate-100);
       border-radius: 4px;
       resize: none;
@@ -97,7 +100,8 @@
   post-card.parent {
     --padding-top: 1rem;
     --bottom-display: none;
-    --margin: 0 .5rem .5rem .5rem;
+    --margin: 0 .5rem;
+    --padding-bottom: 0;
   }
 
   .ref {
@@ -165,7 +169,7 @@
       height: auto;
       position: absolute;
       top: 4.625rem;
-      left: 2.375rem;
+      left: calc(3rem - 1px);;
       bottom: -1rem;
     }
   }

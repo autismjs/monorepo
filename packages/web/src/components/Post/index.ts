@@ -84,6 +84,13 @@ export default class Post extends CustomElement {
       ),
     );
   }
+
+  async onupdated() {
+    const el = this.shadowRoot!.querySelector('div.content');
+    if (el?.clientHeight && el.clientHeight >= 15 * 24) {
+      el.classList.add('max-height');
+    }
+  }
 }
 
 register('post-card', Post);

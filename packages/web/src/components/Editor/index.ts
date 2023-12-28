@@ -42,6 +42,7 @@ export default class Editor extends CustomElement {
           post,
           reset: () => {
             this.$.content.$ = '';
+            $editor.reference.$ = '';
           },
         },
       }),
