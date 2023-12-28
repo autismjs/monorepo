@@ -11,19 +11,20 @@ import { userId, userName } from '../../utils/misc.ts';
 import { MessageType, Post, PostSubtype } from '@message';
 import { Observable } from '../../../lib/state.ts';
 import css from './index.scss';
+import $editor from '../../state/editor.ts';
 
 @connect(() => {
   const content = new Observable('');
 
   return {
     content,
-    ecdsa: $signer.$ecdsa,
+    reference: $editor.reference,
   };
 })
 export default class Editor extends CustomElement {
   css = css.toString();
   onSubmit = () => {
-    const creator = $signer.publicKey;
+    const creator = this.state.creator;
     const content = this.$.content.$;
 
     const post = new Post({
@@ -56,12 +57,16 @@ export default class Editor extends CustomElement {
   };
 
   render(): VNode {
-    const creator = $signer.publicKey;
-    const name = userName($signer.publicKey) || 'Anonymous';
-    const handle = userId($signer.publicKey) || '';
+    const creator = this.state.creator;
+    const name = userName(creator) || 'Anonymous';
+    const handle = userId(creator) || '';
 
     return h(
       'div.editor',
+      !!$editor.reference.$ &&
+        h('post-card', {
+          hash: $editor.reference.$,
+        }),
       h(
         'div.post',
         h('profile-image', {

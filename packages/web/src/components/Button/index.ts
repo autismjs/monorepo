@@ -5,8 +5,11 @@ export default class Button extends CustomElement {
   css = css.toString();
 
   render() {
-    const { disabled } = this.state;
-    const btnProps: any = { disabled };
+    const { disabled, active } = this.state;
+    const btnProps: any = {
+      disabled,
+      className: active ? 'button--active' : '',
+    };
 
     if (!disabled) {
       delete btnProps.disabled;
@@ -14,7 +17,7 @@ export default class Button extends CustomElement {
     }
 
     // @ts-ignore
-    return h('button', btnProps, h('slot'));
+    return h('button.button', btnProps, h('slot'));
   }
 }
 

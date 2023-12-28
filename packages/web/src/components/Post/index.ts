@@ -1,4 +1,10 @@
-import { connect, CustomElement, h, register } from '../../../lib/ui.ts';
+import {
+  boolAttr,
+  connect,
+  CustomElement,
+  h,
+  register,
+} from '../../../lib/ui.ts';
 import { fromNow, userId, userName } from '../../utils/misc.ts';
 import CommentIcon from '../../../static/icons/comment.svg';
 import RepostIcon from '../../../static/icons/repost.svg';
@@ -7,6 +13,7 @@ import '../ProfileImage';
 import '../Button';
 import css from './index.scss';
 import $node from '../../state/node.ts';
+import $editor from '../../state/editor.ts';
 
 @connect((el) => {
   const hash = el.state.hash;
@@ -15,6 +22,7 @@ import $node from '../../state/node.ts';
   return {
     post,
     user,
+    reference: $editor.reference,
   };
 })
 export default class Post extends CustomElement {
@@ -25,18 +33,18 @@ export default class Post extends CustomElement {
   css = css.toString();
 
   comment = () => {
-    console.log('comment button clicked: ', this.state.hash);
+    $editor.reference.$ = this.state.hash;
   };
 
   render() {
-    const p = this.$.post?.$;
-    const u = this.$.user?.$;
+    const p = $node.$posts.get(this.state.hash);
+    const u = $node.$users.get(p.$?.creator || '');
 
-    const creator = p?.json.creator || '';
-    const createat = fromNow(p?.json.createdAt) || '';
-    const content = p?.json.content || '';
-    const name = u?.name || userName(p?.json.creator) || 'Anonymous';
-    const handle = userId(p?.json.creator) || '';
+    const creator = p.$?.json.creator || '';
+    const createat = fromNow(p.$?.json.createdAt) || '';
+    const content = p.$?.json.content || '';
+    const name = u.$?.name || userName(p.$?.json.creator) || 'Anonymous';
+    const handle = userId(p.$?.json.creator) || '';
 
     return h(
       'div.post',
@@ -56,6 +64,7 @@ export default class Post extends CustomElement {
           'c-button.comment-btn',
           // @ts-ignore
           {
+            ...boolAttr('active', $editor.reference.$ === this.state.hash),
             onclick: this.comment,
           },
           h('img', { src: CommentIcon }),

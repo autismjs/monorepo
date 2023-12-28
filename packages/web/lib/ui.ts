@@ -311,7 +311,7 @@ type DOMOptions = {
   onclick?(): void;
 } & { [key: string]: string };
 
-type VNodeOption = VNode | string | (() => VNode | VNode[]);
+type VNodeOption = VNode | string | (() => VNode | VNode[]) | boolean;
 type VNodeOptions = VNodeOption | VNodeOption[];
 
 export const h = (
@@ -389,6 +389,10 @@ export const h = (
 
     if (typeof nodeOrText === 'string') {
       return [new VNode({ tagName: 'text', content: nodeOrText })];
+    }
+
+    if (typeof nodeOrText === 'boolean') {
+      return [];
     }
 
     const nodes = nodeOrText();
@@ -478,5 +482,11 @@ export function connect(
 export function disabled(bool?: any): { disabled?: 'true' } {
   const obj: { disabled?: 'true' } = {};
   if (!!bool) obj.disabled = 'true';
+  return obj;
+}
+
+export function boolAttr(key: string, bool?: any): { [key: string]: 'true' } {
+  const obj: { [key: string]: 'true' } = {};
+  if (!!bool) obj[key] = 'true';
   return obj;
 }

@@ -95,7 +95,7 @@ export class ObservableMap<keyType = string, ValueType = any> {
   }
 }
 
-export function obervable(target: any, key: string) {
+export function observable(target: any, key: string) {
   const currentValue = target[key];
   let currentStore = new Observable(currentValue);
 
