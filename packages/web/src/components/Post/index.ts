@@ -19,10 +19,12 @@ import $editor from '../../state/editor.ts';
   const hash = el.state.hash;
   const post = $node.$posts.get(hash);
   const user = $node.$users.get(post.$?.creator || '');
+
   return {
     post,
     user,
     reference: $editor.reference,
+    postmeta: $node.$postmetas.get(hash),
   };
 })
 export default class Post extends CustomElement {
@@ -33,18 +35,25 @@ export default class Post extends CustomElement {
   css = css.toString();
 
   comment = () => {
-    $editor.reference.$ = this.state.hash;
+    const p = $node.$posts.get(this.state.hash);
+    $editor.reference.$ =
+      $editor.reference.$.split('/')[1] === this.state.hash
+        ? ''
+        : p.$?.messageId || '';
   };
 
   render() {
     const p = $node.$posts.get(this.state.hash);
     const u = $node.$users.get(p.$?.creator || '');
+    const postmeta = $node.getPostMeta(this.state.hash);
 
     const creator = p.$?.json.creator || '';
     const createat = fromNow(p.$?.json.createdAt) || '';
     const content = p.$?.json.content || '';
     const name = u.$?.name || userName(p.$?.json.creator) || 'Anonymous';
     const handle = userId(p.$?.json.creator) || '';
+
+    const refHash = $editor.reference.$.split('/')[1] || $editor.reference.$;
 
     return h(
       'div.post',
@@ -64,11 +73,11 @@ export default class Post extends CustomElement {
           'c-button.comment-btn',
           // @ts-ignore
           {
-            ...boolAttr('active', $editor.reference.$ === this.state.hash),
+            ...boolAttr('active', refHash === this.state.hash),
             onclick: this.comment,
           },
           h('img', { src: CommentIcon }),
-          h('span', '0'),
+          h('span', `${postmeta?.replies || 0}`),
         ),
         h('c-button.repost-btn', h('img', { src: RepostIcon }), h('span', '0')),
         h('c-button.like-btn', h('img', { src: LikeIcon }), h('span', '0')),

@@ -12,6 +12,7 @@ import { MessageType, Post, PostSubtype } from '@message';
 import { Observable } from '../../../lib/state.ts';
 import css from './index.scss';
 import $editor from '../../state/editor.ts';
+import XmarkIcon from '../../../static/icons/xmark.svg';
 
 @connect(() => {
   const content = new Observable('');
@@ -60,15 +61,42 @@ export default class Editor extends CustomElement {
     const creator = this.state.creator;
     const name = userName(creator) || 'Anonymous';
     const handle = userId(creator) || '';
+    const [_c, _h] = $editor.reference.$.split('/');
+    const hash = _h || _c;
+    const parentCreator = _h ? _c : '';
+    const parentHandle = userId(parentCreator) || '';
 
     return h(
       'div.editor',
-      !!$editor.reference.$ &&
-        h('post-card', {
-          hash: $editor.reference.$,
-        }),
       h(
-        'div.post',
+        'div.ref',
+        {
+          className: !hash ? 'ref--hidden' : '',
+        },
+        h('post-card.parent', {
+          hash: hash,
+        }),
+        h(
+          'div.ref__desc',
+          // @ts-ignore
+          {
+            onclick: () => {
+              $editor.reference.$ = '';
+            },
+          },
+          h('img.xmark', {
+            src: XmarkIcon,
+          }),
+          h(
+            'span.ref__text.ref__text--cancel',
+            `Cancel replying to ${parentHandle}`,
+          ),
+          h('span.ref__text.ref__text--reply', `Replying to ${parentHandle}`),
+        ),
+        h('div.ref__connector'),
+      ),
+      h(
+        'div.post.editor__post',
         h('profile-image', {
           creator: creator,
         }),

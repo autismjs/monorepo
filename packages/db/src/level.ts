@@ -126,10 +126,14 @@ export default class LevelDBAdapter implements BaseDBAdapter {
         const msg = message as Post;
 
         if (msg.reference) {
-          await this.#indices.thread
-            .sublevel(msg.reference.split('/')[1], { valueEncoding: 'json' })
-            .sublevel(MessageType[msg.type], { valueEncoding: 'json' })
-            .put(time, message.hash);
+          const hash = msg.reference.split('/')[1];
+
+          if (hash) {
+            await this.#indices.thread
+              .sublevel(msg.reference.split('/')[1], { valueEncoding: 'json' })
+              .sublevel(MessageType[msg.type], { valueEncoding: 'json' })
+              .put(time, message.hash);
+          }
         }
 
         break;
@@ -319,8 +323,12 @@ export default class LevelDBAdapter implements BaseDBAdapter {
       }
     };
 
+    const hash = reference.split('/')[1] || reference;
+
+    if (!hash) return [];
+
     const db = this.#indices.thread
-      .sublevel(reference.split('/')[1])
+      .sublevel(hash)
       .sublevel(MessageType[MessageType.Post]);
 
     return this.#query(db, predicate, options);
@@ -342,8 +350,12 @@ export default class LevelDBAdapter implements BaseDBAdapter {
       );
     };
 
+    const hash = reference.split('/')[1] || reference;
+
+    if (!hash) return [];
+
     const db = this.#indices.thread
-      .sublevel(reference.split('/')[1])
+      .sublevel(hash)
       .sublevel(MessageType[MessageType.Moderation]);
 
     return this.#query(db, predicate, options);

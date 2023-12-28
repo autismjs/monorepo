@@ -8,6 +8,11 @@ export type UserProfileData = {
   meta: { [k: string]: string };
 };
 
+export type PostMeta = {
+  moderations: { [subtype: string]: number };
+  replies: number;
+};
+
 export interface BaseDBAdapter {
   insertMessage(message: Any): Promise<Any | null>;
   getPosts(options?: {
@@ -42,10 +47,7 @@ export interface BaseDBAdapter {
     },
   ): Promise<Any[]>;
   getProfile(user: string): Promise<UserProfileData>;
-  getPostMeta(reference: string): Promise<{
-    moderations: { [subtype: string]: number };
-    replies: number;
-  }>;
+  getPostMeta(reference: string): Promise<PostMeta>;
   getUserMeta(user: string): Promise<{
     outgoingConnections: { [subtype: string]: number };
     incomingConnections: { [subtype: string]: number };

@@ -1,7 +1,8 @@
 import { Observable, ObservableMap } from '../../lib/state.ts';
 import { Autism } from '@protocol/browser';
 import { Post } from '@message';
-import { UserProfileData } from '@autismjs/db/src/base.ts';
+import { PostMeta, UserProfileData } from '@autismjs/db/src/base.ts';
+import { equal } from '../utils/misc.ts';
 
 export class NodeStore {
   node: Autism;
@@ -10,11 +11,12 @@ export class NodeStore {
   $globalPosts = new Observable<string[]>([]);
   $posts = new ObservableMap<string, Post>();
   $users = new ObservableMap<string, UserProfileData>();
+  $postmetas = new ObservableMap<string, PostMeta>();
 
   constructor() {
     const node = new Autism({
       bootstrap: [
-        '/ip4/192.168.86.24/tcp/63482/ws/p2p/12D3KooWJ4guEVPUD1zLBvbevx7h5aJHXfN9xokhUMKj4dM2pvUG',
+        '/ip4/192.168.86.24/tcp/60336/ws/p2p/12D3KooWAeyUxK9NAudYufT2yadwDqK1KE5MTEYhkq2XMvzyFqs7',
       ],
     });
 
@@ -56,6 +58,19 @@ export class NodeStore {
       return p.hash;
     });
   };
+
+  getPostMeta(messageId?: string) {
+    if (!messageId) return null;
+
+    const store = this.$postmetas.get(messageId);
+
+    this.node.db.db.getPostMeta(messageId).then((meta) => {
+      if (!equal(store.$, meta)) {
+        store.$ = meta;
+      }
+    });
+    return store.$;
+  }
 
   getPost(hash: string) {
     const store = this.$posts.get(hash);

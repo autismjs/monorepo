@@ -1,12 +1,14 @@
 .post {
-  display: grid;
-  background: var(--white);
-  grid-template-columns: 3.5rem auto;
-  grid-template-rows: auto auto auto;
-  padding: .5rem;
+  display: var(--display, grid);
+  background: var(--background, var(--white));
+  grid-template-columns: var(--grid-template-columns, 3.5rem auto);
+  grid-template-rows: var(--grid-template-rows, auto auto auto);
+  padding: var(--padding, .5rem);
+  padding-top: var(--padding-top, .5rem);
+  margin: var(--margin, 0);
   font-size: var(--font-size, var(--text-base));
   border: var(--border, none);
-  cursor: default;
+  cursor: var(--cursor, default);
 }
 
 profile-image {
@@ -58,11 +60,12 @@ profile-image {
   grid-row-end: 3;
   padding: .25rem 0;
   font-weight: var(--font-normal);
+  color: var(--slate-900);
   line-height: 1.3125;
 }
 
 .bottom {
-  display: flex;
+  display: var(--bottom-display, flex);
   flex-flow: row nowrap;
   grid-column-start: 2;
   grid-column-end: 3;

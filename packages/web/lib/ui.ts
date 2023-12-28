@@ -232,6 +232,22 @@ export class VNode {
       }
     }
 
+    if (newNode.classList.length) {
+      for (const className of newNode.classList) {
+        if (!lastEl.classList.contains(className)) {
+          lastEl.classList.add(className);
+        }
+      }
+    }
+
+    if (lastEl.classList.length) {
+      for (const className of Array.from(lastEl.classList)) {
+        if (!newNode.classList.includes(className)) {
+          lastEl.classList.remove(className);
+        }
+      }
+    }
+
     if (dirty) {
       lastEl.replaceWith(newNode.createElement());
       return;
