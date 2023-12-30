@@ -47,7 +47,7 @@ export class Message {
       | ChatJSON
       | GroupJSON
       | RevertJSON,
-  ): Any | null {
+  ): Post | Moderation | Connection | Profile | Chat | Group | Revert | null {
     switch (json.type) {
       case MessageType.Post:
         return new Post(json as PostJSON);

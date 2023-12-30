@@ -84,6 +84,25 @@ export class NodeStore {
     });
   }
 
+  async getParents(hash: string, list: string[] = []): Promise<string[]> {
+    const post = await this.node.db.db.getMessage(hash);
+    const reference = (post as Post)?.reference || '';
+    const [creator, refhash] = reference.split('/');
+    const parentHash = refhash || creator;
+
+    if (post && parentHash) {
+      const parent = await this.node.db.db.getMessage(parentHash);
+      if (parent) {
+        return this.getParents(parent.hash, [
+          (parent as Post).messageId,
+          ...list,
+        ]);
+      }
+    }
+
+    return list;
+  }
+
   getReplies(messageId: string) {
     this.#updateReplies(messageId);
     const $replies = this.$replies.get(messageId);

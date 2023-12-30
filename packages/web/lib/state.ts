@@ -1,4 +1,7 @@
 import { equal } from '../src/utils/misc.ts';
+import { CustomElement } from './ui.ts';
+import { types } from 'sass';
+import Error = types.Error;
 
 export type Subscription<ValueType = any> =
   | {
@@ -73,6 +76,54 @@ export class Observable<ObservableValue = any> {
         this.#subscriptions.splice(index, 1);
       }
     };
+  }
+}
+
+export function useObserve<ValueType = any>(value: ValueType) {
+  const store = new Observable(value);
+  return [
+    store.$,
+    function setValue(newValue: ValueType) {
+      store.$ = newValue;
+    },
+  ];
+}
+
+export function useEffect(
+  callback: () => Promise<void>,
+  dependencies: any[],
+  element: CustomElement,
+) {
+  const oldlen = element.effects.length;
+
+  if (!oldlen) {
+    element.effects.push(dependencies);
+    if (oldlen && oldlen !== element.effects.length) {
+      throw new Error('Number of effects is different');
+    }
+    callback().then(() => {
+      element.update();
+    });
+    return;
+  }
+
+  const old = element.effects.shift();
+
+  if (old?.length !== dependencies.length) {
+    throw new Error('Number of dependencies is different');
+  }
+
+  for (let i = 0; i < old.length; i++) {
+    if (old[i] !== dependencies[i] && !equal(old[i], dependencies[i])) {
+      element.effects.push(dependencies);
+      if (oldlen && oldlen !== element.effects.length) {
+        throw new Error('Number of effects is different');
+      }
+      callback().then(() => {
+        element.update();
+      });
+      return;
+    }
   }
 }
 

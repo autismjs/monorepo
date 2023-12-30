@@ -29,10 +29,12 @@
   --cursor: pointer;
 
   &:hover {
-    box-shadow: 0 0 0 2px var(--slate-100);
+    --background: var(--slate-25);
+    z-index: 200;
   }
 
   &:active {
-    box-shadow: 0 0 0 2px var(--slate-200);
+    --background: var(--slate-25);
+    z-index: 200;
   }
 }

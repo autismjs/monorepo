@@ -5,7 +5,6 @@ import {
   disabled,
   h,
   register,
-  Router,
 } from '../../../lib/ui.ts';
 import { format, fromNow, userId, userName } from '../../utils/misc.ts';
 import CommentIcon from '../../../static/icons/comment.svg';
@@ -20,7 +19,9 @@ import {
   MessageType,
   Moderation,
   ModerationSubtype,
+  PostSubtype,
   ProofType,
+  Post as AustismPost,
 } from '@message';
 import $signer from '../../state/signer.ts';
 
@@ -56,6 +57,30 @@ export default class Post extends CustomElement {
     return false;
   };
 
+  toggleRepost = (evt: PointerEvent) => {
+    evt.stopPropagation();
+    const p = $node.$posts.get(this.state.hash);
+
+    if (!p.$?.messageId) return;
+
+    if (!$signer.$ecdsa.$ || !$signer.$ecdsa.$.publicKey) return;
+
+    const post = new AustismPost({
+      type: MessageType.Post,
+      subtype: PostSubtype.Repost,
+      reference: p.$.messageId,
+      creator: $signer.$ecdsa.$.publicKey,
+      createdAt: new Date(),
+    });
+
+    post.commit({
+      type: ProofType.ECDSA,
+      value: $signer.$ecdsa.$.sign(post.hash),
+    });
+
+    $node.node.publish(post);
+  };
+
   toggleLike = (evt: PointerEvent) => {
     evt.stopPropagation();
     const p = $node.$posts.get(this.state.hash);
@@ -79,39 +104,6 @@ export default class Post extends CustomElement {
 
     $node.node.publish(mod);
   };
-
-  renderParent() {
-    const post = $node.getPost(this.state.hash);
-
-    if (this.state.displayparent && post?.reference) {
-      const parent = $node.getPost(
-        post.reference.split('/')[1] || post.reference,
-      );
-
-      if (parent) {
-        return h(
-          'div.parents',
-          // @ts-ignore
-          h('post-card', {
-            hash: parent?.hash,
-            onclick: () => {
-              if (!parent?.hash) return;
-              const hash = parent?.hash;
-              const { creator, messageId } = $node.$posts.get(hash).$ || {};
-              const url = creator ? `/${creator}/status/${hash}` : `/${hash}`;
-              $editor.reference.$ = messageId || '';
-              $node.getReplies(messageId || '');
-              Router.go(url);
-            },
-            ...boolAttr('displayparent', true),
-            ...boolAttr('parent', true),
-          }),
-        );
-      }
-    }
-
-    return h('div.parents');
-  }
 
   render() {
     const p = $node.getPost(this.state.hash);
@@ -137,7 +129,6 @@ export default class Post extends CustomElement {
         ...boolAttr('comfortable', this.state.comfortable),
         ...boolAttr('parent', this.state.parent),
       },
-      this.renderParent(),
       h('profile-image', {
         creator: creator,
       }),
@@ -160,39 +151,56 @@ export default class Post extends CustomElement {
         ),
       h(
         'div.bottom',
-        h(
-          'c-button.comment-btn',
-          // @ts-ignore
-          {
-            ...disabled(!$signer.$ecdsa.$?.privateKey),
-            onclick: this.comment,
-            title: 'Reply',
-          },
-          h('img', { src: CommentIcon }),
-          h('span', `${postmeta?.replies || 0}`),
-        ),
-        h(
-          'c-button.repost-btn',
-          {
-            title: 'Repost',
-            ...disabled(!$signer.$ecdsa.$?.privateKey),
-          },
-          h('img', { src: RepostIcon }),
-          h('span', '0'),
-        ),
-        h(
-          'c-button.like-btn',
-          // @ts-ignore
-          {
-            title: 'Like',
-            ...boolAttr('active', postmeta?.moderated[ModerationSubtype.Like]),
-            ...disabled(!$signer.$ecdsa.$?.privateKey),
-            onclick: this.toggleLike,
-          },
-          h('img', { src: LikeIcon }),
-          h('span', `${postmeta?.moderations[ModerationSubtype.Like] || 0}`),
-        ),
+        this.btn({
+          title: 'Reply',
+          className: 'comment-btn',
+          active: false,
+          count: postmeta?.replies,
+          onclick: this.comment,
+          src: CommentIcon,
+        }),
+        this.btn({
+          className: 'repost-btn',
+          active: false,
+          count: 0,
+          onclick: this.toggleRepost,
+          src: RepostIcon,
+          title: 'Repost',
+        }),
+        this.btn({
+          className: 'like-btn',
+          active: postmeta?.moderated[ModerationSubtype.Like],
+          count: postmeta?.moderations[ModerationSubtype.Like],
+          onclick: this.toggleLike,
+          src: LikeIcon,
+          title: 'Like',
+        }),
       ),
+    );
+  }
+
+  btn(props: {
+    className: string;
+    active?: boolean;
+    count?: number;
+    onclick: (evt: PointerEvent) => void;
+    src: string;
+    title: string;
+  }) {
+    const { title, className, active = false, count = 0, onclick } = props;
+
+    return h(
+      'c-button',
+      // @ts-ignore
+      {
+        className: className,
+        title: title,
+        ...boolAttr('active', active),
+        ...disabled(!$signer.$ecdsa.$?.privateKey),
+        onclick: onclick,
+      },
+      h('img', { src: props.src }),
+      h('span', `${count || 0}`),
     );
   }
 

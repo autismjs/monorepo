@@ -1,6 +1,8 @@
 @import "../App/index.scss";
 
 .posts {
+  gap: 0;
+
   &__bottom {
     flex: 1 0 auto;
   }
@@ -10,18 +12,20 @@
 
     &:hover {
       box-shadow: none;
+      --background: var(--white);
     }
 
     &:active {
       box-shadow: none;
+      --background: var(--white);
     }
   }
 }
 
-.replies {
+.replies,
+.parents {
   display: flex;
   flex-flow: column nowrap;
-  gap: 0.25rem;
   flex: 0 0 auto;
 
   post-card {
@@ -29,11 +33,18 @@
     --cursor: pointer;
 
     &:hover {
-      box-shadow: 0 0 0 2px var(--slate-100);
+      --background: var(--slate-25);
+      z-index: 200;
     }
 
     &:active {
-      box-shadow: 0 0 0 2px var(--slate-200);
+      --background: var(--slate-25);
+      z-index: 200;
     }
   }
+}
+
+.replies {
+  margin-top: .25rem;
+  gap: 0.25rem;
 }

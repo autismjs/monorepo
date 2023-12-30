@@ -19,6 +19,7 @@ export class CustomElement extends HTMLElement implements ICustomElement {
   #lastAttrUpdated = 0;
   #attrUpdateTimeout: any;
   $?: any;
+  effects: any[][] = [];
 
   get tree() {
     return this.#tree;
