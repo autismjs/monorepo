@@ -9,6 +9,7 @@ import {
 import { format, fromNow, userId, userName } from '../../utils/misc.ts';
 import CommentIcon from '../../../static/icons/comment.svg';
 import RepostIcon from '../../../static/icons/repost.svg';
+import RepostSlate300Icon from '../../../static/icons/repost-slate-300.svg';
 import LikeIcon from '../../../static/icons/like.svg';
 import '../ProfileImage';
 import '../Button';
@@ -19,17 +20,17 @@ import {
   MessageType,
   Moderation,
   ModerationSubtype,
+  Post as AustismPost,
   PostSubtype,
   ProofType,
-  Post as AustismPost,
 } from '@message';
 import $signer from '../../state/signer.ts';
+import { useEffect } from '../../../lib/state.ts';
 
 @connect((el) => {
   const hash = el.state.hash;
   const post = $node.$posts.get(hash);
   const user = $node.$users.get(post.$?.creator || '');
-  const parent = post.$?.reference && $node.$posts.get(post.$?.reference);
 
   return {
     post,
@@ -37,7 +38,6 @@ import $signer from '../../state/signer.ts';
     ecdsa: $signer.$ecdsa,
     reference: $editor.reference,
     postmeta: $node.$postmetas.get(hash),
-    parent: parent || null,
   };
 })
 export default class Post extends CustomElement {
@@ -47,13 +47,34 @@ export default class Post extends CustomElement {
 
   css = css.toString();
 
+  async onupdated() {
+    this.#fixMaxHeight();
+
+    const repost = $node.getRepostRef(this.state.hash);
+
+    if (repost?.subtype !== PostSubtype.Repost || !repost?.reference) return;
+
+    const [creator, hash] = repost!.reference!.split('/');
+    const postHash = hash || creator;
+
+    useEffect(
+      async () => {
+        $node.getPost(postHash);
+        $node.$posts.get(postHash).subscribe(this.update);
+        $node.$postmetas.get(postHash).subscribe(this.update);
+      },
+      [postHash],
+      this,
+    );
+  }
+
   comment = (evt: PointerEvent) => {
     evt.stopPropagation();
-    const p = $node.$posts.get(this.state.hash);
+    const repost = $node.getRepostRef(this.state.hash);
+    const hash = repost?.hash || this.state.hash;
+    const p = $node.$posts.get(hash);
     $editor.reference.$ =
-      $editor.reference.$.split('/')[1] === this.state.hash
-        ? ''
-        : p.$?.messageId || '';
+      $editor.reference.$.split('/')[1] === hash ? '' : p.$?.messageId || '';
     return false;
   };
 
@@ -106,12 +127,16 @@ export default class Post extends CustomElement {
   };
 
   render() {
-    const p = $node.getPost(this.state.hash);
+    const post = $node.getPost(this.state.hash);
+    const repost =
+      post?.subtype === PostSubtype.Repost
+        ? $node.getPost(post.reference!.split('/')[1] || post.reference!)
+        : null;
+    const hash = repost?.hash || this.state.hash;
+    const p = $node.getPost(hash);
     const u = $node.$users.get(p?.creator || '');
-    const postmeta = $node.getPostMeta(
-      this.state.hash,
-      $signer.$ecdsa.$?.publicKey,
-    );
+    const rpu = $node.$users.get(repost?.creator || '');
+    const postmeta = $node.getPostMeta(hash, $signer.$ecdsa.$?.publicKey);
 
     const creator = p?.json.creator || '';
     const createat = fromNow(p?.json.createdAt) || '';
@@ -122,6 +147,8 @@ export default class Post extends CustomElement {
       ? format(p?.json.createdAt, 'h:mm A · MMM D, YYYY')
       : '';
 
+    const rpname = rpu.$?.name || userName(post?.creator) || 'Anonymous';
+
     return h(
       'div.post',
       {
@@ -129,6 +156,11 @@ export default class Post extends CustomElement {
         ...boolAttr('comfortable', this.state.comfortable),
         ...boolAttr('parent', this.state.parent),
       },
+      !!repost &&
+        h('img.reposted-icon', {
+          src: RepostSlate300Icon,
+        }),
+      !!repost && h('div.reposted', `${rpname} reposted`),
       h('profile-image', {
         creator: creator,
       }),
@@ -204,7 +236,7 @@ export default class Post extends CustomElement {
     );
   }
 
-  async onupdated() {
+  #fixMaxHeight() {
     const el = this.shadowRoot!.querySelector('div.content');
     if (el?.clientHeight && el.clientHeight >= 15 * 24) {
       el.classList.add('max-height');

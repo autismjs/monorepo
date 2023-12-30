@@ -9,6 +9,7 @@
 
   post-card {
     --cursor: default;
+    --background: var(--white);
 
     &:hover {
       box-shadow: none;
@@ -34,12 +35,10 @@
 
     &:hover {
       --background: var(--slate-25);
-      z-index: 200;
     }
 
     &:active {
       --background: var(--slate-25);
-      z-index: 200;
     }
   }
 }

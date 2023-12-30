@@ -24,8 +24,10 @@ export default class PostView extends CustomElement {
   css = css.toString();
 
   async onupdated() {
-    const [, creator, , hash] = Router.pathname.split('/');
-    const messageId = creator + '/' + hash;
+    const [, creator, , h] = Router.pathname.split('/');
+    const repost = $node.getRepostRef(h);
+    const messageId = !repost ? creator + '/' + h : repost.messageId;
+    const hash = repost?.hash || h;
 
     useEffect(
       async () => {
@@ -83,7 +85,8 @@ export default class PostView extends CustomElement {
 
   renderReplies = () => {
     const [, creator, , hash] = Router.pathname.split('/');
-    const messageId = creator + '/' + hash;
+    const repost = $node.getRepostRef(hash);
+    const messageId = repost ? repost.messageId : creator + '/' + hash;
     const replies = $node.getReplies(messageId);
 
     return h(

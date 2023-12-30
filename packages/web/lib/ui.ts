@@ -191,12 +191,20 @@ export class VNode {
   #patchOne(lastEl: Element, newNode: VNode) {
     let dirty = false;
 
-    if (lastEl.tagName === 'TEXT' && lastEl.textContent !== newNode.content) {
+    if (lastEl.tagName !== newNode.tagName.toUpperCase()) {
+      dirty = true;
+    }
+
+    if (
+      !dirty &&
+      lastEl.tagName === 'TEXT' &&
+      lastEl.textContent !== newNode.content
+    ) {
       lastEl.textContent = newNode.content || '';
       dirty = true;
     }
 
-    if (newNode.attributes.size) {
+    if (!dirty && newNode.attributes.size) {
       for (const [name, value] of newNode.attributes) {
         if (excludedAttributes.has(name)) continue;
 
@@ -213,7 +221,7 @@ export class VNode {
       }
     }
 
-    if (lastEl.attributes.length) {
+    if (!dirty && lastEl.attributes.length) {
       for (const { name, value } of Array.from(lastEl.attributes)) {
         if (excludedAttributes.has(name)) continue;
 
@@ -230,7 +238,7 @@ export class VNode {
       }
     }
 
-    if (newNode.classList.length) {
+    if (!dirty && newNode.classList.length) {
       for (const className of newNode.classList) {
         if (!lastEl.classList.contains(className)) {
           lastEl.classList.add(className);
@@ -238,7 +246,7 @@ export class VNode {
       }
     }
 
-    if (lastEl.classList.length) {
+    if (!dirty && lastEl.classList.length) {
       for (const className of Array.from(lastEl.classList)) {
         if (!newNode.classList.includes(className)) {
           lastEl.classList.remove(className);

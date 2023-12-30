@@ -80,6 +80,7 @@ module.exports = [
     mode: isProd ? 'production' : 'development',
     ignoreWarnings: [/Uncaught \(in promise\) CodeError: stream reset/],
     entry: {
+      'autismjs-crypto': ['@crypto'],
       app: path.join(__dirname, 'src', 'index.ts'),
     },
 
@@ -160,10 +161,10 @@ module.exports = [
               }),
             ]
           : [],
-      // runtimeChunk: 'single',
-      // splitChunks: {
-      //   chunks: 'all',
-      // },
+      runtimeChunk: 'single',
+      splitChunks: {
+        chunks: 'all',
+      },
     },
     devtool:
       process.env.NODE_ENV === 'development'

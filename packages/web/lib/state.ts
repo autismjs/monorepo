@@ -98,9 +98,6 @@ export function useEffect(
 
   if (!oldlen) {
     element.effects.push(dependencies);
-    if (oldlen && oldlen !== element.effects.length) {
-      throw new Error('Number of effects is different');
-    }
     callback().then(() => {
       element.update();
     });
@@ -113,12 +110,10 @@ export function useEffect(
     throw new Error('Number of dependencies is different');
   }
 
+  element.effects.push(dependencies);
+
   for (let i = 0; i < old.length; i++) {
     if (old[i] !== dependencies[i] && !equal(old[i], dependencies[i])) {
-      element.effects.push(dependencies);
-      if (oldlen && oldlen !== element.effects.length) {
-        throw new Error('Number of effects is different');
-      }
       callback().then(() => {
         element.update();
       });

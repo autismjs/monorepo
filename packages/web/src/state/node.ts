@@ -1,6 +1,6 @@
 import { Observable, ObservableMap } from '../../lib/state.ts';
 import { Autism } from '@protocol/browser';
-import { Post } from '@message';
+import { Post, PostSubtype } from '@message';
 import { PostMeta, UserProfileData } from '@autismjs/db/src/base.ts';
 import { equal } from '../utils/misc.ts';
 
@@ -17,7 +17,7 @@ export class NodeStore {
   constructor() {
     const node = new Autism({
       bootstrap: [
-        '/ip4/192.168.86.24/tcp/57377/ws/p2p/12D3KooWHrwzv7ehbPR4gcQCgq5DHHmpzBCebhtpsB7KLMU5kBaC',
+        '/ip4/192.168.86.24/tcp/56573/ws/p2p/12D3KooWCREWs8KVyccVqB6HUUMyJMutKWBrDRSWDUFdHfVpP9AY',
       ],
     });
 
@@ -101,6 +101,21 @@ export class NodeStore {
     }
 
     return list;
+  }
+
+  getRepostRef(hash: string) {
+    const post = $node.getPost(hash);
+    const repostRef =
+      post?.subtype === PostSubtype.Repost ? post.reference : '';
+    const [rpCreator, rpHash] = repostRef?.split('/') || [];
+    const repostHash = rpHash || rpCreator;
+
+    if (repostHash) {
+      $node.getPost(repostHash);
+      return $node.$posts.get(repostHash).$;
+    }
+
+    return null;
   }
 
   getReplies(messageId: string) {
