@@ -41,6 +41,11 @@ export function fromNow(date?: Date, withoutSuffix = true) {
   return dayjs(date).fromNow(withoutSuffix);
 }
 
+export function format(date?: Date, fmt = 'YYYY-MM-DDTHH:mm:ssZ[Z]') {
+  if (!date) return '';
+  return dayjs(date).format(fmt);
+}
+
 export function throttle(delay: number) {
   let lastExecution = 0;
   return function (

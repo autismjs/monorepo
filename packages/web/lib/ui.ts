@@ -15,7 +15,6 @@ interface ICustomElement extends HTMLElement {
 const excludedAttributes = new Set(['class', 'id']);
 export class CustomElement extends HTMLElement implements ICustomElement {
   css: string;
-  html: string;
   #tree?: VNode;
   #lastAttrUpdated = 0;
   #attrUpdateTimeout: any;
@@ -61,9 +60,10 @@ export class CustomElement extends HTMLElement implements ICustomElement {
   }
 
   async connectedCallback() {
+    if (this.#tree) return;
     this.attachShadow({ mode: 'open' });
     await this.onmount();
-    this.create();
+    this.update();
   }
 
   update = async () => {
@@ -130,7 +130,6 @@ type VNodeProps = {
   id?: string;
   attributes?: Map<string, string>;
   children?: VNode[];
-  style?: CSSStyleDeclaration;
   content?: string;
   oninput?: () => void;
   onsubmit?: () => void;
@@ -143,7 +142,6 @@ export class VNode {
   classList: string[] = [];
   attributes = new Map<string, string>();
   children: VNode[] = [];
-  style?: CSSStyleDeclaration;
   oninput?: () => void;
   onsubmit?: () => void;
   onclick?: () => void;
@@ -156,7 +154,6 @@ export class VNode {
     this.classList = options.classList || [];
     this.id = options.id;
     this.attributes = options.attributes || new Map();
-    this.style = options.style;
     this.content = options.content;
     this.oninput = options.oninput;
     this.onsubmit = options.onsubmit;
@@ -284,12 +281,6 @@ export class VNode {
 
     if (this.id) el.id = this.id;
 
-    if (this.style) {
-      for (const [k, v] of Object.entries(this.style)) {
-        el.style[k as any] = v;
-      }
-    }
-
     if (this.attributes) {
       for (const [k, v] of this.attributes) {
         el.setAttribute(k, v);
@@ -300,9 +291,9 @@ export class VNode {
       el.textContent = this.content;
     }
 
-    if (this.oninput) el.addEventListener('input', this.oninput, true);
-    if (this.onclick) el.addEventListener('click', this.onclick, true);
-    if (this.onsubmit) el.addEventListener('submit', this.onsubmit, true);
+    if (this.oninput) el.addEventListener('input', this.oninput);
+    if (this.onclick) el.addEventListener('click', this.onclick);
+    if (this.onsubmit) el.addEventListener('submit', this.onsubmit);
 
     frag.append(el);
 
@@ -319,7 +310,6 @@ export class VNode {
 }
 
 type DOMOptions = {
-  style?: CSSStyleDeclaration;
   className?: string;
   children?: VNode[];
   oninput?(): void;
@@ -333,7 +323,7 @@ type VNodeOptions = VNodeOption | VNodeOption[];
 export const h = (
   name: string,
   optionOrNodes?: DOMOptions | VNodeOptions,
-  ...args: VNodeOption[]
+  ...args: VNodeOptions[]
 ) => {
   const tagName = name.match(/^[^.|#|\[]*/g);
   const classList = name.match(/(?<=[.*])([^.#\[\]]*)+?(?=[(#.\s\[)*])?/g);
@@ -376,7 +366,7 @@ export const h = (
 
   function reduceChildren(
     props: VNodeProps,
-    nodeOrStrings: VNodeOptions,
+    nodeOrStrings: VNodeOptions | VNodeOptions[],
   ): VNodeProps {
     let newProps = { ...props };
     if (Array.isArray(nodeOrStrings)) {
@@ -398,7 +388,7 @@ export const h = (
     return newProps;
   }
 
-  function mapNodeText(nodeOrText: VNodeOption): VNode[] {
+  function mapNodeText(nodeOrText: VNodeOptions): VNode[] {
     if (nodeOrText instanceof VNode) {
       return [nodeOrText];
     }
@@ -409,6 +399,13 @@ export const h = (
 
     if (typeof nodeOrText === 'boolean') {
       return [];
+    }
+
+    if (Array.isArray(nodeOrText)) {
+      return nodeOrText.reduce((list: VNode[], n) => {
+        list.concat(mapNodeText(n));
+        return list;
+      }, []);
     }
 
     const nodes = nodeOrText();
@@ -430,7 +427,6 @@ export const h = (
       content,
       children,
       className,
-      style,
       id,
       ...rest
     } = opts;
@@ -442,7 +438,6 @@ export const h = (
 
     if (className)
       newProps.classList = newProps.classList.concat(className.split(' '));
-    if (style) newProps.style = style;
     if (id) newProps.id = id;
     if (children) newProps.children = children.concat(children);
     if (content) newProps.content = content;
@@ -465,7 +460,11 @@ export const h = (
  */
 export function connect(
   getStore:
-    | ((element: CustomElement) => { [key: string]: Observable } | Observable)
+    | ((
+        element: CustomElement,
+      ) =>
+        | { [key: string]: Observable | undefined | null }
+        | (Observable | undefined | null))
     | Observable,
 ): any {
   return function (ctx: () => CustomElement) {
@@ -481,12 +480,12 @@ export function connect(
 
         this.$ = stores;
         if (stores instanceof Observable) {
-          stores.subscribe(this.update);
+          stores?.subscribe(this.update);
         } else {
           for (const key in stores) {
             if (stores.hasOwnProperty(key)) {
               const store = stores[key];
-              store.subscribe(this.update);
+              store?.subscribe(this.update);
             }
           }
         }
@@ -503,6 +502,67 @@ export function disabled(bool?: any): { disabled?: 'true' } {
 
 export function boolAttr(key: string, bool?: any): { [key: string]: 'true' } {
   const obj: { [key: string]: 'true' } = {};
-  if (!!bool) obj[key] = 'true';
+  if (!!bool) obj[key.toLowerCase()] = 'true';
   return obj;
 }
+
+class UIRouter {
+  #hasInit = false;
+
+  #routes: [RegExp, CustomElement][] = [];
+
+  $pathname = new Observable('');
+
+  #el?: CustomElement;
+
+  get pathname() {
+    return this.$pathname.$;
+  }
+
+  constructor() {
+    this.$pathname.subscribe(this.update);
+  }
+
+  #refreshPath = () => {
+    console.log(window.location.pathname);
+    this.$pathname.$ = window.location.pathname;
+  };
+
+  #init() {
+    if (!this.#hasInit) {
+      window.addEventListener('popstate', this.#refreshPath);
+      window.addEventListener('DOMContentLoaded', this.#refreshPath);
+      this.#hasInit = true;
+    }
+  }
+
+  go = (url: string) => {
+    this.#init();
+    window.history.pushState({}, '', url);
+    this.#refreshPath();
+  };
+
+  add = (path: RegExp, node: CustomElement) => {
+    this.#init();
+    this.#routes.push([path, node]);
+  };
+
+  update = () => {
+    this.#init();
+    for (const [path, element] of this.#routes) {
+      if (path.test(this.pathname)) {
+        if (this.#el && this.#el !== element) {
+          this.#el.replaceWith(element);
+          this.#el = element;
+          this.#el.update();
+        } else if (!this.#el) {
+          document.body.append(element);
+          this.#el = element;
+        }
+        return;
+      }
+    }
+  };
+}
+
+export const Router = new UIRouter();

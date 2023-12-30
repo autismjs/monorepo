@@ -306,7 +306,7 @@ export default class LevelDBAdapter implements BaseDBAdapter {
       limit?: number;
       offset?: string;
     },
-  ): Promise<Any[]> => {
+  ): Promise<Post[]> => {
     if (!reference) return [];
 
     const predicate = (msg: Any) => {
@@ -331,7 +331,7 @@ export default class LevelDBAdapter implements BaseDBAdapter {
       .sublevel(hash)
       .sublevel(MessageType[MessageType.Post]);
 
-    return this.#query(db, predicate, options);
+    return this.#query(db, predicate, options) as Promise<Post[]>;
   };
 
   async getModerations(

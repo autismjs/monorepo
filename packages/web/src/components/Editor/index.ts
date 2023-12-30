@@ -1,4 +1,5 @@
 import {
+  boolAttr,
   connect,
   CustomElement,
   disabled,
@@ -42,7 +43,6 @@ export default class Editor extends CustomElement {
           post,
           reset: () => {
             this.$.content.$ = '';
-            $editor.reference.$ = '';
           },
         },
       }),
@@ -76,6 +76,7 @@ export default class Editor extends CustomElement {
         },
         h('post-card.parent', {
           hash: hash,
+          ...boolAttr('hideactions', true),
         }),
         h(
           'div.ref__desc',
@@ -98,6 +99,9 @@ export default class Editor extends CustomElement {
       ),
       h(
         'div.post.editor__post',
+        {
+          ...boolAttr('comfortable', true),
+        },
         h('profile-image', {
           creator: creator,
         }),

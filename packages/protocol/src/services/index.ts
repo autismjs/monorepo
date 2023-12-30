@@ -117,13 +117,10 @@ export class Autism extends EventEmitter2 {
       const children = merkle.checkHash(depth, index, BigInt(root));
 
       if (!children) {
-        console.log(`sending message depth: ${depth} index: ${index}`);
-
         const message = await this.db.getMessage(
           hexify(merkle.leaves[index]).padStart(64, '0'),
         );
 
-        console.log(user, message?.hash);
         if (message) {
           res.send(
             Buffer.from(
@@ -229,7 +226,6 @@ export class Autism extends EventEmitter2 {
     for (const user of users) {
       const merkle = await this.db.merklize(user);
       const root = '0x' + merkle.root.toString(16);
-
       await this.#syncUserWithPeer(peerId, user, root);
     }
   };

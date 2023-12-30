@@ -1,29 +1,175 @@
 .post {
   display: var(--display, grid);
   background: var(--background, var(--white));
-  grid-template-columns: var(--grid-template-columns, 3.5rem auto);
+  grid-template-columns: var(--grid-template-columns, 3rem auto);
   grid-template-rows: var(--grid-template-rows, auto auto auto);
-  padding: var(--padding, 1rem);
-  padding-top: var(--padding-top, 1rem);
-  padding-bottom: var(--padding-bottom, 1rem);
+  padding: var(--padding, .5rem);
+  padding-top: var(--padding-top, .5rem);
+  padding-bottom: var(--padding-bottom, .5rem);
   margin: var(--margin, 0);
   font-size: var(--font-size, var(--text-base));
   border: var(--border, none);
   cursor: var(--cursor, default);
+  box-shadow: var(--box-shadow);
+
+  &[hideactions] {
+    .bottom {
+      display: none;
+    }
+  }
+
+  &[parent] {
+    .content {
+      position: relative;
+      &::before {
+        content: '';
+        display: block;
+        width: 2px;
+        background: var(--slate-100);
+        height: calc(100% + .5rem);
+        position: absolute;
+        top: 1.75rem;
+        left: calc(-1.75rem - 1px);
+        bottom: -1rem;
+      }
+    }
+  }
+
+  &[comfortable] {
+    --grid-template-rows: auto auto auto auto;
+
+    .parents {
+      display: flex;
+      flex-flow: column nowrap;
+      grid-column-start: 1;
+      grid-column-end: 3;
+      grid-row-start: 1;
+      grid-row-end: 2;
+    }
+
+    profile-image {
+      grid-column-start: 1;
+      grid-column-end: 2;
+      grid-row-start: 2;
+      grid-row-end: 3;
+    }
+
+    .top {
+      display: grid;
+      grid-template-columns: min-content auto;
+      grid-template-rows: auto auto;
+      grid-column-start: 2;
+      grid-column-end: 3;
+      grid-row-start: 2;
+      grid-row-end: 3;
+
+      .creator {
+        grid-column-start: 1;
+        grid-column-end: 2;
+        grid-row-start: 1;
+        grid-row-end: 2;
+      }
+
+      .userId {
+        grid-column-start: 1;
+        grid-column-end: 3;
+        grid-row-start: 2;
+        grid-row-end: 3;
+      }
+
+      .createAt-top {
+        display: none;
+        grid-column-start: 2;
+        grid-column-end: 3;
+        grid-row-start: 1;
+        grid-row-end: 2;
+      }
+    }
+
+    .bottom {
+      display: flex;
+      flex-flow: row nowrap;
+      align-items: center;
+      justify-content: flex-start;
+      grid-column-start: 1;
+      grid-column-end: 3;
+      grid-row-start: 5;
+      grid-row-end: 6;
+      gap: 1rem;
+      padding-top: .5rem;
+      border-top: 1px solid var(--slate-50);
+
+      .comment-btn,
+      .like-btn,
+      .repost-btn {
+        margin-left: 0;
+        --font-size: var(--text-md);
+        --padding: .25rem .375rem;
+
+        img {
+          width: var(--text-md);
+          height: var(--text-md);
+        }
+      }
+    }
+
+    .createAt-bottom {
+      font-weight: var(--font-light);
+      color: var(--slate-300);
+      grid-column-start: 1;
+      grid-column-end: 3;
+      grid-row-start: 4;
+      grid-row-end: 5;
+      margin-bottom: .5rem;
+    }
+
+    .content {
+      grid-column-start: 1;
+      grid-column-end: 3;
+      grid-row-start: 3;
+      grid-row-end: 4;
+      background-color: var(--white);
+      font-family: var(--font-sans);
+      color: var(--slate-800);
+      font-weight: var(--font-normal);
+      font-size: var(--text-md);
+      margin: .5rem 0;
+    }
+  }
 }
+
+
 
 .max-height {
   max-height: 24rem;
   mask-image: linear-gradient(180deg, var(--slate-500),transparent);
 }
 
+.parents {
+  display: flex;
+  flex-flow: column nowrap;
+  grid-column-start: 1;
+  grid-column-end: 3;
+  grid-row-start: 1;
+  grid-row-end: 2;
+  position: relative;
+
+  post-card {
+    --padding: 0;
+    --padding-top: 0;
+    --padding-bottom: 1rem;
+    --cursor: pointer;
+    margin: 0 0 .5rem 0;
+  }
+}
+
 profile-image {
   --display: inline-block;
-  --width: 3rem;
-  --height: 3rem;
+  --width: 2.5rem;
+  --height: 2.5rem;
   grid-column-start: 1;
   grid-column-end: 2;
-  grid-row-start: 1;
+  grid-row-start: 2;
   grid-row-end: 4;
   --margin: 0 .5rem 0 0;
 }
@@ -34,8 +180,8 @@ profile-image {
   align-items: center;
   grid-column-start: 2;
   grid-column-end: 3;
-  grid-row-start: 1;
-  grid-row-end: 2;
+  grid-row-start: 2;
+  grid-row-end: 3;
   gap: .25rem;
 
   .creator {
@@ -62,14 +208,13 @@ profile-image {
   flex-flow: row nowrap;
   grid-column-start: 2;
   grid-column-end: 3;
-  grid-row-start: 2;
-  grid-row-end: 3;
+  grid-row-start: 3;
+  grid-row-end: 4;
   padding: .5rem 0;
   font-weight: var(--font-normal);
   color: var(--slate-900);
   line-height: 1.3125;
   white-space: pre-wrap;
-  overflow: hidden;
   word-break: break-all;
 }
 
@@ -78,13 +223,18 @@ profile-image {
   flex-flow: row nowrap;
   grid-column-start: 2;
   grid-column-end: 3;
-  grid-row-start: 3;
-  grid-row-end: 4;
-  gap: .25rem;
+  grid-row-start: 4;
+  grid-row-end: 5;
+  gap: .75rem;
 
   .comment-btn,
   .like-btn,
   .repost-btn {
+    transition:
+      opacity 200ms ease-in-out,
+      color 200ms ease-in-out,
+      background-color 200ms ease-in-out;
+    margin-left: -.5rem;
     --background-color: transparent;
     --border: 1px solid transparent;
     --gap: .5rem;
@@ -92,108 +242,126 @@ profile-image {
     --font-size: var(--text-base);
     --padding: .25rem .375rem;
     --border-radius: .25rem;
-    --opacity: 1;
+    --opacity: .6;
+    --color: var(--slate-400);
 
     img {
       width: var(--text-base);
       height: var(--text-base);
-      opacity: .5;
+      transition:
+              filter 200ms ease-in-out;
+    }
+
+    &:hover,
+    &:active,
+    &[active=true] {
+      img {
+        filter: grayscale(0%) brightness(100%);
+      }
     }
 
     &:hover {
-      img {
-        opacity: .75;
-      }
+      --opacity: .9;
     }
 
-    &[active=true],
     &:active {
-      --font-weight: var(--font-medium);
-      img {
-        opacity: 1;
-      }
+      --opacity: 1;
     }
 
-    &[disabled=true] {
-      --opacity: .8;
-
-      &:hover,
-      &:active {
-        --opacity: .8;
-
-        img {
-          opacity: .5;
-        }
-      }
+    &[active=true] {
+      --opacity: 1;
     }
 
+    &[disabled=true],
+    &[disabled=true]:hover,
+    &[disabled=true]:active {
+      --opacity: .3;
+      --background-color: transparent;
+      --color: var(--slate-400);
+    }
   }
 }
 
 .comment-btn {
-  --color: var(--blue-200);
+  img {
+    filter: grayscale(100%) brightness(140%);
+  }
 
   &:hover {
     --background-color: var(--blue-100);
-    --color: var(--blue-400);
+    --color: var(--blue-500);
   }
 
-  &[active=true],
   &:active {
     --background-color: var(--blue-200);
-    --color: var(--blue-600);
+    --color: var(--blue-500);
   }
 
-  &[disabled=true] {
-    &:hover,
-    &:active {
-      --background-color: transparent;
-      --color: var(--blue-200);
+  &[active=true] {
+    --color: var(--blue-500);
+  }
+
+  &[disabled=true],
+  &[disabled=true]:hover,
+  &[disabled=true]:active {
+    img {
+      filter: grayscale(100%) brightness(140%);
     }
   }
 }
 
 .repost-btn {
-  --color: var(--green-200);
+  img {
+    filter: grayscale(100%) brightness(100%);
+  }
 
   &:hover {
     --background-color: var(--green-100);
-    --color: var(--green-400);
+    --color: var(--green-500);
   }
 
-  &[active=true],
   &:active {
     --background-color: var(--green-200);
-    --color: var(--green-600);
+    --color: var(--green-500);
   }
 
-  &[disabled=true] {
-    &:hover,
-    &:active {
-      --background-color: transparent;
-      --color: var(--green-200);
+  &[active=true]{
+    --color: var(--green-500);
+  }
+
+  &[disabled=true],
+  &[disabled=true]:hover,
+  &[disabled=true]:active {
+    img {
+      filter: grayscale(100%) brightness(100%);
     }
   }
 }
 
 .like-btn {
-  --color: var(--red-200);
+  img {
+    filter: grayscale(100%) brightness(140%);
+  }
 
   &:hover {
     --background-color: var(--red-100);
-    --color: var(--red-400);
+    --color: var(--red-500);
   }
 
-  &[active=true],
   &:active {
-    --color: var(--red-600);
+    --background-color: var(--red-200);
+    --color: var(--red-500);
   }
 
-  &[disabled=true] {
-    &:hover,
-    &:active {
-      --background-color: transparent;
-      --color: var(--red-200);
+  &[active=true] {
+    --color: var(--red-500);
+  }
+
+  &[disabled=true],
+  &[disabled=true]:hover,
+  &[disabled=true]:active {
+    img {
+      filter: grayscale(100%) brightness(140%);
     }
   }
 }

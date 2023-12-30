@@ -224,7 +224,7 @@ export class Autism extends EventEmitter2 {
     for (const user of users) {
       const merkle = await this.db.merklize(user);
       const root = '0x' + merkle.root.toString(16);
-      this.#syncUserWithPeer(peerId, user, root);
+      await this.#syncUserWithPeer(peerId, user, root);
     }
   };
 

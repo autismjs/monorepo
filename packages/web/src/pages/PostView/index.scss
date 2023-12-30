@@ -1,0 +1,39 @@
+@import "../App/index.scss";
+
+.posts {
+  &__bottom {
+    flex: 1 0 auto;
+  }
+
+  post-card {
+    --cursor: default;
+
+    &:hover {
+      box-shadow: none;
+    }
+
+    &:active {
+      box-shadow: none;
+    }
+  }
+}
+
+.replies {
+  display: flex;
+  flex-flow: column nowrap;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+
+  post-card {
+    flex: 0 0 auto;
+    --cursor: pointer;
+
+    &:hover {
+      box-shadow: 0 0 0 2px var(--slate-100);
+    }
+
+    &:active {
+      box-shadow: 0 0 0 2px var(--slate-200);
+    }
+  }
+}

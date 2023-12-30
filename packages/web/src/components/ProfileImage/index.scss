@@ -8,4 +8,5 @@ img {
   margin: var(--margin, 0);
   background-color: var(--background-color, var(--slate-50));
   box-shadow: var(--box-shadow);
+  cursor: var(--cursor);
 }

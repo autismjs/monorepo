@@ -9,6 +9,7 @@ export class NodeStore {
   #wait: Promise<void>;
 
   $globalPosts = new Observable<string[]>([]);
+  $replies = new ObservableMap<string, string[]>();
   $posts = new ObservableMap<string, Post>();
   $users = new ObservableMap<string, UserProfileData>();
   $postmetas = new ObservableMap<string, PostMeta>();
@@ -16,7 +17,7 @@ export class NodeStore {
   constructor() {
     const node = new Autism({
       bootstrap: [
-        '/ip4/192.168.86.24/tcp/51279/ws/p2p/12D3KooWL9Um7kUczwNgJ8WBNapYkJdggNVLpBMuSWTx7166oBfd',
+        '/ip4/192.168.86.24/tcp/57377/ws/p2p/12D3KooWHrwzv7ehbPR4gcQCgq5DHHmpzBCebhtpsB7KLMU5kBaC',
       ],
     });
 
@@ -70,6 +71,23 @@ export class NodeStore {
       }
     });
     return store.$;
+  }
+
+  async #updateReplies(messageId: string) {
+    const replies = await this.node.db.db.getReplies(messageId);
+    const $replies = this.$replies.get(messageId);
+    $replies.$ = replies.map((p) => {
+      if (this.$posts.get(p.hash).$?.hex !== p.hex) {
+        this.$posts.set(p.hash, p);
+      }
+      return p.messageId;
+    });
+  }
+
+  getReplies(messageId: string) {
+    this.#updateReplies(messageId);
+    const $replies = this.$replies.get(messageId);
+    return $replies.$;
   }
 
   getPost(hash: string) {

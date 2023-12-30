@@ -8,7 +8,7 @@
     "build:web": "webpack --config webpack.config.js",
     "watch:web": "webpack --config webpack.config.js --watch",
     "build": "NODE_ENV=production concurrently --kill-others-on-fail npm:build:web",
-    "dev": "NODE_ENV=development webpack-dev-server --config webpack.config.js --hot",
+    "dev": "NODE_ENV=development webpack-dev-server --config webpack.config.js",
     "eslint": "eslint . --fix",
     "tsc": "tsc --noEmit",
     "lint": "concurrently npm:tsc npm:eslint"
@@ -17,7 +17,6 @@
   "license": "MIT",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.5.1",
-    "@autismjs/message": "^0.2.1",
     "dayjs": "^1.11.10",
     "minidenticons": "^4.2.0"
   },
@@ -27,6 +26,7 @@
     "console-browserify": "^1.2.0",
     "copy-webpack-plugin": "^11.0.0",
     "crypto-browserify": "^3.12.0",
+    "clean-webpack-plugin": "^4.0.0",
     "sass": "^1.69.5",
     "sass-loader": "^13.3.2",
     "css-loader": "^6.8.1",
