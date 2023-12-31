@@ -65,8 +65,6 @@ export class Connection extends Base {
   }
 
   get hex(): string {
-    if (this.#hex) return this.#hex;
-
     this.#hex = super.hex + [encodeString(this.value || '', 0xfff)].join('');
 
     return this.#hex;

@@ -1,10 +1,10 @@
-import { EventEmitter2, ConstructorOptions } from 'eventemitter2';
+import { ConstructorOptions, EventEmitter2 } from 'eventemitter2';
 import { Any, Message, ProofType } from '@message';
 import {
   P2P,
-  ProtocolType,
-  ProtocolResponseParam,
   ProtocolRequestParam,
+  ProtocolResponseParam,
+  ProtocolType,
 } from './p2p/browser.ts';
 import { DB } from './db';
 import { PubsubTopics } from '../utils/types';
@@ -48,6 +48,10 @@ export class Autism extends EventEmitter2 {
       name: this.#name,
     });
 
+    this.db.db.on('db:message:revert', (json) => {
+      this.emit('pubsub:message:revert', json);
+    });
+
     this.#sync = options?.sync || 5 * 60 * 1000; // default: 5m;
     this.#syncTimeout = null;
   }
@@ -70,6 +74,7 @@ export class Autism extends EventEmitter2 {
       const message = Message.fromHex(Buffer.from(value.data).toString('hex'));
 
       if (!message) return;
+
       if (!message.proof) return;
 
       if (message.proof.type === ProofType.ECDSA) {
@@ -272,7 +277,7 @@ export class Autism extends EventEmitter2 {
 
       if (!verified) return;
 
-      return this.p2p.publish(PubsubTopics.Global, message.buffer);
+      this.p2p.publish(PubsubTopics.Global, message.buffer);
     }
   }
 

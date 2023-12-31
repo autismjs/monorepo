@@ -4,22 +4,28 @@ import { BaseDBAdapter, PostMeta, UserProfileData } from './base';
 import {
   Any,
   AnyJSON,
-  MessageType,
-  PostSubtype,
-  Post,
-  Moderation,
   Connection,
-  Profile,
-  Message,
-  ModerationSubtype,
   ConnectionSubtype,
+  Message,
+  MessageType,
+  Moderation,
+  ModerationSubtype,
+  Post,
+  PostSubtype,
+  Profile,
   ProfileSubtype,
+  Reference,
+  Revert,
 } from '@message';
 import { Mutex } from 'async-mutex';
+import { ConstructorOptions, EventEmitter2 } from 'eventemitter2';
 
 const charwise = require('charwise');
 
-export default class LevelDBAdapter implements BaseDBAdapter {
+export default class LevelDBAdapter
+  extends EventEmitter2
+  implements BaseDBAdapter
+{
   #db: Level<string, AnyJSON>;
   #mutex: Mutex;
 
@@ -33,8 +39,9 @@ export default class LevelDBAdapter implements BaseDBAdapter {
     param: {
       path?: string;
       prefix?: string;
-    } = {},
+    } & ConstructorOptions = {},
   ) {
+    super(param);
     const { path = process.cwd() + '/build', prefix = '' } = param;
 
     this.#db = new Level(`${path}/${prefix}/db`, {
@@ -177,9 +184,113 @@ export default class LevelDBAdapter implements BaseDBAdapter {
 
         break;
       }
+
+      case MessageType.Revert: {
+        const rvt = message as Revert;
+        const msg = await this.getMessage(Reference.from(rvt.reference).hash);
+        if (msg) {
+          await this.revertMessage(msg);
+        }
+        break;
+      }
     }
 
     return message;
+  }
+
+  async revertMessage(message: Any) {
+    const exist = await this.getMessage(message.hash);
+
+    if (!exist) {
+      return null;
+    }
+
+    const time =
+      charwise.encode(message.createdAt.getTime()) +
+      '-' +
+      message.creator +
+      '-' +
+      message.type +
+      '-' +
+      message.subtype;
+
+    await this.#db.del(message.hash);
+
+    await this.#indices.global
+      .sublevel(MessageType[message.type], { valueEncoding: 'json' })
+      .del(time);
+
+    await this.#indices.user
+      .sublevel(message.creator, { valueEncoding: 'json' })
+      .sublevel(MessageType[message.type], { valueEncoding: 'json' })
+      .del(time);
+
+    await this.#indices.user
+      .sublevel(message.creator, { valueEncoding: 'json' })
+      .sublevel('all', { valueEncoding: 'json' })
+      .del(time);
+
+    await this.#indices.user.sublevel('list').del(message.creator);
+
+    switch (message.type) {
+      case MessageType.Post: {
+        const msg = message as Post;
+
+        if (msg.reference) {
+          const hash = msg.reference.split('/')[1];
+
+          if (hash) {
+            await this.#indices.thread
+              .sublevel(msg.reference.split('/')[1], { valueEncoding: 'json' })
+              .sublevel(MessageType[msg.type], { valueEncoding: 'json' })
+              .del(time);
+          }
+        }
+
+        break;
+      }
+
+      case MessageType.Moderation: {
+        const msg = message as Moderation;
+
+        if (msg.reference) {
+          await this.#indices.thread
+            .sublevel(msg.reference.split('/')[1], { valueEncoding: 'json' })
+            .sublevel(MessageType[msg.type], { valueEncoding: 'json' })
+            .del(time);
+        }
+
+        break;
+      }
+
+      case MessageType.Connection: {
+        const msg = message as Connection;
+
+        if (msg.value) {
+          await this.#indices.user
+            .sublevel(msg.value, { valueEncoding: 'json' })
+            .sublevel(MessageType[msg.type], { valueEncoding: 'json' })
+            .del(time);
+        }
+
+        break;
+      }
+
+      case MessageType.Profile: {
+        const msg = message as Profile;
+
+        if (msg.value) {
+          await this.#indices.user
+            .sublevel(msg.creator, { valueEncoding: 'json' })
+            .sublevel(MessageType[msg.type], { valueEncoding: 'json' })
+            .del(time);
+        }
+
+        break;
+      }
+    }
+
+    this.emit('db:message:revert', message.json);
   }
 
   async #query(
@@ -576,7 +687,10 @@ function flattenByCreatorSubtype(items: Any[]): { [subtype: string]: number } {
   return items.reduce((sum: { [k: string]: number }, item) => {
     sum[item.subtype] = sum[item.subtype] || 0;
 
-    if (!exists[item.creator + '/' + item.subtype]) {
+    if (
+      item.subtype === PostSubtype.Comment ||
+      !exists[item.creator + '/' + item.subtype]
+    ) {
       sum[item.subtype]++;
       exists[item.creator + '/' + item.subtype] = true;
     }
@@ -588,15 +702,15 @@ function flattenByCreatorSubtype(items: Any[]): { [subtype: string]: number } {
 function reduceByCreatorSubtype(
   msgs: Any[],
   own?: string | null,
-): { [subtype: string]: boolean } {
+): { [subtype: string]: string } {
   const obj: {
-    [key: string]: boolean;
+    [key: string]: string;
   } = {};
 
   if (own) {
     for (const msg of msgs) {
       if (msg.creator === own) {
-        obj[msg.subtype] = true;
+        obj[msg.subtype] = msg.messageId;
       }
     }
   }

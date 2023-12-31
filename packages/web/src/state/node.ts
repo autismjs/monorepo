@@ -1,7 +1,7 @@
 import { Observable, ObservableMap } from '../../lib/state.ts';
 import { Autism } from '@protocol/browser';
 import {
-  Any,
+  AnyJSON,
   MessageType,
   Moderation,
   Post,
@@ -21,18 +21,18 @@ export class NodeStore {
   $users = new ObservableMap<string, UserProfileData>();
   $postmetas = new ObservableMap<string, PostMeta>();
 
-  onPubsub = (msg: Any) => {
+  onPubsub = async (msg: AnyJSON, isRevert = false) => {
     switch (msg.type) {
       case MessageType.Post: {
         const post = msg as Post;
         if (post.subtype === PostSubtype.Default) {
-          this.#updatePosts(msg);
+          this.#updatePosts(isRevert ? undefined : post);
           this.getPost(post.hash!);
           this.getReplies(post.messageId);
           this.getPostMeta(post.messageId);
         }
         if ([PostSubtype.Repost].includes(post.subtype)) {
-          this.#updatePosts(msg);
+          this.#updatePosts(isRevert ? undefined : post);
           this.getPost(Reference.from(post.reference!).hash);
           this.getReplies(post.reference!);
           this.getPostMeta(post.reference);
@@ -47,14 +47,18 @@ export class NodeStore {
       case MessageType.Moderation: {
         const mod = msg as Moderation;
         this.getPostMeta(mod.reference);
+        return;
       }
+      default:
+        console.log('unknown pubsub message', msg);
+        return;
     }
   };
 
   constructor() {
     const node = new Autism({
       bootstrap: [
-        '/ip4/192.168.86.24/tcp/58937/ws/p2p/12D3KooWCU7HfBs3Md9e7DyNqnCubWH5w7dZLLdQSwjHaQXDSiGD',
+        '/ip4/192.168.86.24/tcp/54884/ws/p2p/12D3KooWBLCTz8qFy5tHT6HCbBF5wEeHvd4qa99PeZR72AkugDrP',
       ],
     });
 
@@ -65,7 +69,8 @@ export class NodeStore {
       console.log('peer connected', peer);
     });
 
-    node.on('pubsub:message:success', this.onPubsub);
+    node.on('pubsub:message:success', (msg) => this.onPubsub(msg, false));
+    node.on('pubsub:message:revert', (msg) => this.onPubsub(msg, true));
 
     node.on('sync:new_message', this.onPubsub);
 
@@ -82,7 +87,6 @@ export class NodeStore {
 
   #updatePosts = async (msg?: Post) => {
     const posts = await this.node.db.db.getPosts();
-    console.log(`updating ${posts.length} posts...`, msg);
 
     if (msg) {
       this.$globalPosts.$ = [msg.hash].concat(this.$globalPosts.$);

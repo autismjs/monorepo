@@ -62,8 +62,6 @@ export class Revert extends Base {
   }
 
   get hex(): string {
-    if (this.#hex) return this.#hex;
-
     this.#hex =
       super.hex + [encodeString(this.reference || '', 0xfff)].join('');
 

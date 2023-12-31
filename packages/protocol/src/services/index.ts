@@ -48,6 +48,10 @@ export class Autism extends EventEmitter2 {
       name: this.#name,
     });
 
+    this.db.db.on('db:message:revert', (json) => {
+      this.emit('pubsub:message:revert', json);
+    });
+
     this.#sync = options?.sync || 5 * 60 * 1000; // default: 5m;
     this.#syncTimeout = null;
   }
@@ -70,6 +74,7 @@ export class Autism extends EventEmitter2 {
       const message = Message.fromHex(Buffer.from(value.data).toString('hex'));
 
       if (!message) return;
+
       if (!message.proof) return;
 
       if (message.proof.type === ProofType.ECDSA) {

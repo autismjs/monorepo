@@ -36,6 +36,7 @@
     "charwise": "^3.0.1",
     "crypto-browserify": "^3.12.0",
     "browser-level": "^1.0.1",
+    "eventemitter2": "^6.4.9",
     "level": "^8.0.0",
     "process": "^0.11.10",
     "stream-browserify": "^3.0.0"

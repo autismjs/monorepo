@@ -25,6 +25,7 @@ export class Observable<ObservableValue = any> {
       return;
     }
     this.#state = state;
+
     for (const sub of this.#subscriptions) {
       if (typeof sub === 'function') {
         sub(state);

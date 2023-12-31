@@ -130,6 +130,7 @@ export class P2P extends EventEmitter2 {
     });
 
     const { name = 'node', bootstrap } = this;
+    // @ts-ignore
     const { createLibp2p } = await import('libp2p');
     const { circuitRelayTransport } = await import('libp2p/circuit-relay');
     const { identifyService } = await import('libp2p/identify');
@@ -137,6 +138,7 @@ export class P2P extends EventEmitter2 {
     const { all } = await import('@libp2p/websockets/filters');
     const { noise } = await import('@chainsafe/libp2p-noise');
     const { kadDHT } = await import('@libp2p/kad-dht');
+    // @ts-ignore
     const { gossipsub } = await import('@chainsafe/libp2p-gossipsub');
     const { yamux } = await import('@chainsafe/libp2p-yamux');
     const { mplex } = await import('@libp2p/mplex');

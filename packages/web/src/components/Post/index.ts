@@ -23,6 +23,8 @@ import {
   Post as AustismPost,
   PostSubtype,
   ProofType,
+  Revert,
+  RevertSubtype,
 } from '@message';
 import $signer from '../../state/signer.ts';
 import { useEffect } from '../../../lib/state.ts';
@@ -79,7 +81,7 @@ export default class Post extends CustomElement {
     return false;
   };
 
-  toggleRepost = (evt: PointerEvent) => {
+  toggleRepost = async (evt: PointerEvent) => {
     evt.stopPropagation();
     const repost = $node.getRepostRef(this.state.hash);
     const hash = repost?.hash || this.state.hash;
@@ -89,23 +91,40 @@ export default class Post extends CustomElement {
 
     if (!$signer.$ecdsa.$ || !$signer.$ecdsa.$.publicKey) return;
 
-    const post = new AustismPost({
-      type: MessageType.Post,
-      subtype: PostSubtype.Repost,
-      reference: p.$.messageId,
-      creator: $signer.$ecdsa.$.publicKey,
-      createdAt: new Date(),
-    });
+    const postmeta = await $node.node.db.db.getPostMeta(
+      p.$.messageId,
+      $signer.$ecdsa.$.publicKey,
+    );
 
-    post.commit({
+    let msg;
+
+    if (!!postmeta.threaded[PostSubtype.Repost]) {
+      msg = new Revert({
+        type: MessageType.Revert,
+        subtype: RevertSubtype.Default,
+        reference: postmeta.threaded[PostSubtype.Repost],
+        creator: $signer.$ecdsa.$.publicKey,
+        createdAt: new Date(),
+      });
+    } else {
+      msg = new AustismPost({
+        type: MessageType.Post,
+        subtype: PostSubtype.Repost,
+        reference: p.$.messageId,
+        creator: $signer.$ecdsa.$.publicKey,
+        createdAt: new Date(),
+      });
+    }
+
+    msg.commit({
       type: ProofType.ECDSA,
-      value: $signer.$ecdsa.$.sign(post.hash),
+      value: $signer.$ecdsa.$.sign(msg.hash),
     });
 
-    $node.node.publish(post);
+    $node.node.publish(msg);
   };
 
-  toggleLike = (evt: PointerEvent) => {
+  toggleLike = async (evt: PointerEvent) => {
     evt.stopPropagation();
     const repost = $node.getRepostRef(this.state.hash);
     const hash = repost?.hash || this.state.hash;
@@ -115,20 +134,37 @@ export default class Post extends CustomElement {
 
     if (!$signer.$ecdsa.$ || !$signer.$ecdsa.$.publicKey) return;
 
-    const mod = new Moderation({
-      type: MessageType.Moderation,
-      subtype: ModerationSubtype.Like,
-      reference: p.$.messageId,
-      creator: $signer.$ecdsa.$.publicKey,
-      createdAt: new Date(),
-    });
+    const postmeta = await $node.node.db.db.getPostMeta(
+      p.$.messageId,
+      $signer.$ecdsa.$.publicKey,
+    );
 
-    mod.commit({
+    let msg;
+
+    if (!!postmeta.moderated[ModerationSubtype.Like]) {
+      msg = new Revert({
+        type: MessageType.Revert,
+        subtype: RevertSubtype.Default,
+        reference: postmeta.moderated[ModerationSubtype.Like],
+        creator: $signer.$ecdsa.$.publicKey,
+        createdAt: new Date(),
+      });
+    } else {
+      msg = new Moderation({
+        type: MessageType.Moderation,
+        subtype: ModerationSubtype.Like,
+        reference: p.$.messageId,
+        creator: $signer.$ecdsa.$.publicKey,
+        createdAt: new Date(),
+      });
+    }
+
+    msg.commit({
       type: ProofType.ECDSA,
-      value: $signer.$ecdsa.$.sign(mod.hash),
+      value: $signer.$ecdsa.$.sign(msg.hash),
     });
 
-    $node.node.publish(mod);
+    $node.node.publish(msg);
   };
 
   render() {
@@ -194,14 +230,14 @@ export default class Post extends CustomElement {
         this.btn({
           title: 'Reply',
           className: 'comment-btn',
-          active: postmeta?.threaded[PostSubtype.Comment],
+          active: !!postmeta?.threaded[PostSubtype.Comment],
           count: postmeta?.threads[PostSubtype.Comment],
           onclick: this.comment,
           src: CommentIcon,
         }),
         this.btn({
           className: 'repost-btn',
-          active: postmeta?.threaded[PostSubtype.Repost],
+          active: !!postmeta?.threaded[PostSubtype.Repost],
           count: postmeta?.threads[PostSubtype.Repost],
           onclick: this.toggleRepost,
           src: RepostIcon,
@@ -209,7 +245,7 @@ export default class Post extends CustomElement {
         }),
         this.btn({
           className: 'like-btn',
-          active: postmeta?.moderated[ModerationSubtype.Like],
+          active: !!postmeta?.moderated[ModerationSubtype.Like],
           count: postmeta?.moderations[ModerationSubtype.Like],
           onclick: this.toggleLike,
           src: LikeIcon,
