@@ -31,13 +31,17 @@ import { useEffect } from '../../../lib/state.ts';
   const hash = el.state.hash;
   const post = $node.$posts.get(hash);
   const user = $node.$users.get(post.$?.creator || '');
+  const repost = $node.getRepostRef(hash);
 
+  $node.getPostMeta(post.$?.messageId);
   return {
     post,
     user,
     ecdsa: $signer.$ecdsa,
     reference: $editor.reference,
     postmeta: $node.$postmetas.get(hash),
+    repost: repost ? $node.$posts.get(repost.hash) : null,
+    repostmeta: repost ? $node.$postmetas.get(repost.hash) : null,
   };
 })
 export default class Post extends CustomElement {
@@ -52,14 +56,15 @@ export default class Post extends CustomElement {
 
     const repost = $node.getRepostRef(this.state.hash);
 
-    if (repost?.subtype !== PostSubtype.Repost || !repost?.reference) return;
-
-    const [creator, hash] = repost!.reference!.split('/');
-    const postHash = hash || creator;
+    const postHash = repost?.hash || this.state.hash;
 
     useEffect(
       async () => {
+        if (!postHash) return;
         $node.getPost(postHash);
+        $node.getPostMeta(postHash);
+
+        // console.log($node.$posts.get(postHash), $node.$postmetas.get(postHash));
         $node.$posts.get(postHash).subscribe(this.update);
         $node.$postmetas.get(postHash).subscribe(this.update);
       },
@@ -80,7 +85,9 @@ export default class Post extends CustomElement {
 
   toggleRepost = (evt: PointerEvent) => {
     evt.stopPropagation();
-    const p = $node.$posts.get(this.state.hash);
+    const repost = $node.getRepostRef(this.state.hash);
+    const hash = repost?.hash || this.state.hash;
+    const p = $node.$posts.get(hash);
 
     if (!p.$?.messageId) return;
 
@@ -104,7 +111,9 @@ export default class Post extends CustomElement {
 
   toggleLike = (evt: PointerEvent) => {
     evt.stopPropagation();
-    const p = $node.$posts.get(this.state.hash);
+    const repost = $node.getRepostRef(this.state.hash);
+    const hash = repost?.hash || this.state.hash;
+    const p = $node.$posts.get(hash);
 
     if (!p.$?.messageId) return;
 

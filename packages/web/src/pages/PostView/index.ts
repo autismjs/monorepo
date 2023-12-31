@@ -52,9 +52,9 @@ export default class PostView extends CustomElement {
           ...boolAttr('parent', true),
           hash: parentHash,
           onclick: () => {
-            const url = `/${creator}/status/${parentHash}`;
-            $editor.reference.$ = parentHash;
-            $node.getReplies(parentHash);
+            const url = `/${creator}/status/${hash}`;
+            $editor.reference.$ = parent;
+            $node.getReplies(parent);
             Router.go(url);
           },
         });

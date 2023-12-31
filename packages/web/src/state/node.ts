@@ -85,13 +85,21 @@ export class NodeStore {
   }
 
   async getParents(hash: string, list: string[] = []): Promise<string[]> {
-    const post = await this.node.db.db.getMessage(hash);
-    const reference = (post as Post)?.reference || '';
+    const p = this.getPost(hash);
+    const post = p || (await this.node.db.db.getMessage<Post>(hash));
+
+    const reference = post?.reference || '';
     const [creator, refhash] = reference.split('/');
     const parentHash = refhash || creator;
 
     if (post && parentHash) {
-      const parent = await this.node.db.db.getMessage(parentHash);
+      const pr = this.getPost(parentHash);
+      const parent = pr || (await this.node.db.db.getMessage<Post>(parentHash));
+
+      if (parent && this.getPost(parentHash)?.hex !== parent?.hex) {
+        this.$posts.get(parentHash).$ = parent;
+      }
+
       if (parent) {
         return this.getParents(parent.hash, [
           (parent as Post).messageId,
@@ -111,8 +119,7 @@ export class NodeStore {
     const repostHash = rpHash || rpCreator;
 
     if (repostHash) {
-      $node.getPost(repostHash);
-      return $node.$posts.get(repostHash).$;
+      return $node.getPost(repostHash);
     }
 
     return null;

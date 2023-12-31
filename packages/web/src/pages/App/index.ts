@@ -22,10 +22,18 @@ export default class App extends CustomElement {
           return h(`post-card`, {
             hash,
             onclick: () => {
-              const { creator, messageId } = $node.$posts.get(hash).$ || {};
-              const url = creator ? `/${creator}/status/${hash}` : `/${hash}`;
-              $editor.reference.$ = messageId || '';
-              $node.getReplies(messageId || '');
+              const repost = $node.getRepostRef(hash);
+              const newHash = repost?.hash || hash;
+              const post = $node.getPost(newHash);
+              const [creator, postHash] =
+                $node.getPost(hash)!.messageId.split('/') || [];
+              const url = creator
+                ? `/${creator}/status/${postHash}`
+                : `/${postHash}`;
+
+              $editor.reference.$ = post!.messageId || '';
+              $node.getReplies(post!.messageId || '');
+              $node.getParents(newHash);
               Router.go(url);
             },
           });

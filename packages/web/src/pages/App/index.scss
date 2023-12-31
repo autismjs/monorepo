@@ -2,10 +2,10 @@
   display: flex;
   flex-flow: row nowrap;
   background: var(--slate-50);
-  width: calc(100% - 2rem);
-  height: calc(100% - 2rem);
+  width: calc(100% - .5rem);
+  height: calc(100% - .5rem);
   overflow: hidden;
-  padding: 1rem;
+  padding: .25rem;
 }
 
 .posts {

@@ -502,7 +502,9 @@ export default class LevelDBAdapter implements BaseDBAdapter {
     return names;
   }
 
-  async getMessage(hash: string): Promise<Any | null> {
+  async getMessage<MessageType = Any>(
+    hash: string,
+  ): Promise<MessageType | null> {
     try {
       const message = await this.#db.get(hash);
 
@@ -513,7 +515,7 @@ export default class LevelDBAdapter implements BaseDBAdapter {
       const msg = Message.fromJSON({
         ...json,
         createdAt: new Date(createdAt),
-      });
+      }) as MessageType;
 
       return msg;
     } catch (e) {
