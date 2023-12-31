@@ -110,6 +110,18 @@ export class Merkle {
     };
   }
 
+  getLeaves(depth: number, index: number, leaves: bigint[] = []): bigint[] {
+    const maxDepth = this.depth - 1;
+
+    if (depth === maxDepth) {
+      return this.leaves[index] ? leaves.concat(this.leaves[index]) : leaves;
+    }
+
+    return leaves
+      .concat(this.getLeaves(depth + 1, 0))
+      .concat(this.getLeaves(depth + 1, 1));
+  }
+
   getProof(leaf: bigint): bigint[] | null {
     const node = this.hashMap.get(leaf);
 

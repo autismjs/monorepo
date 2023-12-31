@@ -31,17 +31,12 @@ import { useEffect } from '../../../lib/state.ts';
   const hash = el.state.hash;
   const post = $node.$posts.get(hash);
   const user = $node.$users.get(post.$?.creator || '');
-  const repost = $node.getRepostRef(hash);
 
-  $node.getPostMeta(post.$?.messageId);
   return {
     post,
     user,
     ecdsa: $signer.$ecdsa,
     reference: $editor.reference,
-    postmeta: $node.$postmetas.get(hash),
-    repost: repost ? $node.$posts.get(repost.hash) : null,
-    repostmeta: repost ? $node.$postmetas.get(repost.hash) : null,
   };
 })
 export default class Post extends CustomElement {
@@ -55,20 +50,21 @@ export default class Post extends CustomElement {
     this.#fixMaxHeight();
 
     const repost = $node.getRepostRef(this.state.hash);
-
     const postHash = repost?.hash || this.state.hash;
+    const post = $node.getPost(postHash);
+    const messageId = post?.messageId;
 
     useEffect(
       async () => {
-        if (!postHash) return;
+        if (!postHash || !messageId) return;
         $node.getPost(postHash);
-        $node.getPostMeta(postHash);
-
-        // console.log($node.$posts.get(postHash), $node.$postmetas.get(postHash));
+        $node.getPostMeta(messageId);
+        $node.getReplies(messageId);
+        $node.$replies.get(messageId).subscribe(this.update);
         $node.$posts.get(postHash).subscribe(this.update);
-        $node.$postmetas.get(postHash).subscribe(this.update);
+        $node.$postmetas.get(messageId).subscribe(this.update);
       },
-      [postHash],
+      [postHash, messageId],
       this,
     );
   }
@@ -145,7 +141,10 @@ export default class Post extends CustomElement {
     const p = $node.getPost(hash);
     const u = $node.$users.get(p?.creator || '');
     const rpu = $node.$users.get(repost?.creator || '');
-    const postmeta = $node.getPostMeta(hash, $signer.$ecdsa.$?.publicKey);
+    const postmeta = $node.getPostMeta(
+      p?.messageId,
+      $signer.$ecdsa.$?.publicKey,
+    );
 
     const creator = p?.json.creator || '';
     const createat = fromNow(p?.json.createdAt) || '';

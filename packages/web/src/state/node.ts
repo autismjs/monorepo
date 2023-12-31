@@ -1,6 +1,13 @@
 import { Observable, ObservableMap } from '../../lib/state.ts';
 import { Autism } from '@protocol/browser';
-import { Post, PostSubtype } from '@message';
+import {
+  Any,
+  MessageType,
+  Moderation,
+  Post,
+  PostSubtype,
+  Reference,
+} from '@message';
 import { PostMeta, UserProfileData } from '@autismjs/db/src/base.ts';
 import { equal } from '../utils/misc.ts';
 
@@ -14,10 +21,40 @@ export class NodeStore {
   $users = new ObservableMap<string, UserProfileData>();
   $postmetas = new ObservableMap<string, PostMeta>();
 
+  onPubsub = (msg: Any) => {
+    switch (msg.type) {
+      case MessageType.Post: {
+        const post = msg as Post;
+        if (post.subtype === PostSubtype.Default) {
+          this.#updatePosts(msg);
+          this.getPost(post.hash!);
+          this.getReplies(post.messageId);
+          this.getPostMeta(post.messageId);
+        }
+        if ([PostSubtype.Repost].includes(post.subtype)) {
+          this.#updatePosts(msg);
+          this.getPost(Reference.from(post.reference!).hash);
+          this.getReplies(post.reference!);
+          this.getPostMeta(post.reference);
+        }
+        if ([PostSubtype.Comment].includes(post.subtype)) {
+          this.getReplies(post.messageId);
+          this.getPost(Reference.from(post.reference!).hash);
+          this.getPostMeta(post.reference);
+        }
+        return;
+      }
+      case MessageType.Moderation: {
+        const mod = msg as Moderation;
+        this.getPostMeta(mod.reference);
+      }
+    }
+  };
+
   constructor() {
     const node = new Autism({
       bootstrap: [
-        '/ip4/192.168.86.24/tcp/56573/ws/p2p/12D3KooWCREWs8KVyccVqB6HUUMyJMutKWBrDRSWDUFdHfVpP9AY',
+        '/ip4/192.168.86.24/tcp/58937/ws/p2p/12D3KooWCU7HfBs3Md9e7DyNqnCubWH5w7dZLLdQSwjHaQXDSiGD',
       ],
     });
 
@@ -28,15 +65,9 @@ export class NodeStore {
       console.log('peer connected', peer);
     });
 
-    node.on('pubsub:message:success', (peer) => {
-      console.log('pubsub:message:success', peer);
-      this.#updatePosts();
-    });
+    node.on('pubsub:message:success', this.onPubsub);
 
-    node.on('sync:new_message', (post) => {
-      console.log('sync:new_message', post);
-      this.#updatePosts();
-    });
+    node.on('sync:new_message', this.onPubsub);
 
     this.#wait = new Promise(async (r) => {
       await this.node.start();
@@ -49,15 +80,20 @@ export class NodeStore {
     return this.#wait;
   }
 
-  #updatePosts = async () => {
+  #updatePosts = async (msg?: Post) => {
     const posts = await this.node.db.db.getPosts();
-    console.log(`updating ${posts.length} posts...`);
-    this.$globalPosts.$ = posts.map((p) => {
-      if (this.$posts.get(p.hash).$?.hex !== p.hex) {
-        this.$posts.set(p.hash, p);
-      }
-      return p.hash;
-    });
+    console.log(`updating ${posts.length} posts...`, msg);
+
+    if (msg) {
+      this.$globalPosts.$ = [msg.hash].concat(this.$globalPosts.$);
+    } else {
+      this.$globalPosts.$ = posts.map((p) => {
+        if (this.$posts.get(p.hash).$?.hex !== p.hex) {
+          this.$posts.set(p.hash, p);
+        }
+        return p.hash;
+      });
+    }
   };
 
   getPostMeta(messageId?: string, own?: string | null) {

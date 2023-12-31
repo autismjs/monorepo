@@ -133,15 +133,35 @@ export class Autism extends EventEmitter2 {
         } else {
           res.send(Buffer.from(JSON.stringify({}), 'utf-8'));
         }
-      } else if (typeof children === 'object') {
-        res.send(
-          Buffer.from(
-            JSON.stringify({
-              children: children,
+      } else if (children && typeof children === 'object') {
+        if (children.depth > 99) {
+          const messages = await Promise.all(
+            merkle.getLeaves(depth, index).map((leaf) => {
+              return this.db
+                .getMessage(hexify(leaf).padStart(64, '0'))
+                .then((msg) => {
+                  return msg?.hex;
+                });
             }),
-            'utf-8',
-          ),
-        );
+          );
+          res.send(
+            Buffer.from(
+              JSON.stringify({
+                messages: messages,
+              }),
+              'utf-8',
+            ),
+          );
+        } else {
+          res.send(
+            Buffer.from(
+              JSON.stringify({
+                children: children,
+              }),
+              'utf-8',
+            ),
+          );
+        }
       } else {
         res.send(Buffer.from(JSON.stringify({}), 'utf-8'));
       }
