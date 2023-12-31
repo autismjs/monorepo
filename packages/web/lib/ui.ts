@@ -7,35 +7,73 @@ interface CustomElementConstructor {
 interface ICustomElement extends HTMLElement {
   state: any;
   render: () => VNode;
-  onmount(): Promise<void>;
-  onupdate(): Promise<void>;
-  onupdated(): Promise<void>;
+  onmount?(): Promise<void>;
+  update?(): Promise<void>;
+  subscribe?(): Promise<void>;
 }
 
-const excludedAttributes = new Set(['class', 'id']);
 export class CustomElement extends HTMLElement implements ICustomElement {
   css: string;
   #tree?: VNode;
+  #mounted = false;
   #lastAttrUpdated = 0;
   #attrUpdateTimeout: any;
   $?: any;
   effects: any[][] = [];
+  #selectors = new Map<string, Element>();
+  #unsubscribes: (() => void)[] = [];
+  onmount?(): Promise<void>;
+  update?(): Promise<void>;
+  subscribe?(): Promise<void>;
+
+  async connectedCallback() {
+    if (this.#tree) {
+      await this.#update();
+      return;
+    }
+    this.attachShadow({ mode: 'open' });
+    if (this.onmount) await this.onmount();
+    this.create();
+    await this.#subscribe();
+  }
 
   get tree() {
     return this.#tree;
   }
 
-  onmount(): Promise<void> {
-    return Promise.resolve();
+  child(index: number) {
+    return this.children[index];
   }
 
-  onupdate(): Promise<void> {
-    return Promise.resolve();
+  listen(store: Observable) {
+    const cb = store.subscribe(this.#update);
+    this.#unsubscribes.push(cb);
   }
 
-  onupdated(): Promise<void> {
-    return Promise.resolve();
-  }
+  unsubscribe = () => {
+    for (const unsubscribe of this.#unsubscribes) {
+      unsubscribe();
+    }
+    this.#unsubscribes = [];
+  };
+
+  query = (selector: string) => {
+    if (!this.shadowRoot) {
+      return null;
+    }
+
+    if (this.#selectors.has(selector)) {
+      return this.#selectors.get(selector);
+    }
+
+    const el = this.shadowRoot.querySelector(selector);
+
+    if (el) {
+      this.#selectors.set(selector, el);
+    }
+
+    return el;
+  };
 
   render(): VNode {
     return h('div');
@@ -60,26 +98,14 @@ export class CustomElement extends HTMLElement implements ICustomElement {
     );
   }
 
-  async connectedCallback() {
-    if (this.#tree) return;
-    this.attachShadow({ mode: 'open' });
-    await this.onmount();
-    this.update();
-  }
+  #subscribe = async () => {
+    if (this.subscribe) await this.subscribe();
+  };
 
-  update = async () => {
-    if (!this.shadowRoot) return;
-
-    if (!this.#tree) {
-      this.create();
-    } else if (this.#tree) {
-      await this.onupdate();
-
-      const oldTree = this.#tree;
-      const newTree = this.render();
-      newTree.patch(oldTree.el);
-      this.onupdated();
-    }
+  #update = async () => {
+    if (this.update) await this.update();
+    this.unsubscribe();
+    await this.#subscribe();
   };
 
   attributeChangedCallback(key: string, ov: string, nv: string) {
@@ -96,7 +122,8 @@ export class CustomElement extends HTMLElement implements ICustomElement {
           this.#attrUpdateTimeout = null;
         }
         this.#lastAttrUpdated = now;
-        await this.update();
+        // console.log(key, ov, nv);
+        await this.#update();
       };
 
       if (timeSince > wait) {
@@ -182,103 +209,6 @@ export class VNode {
     const frag = this.createElement();
     root.append(frag);
     return frag;
-  }
-
-  patch(rootElement: Element) {
-    this.#patchOne(rootElement, this);
-  }
-
-  #patchOne(lastEl: Element, newNode: VNode) {
-    let dirty = false;
-
-    if (lastEl.tagName !== newNode.tagName.toUpperCase()) {
-      dirty = true;
-    }
-
-    if (
-      !dirty &&
-      lastEl.tagName === 'TEXT' &&
-      lastEl.textContent !== newNode.content
-    ) {
-      lastEl.textContent = newNode.content || '';
-      dirty = true;
-    }
-
-    if (!dirty && newNode.attributes.size) {
-      for (const [name, value] of newNode.attributes) {
-        if (excludedAttributes.has(name)) continue;
-
-        if (lastEl.getAttribute(name) !== value) {
-          lastEl.setAttribute(name, value);
-
-          if (name === 'value') {
-            //@ts-ignore
-            lastEl.value = value;
-          } else {
-            dirty = true;
-          }
-        }
-      }
-    }
-
-    if (!dirty && lastEl.attributes.length) {
-      for (const { name, value } of Array.from(lastEl.attributes)) {
-        if (excludedAttributes.has(name)) continue;
-
-        if (value && !newNode.attributes.get(name)) {
-          lastEl.removeAttribute(name);
-
-          if (name === 'value') {
-            //@ts-ignore
-            lastEl.value = '';
-          } else {
-            dirty = true;
-          }
-        }
-      }
-    }
-
-    if (!dirty && newNode.classList.length) {
-      for (const className of newNode.classList) {
-        if (!lastEl.classList.contains(className)) {
-          lastEl.classList.add(className);
-        }
-      }
-    }
-
-    if (!dirty && lastEl.classList.length) {
-      for (const className of Array.from(lastEl.classList)) {
-        if (!newNode.classList.includes(className)) {
-          lastEl.classList.remove(className);
-        }
-      }
-    }
-
-    if (dirty) {
-      lastEl.replaceWith(newNode.createElement());
-      return;
-    }
-
-    const maxlength = Math.max(newNode.children.length, lastEl.children.length);
-
-    if (!maxlength) {
-      return;
-    }
-
-    const lastChildren = Array.from(lastEl.children).slice();
-    const newChildren = newNode.children.slice();
-    for (let i = 0; i < maxlength; i++) {
-      const lastChild = lastChildren[i];
-      const newChild = newChildren[i];
-
-      if (lastChild && newChild) {
-        newChild.patch(lastChild);
-      } else if (!lastChild && newChild) {
-        lastEl.appendChild(newChild.createElement());
-      } else if (lastChild && !newChild) {
-        lastEl.removeChild(lastChild);
-      }
-    }
   }
 
   createElement() {
@@ -478,6 +408,7 @@ export function connect(
 ): any {
   return function (ctx: () => CustomElement) {
     const oldonmount = ctx.prototype.onmount;
+    if (!oldonmount) return;
     ctx.prototype.onmount = function () {
       oldonmount.call(this);
 
@@ -515,14 +446,18 @@ export function boolAttr(key: string, bool?: any): { [key: string]: 'true' } {
   return obj;
 }
 
+type UIRouterElement = (new () => CustomElement) | CustomElement;
+
 class UIRouter {
   #hasInit = false;
 
-  #routes: [RegExp, CustomElement][] = [];
+  #routes: [RegExp, UIRouterElement][] = [];
 
   $pathname = new Observable('');
 
   #el?: CustomElement;
+
+  #loaded = false;
 
   get pathname() {
     return this.$pathname.$;
@@ -532,15 +467,21 @@ class UIRouter {
     this.$pathname.subscribe(this.update);
   }
 
-  #refreshPath = () => {
-    console.log(window.location.pathname);
+  #refreshPath = (evt?: any) => {
+    console.log(evt?.type, evt);
     this.$pathname.$ = window.location.pathname;
   };
 
   #init() {
     if (!this.#hasInit) {
-      window.addEventListener('popstate', this.#refreshPath);
-      window.addEventListener('DOMContentLoaded', this.#refreshPath);
+      window.addEventListener('popstate', (evt) => {
+        console.log('popstate');
+        this.#refreshPath(evt);
+      });
+      window.addEventListener('DOMContentLoaded', (evt) => {
+        console.log('DOMContentLoadedstate');
+        this.#refreshPath(evt);
+      });
       this.#hasInit = true;
     }
   }
@@ -551,7 +492,7 @@ class UIRouter {
     this.#refreshPath();
   };
 
-  add = (path: RegExp, node: CustomElement) => {
+  add = (path: RegExp, node: UIRouterElement) => {
     this.#init();
     this.#routes.push([path, node]);
   };
@@ -560,13 +501,14 @@ class UIRouter {
     this.#init();
     for (const [path, element] of this.#routes) {
       if (path.test(this.pathname)) {
-        if (this.#el && this.#el !== element) {
-          this.#el.replaceWith(element);
-          this.#el = element;
-          this.#el.update();
+        const el = element instanceof CustomElement ? element : new element();
+
+        if (this.#el && this.#el !== el) {
+          this.#el.replaceWith(el);
+          this.#el = el;
         } else if (!this.#el) {
-          document.body.append(element);
-          this.#el = element;
+          document.body.append(el);
+          this.#el = el;
         }
         return;
       }

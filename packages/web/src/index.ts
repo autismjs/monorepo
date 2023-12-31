@@ -6,7 +6,6 @@ import PostView from './pages/PostView';
 (async () => {
   Router.add(/\/(.*?)\/status\/(.*)/, new PostView());
   Router.add(/(.*?)/, new App());
-  Router.update();
+  console.log((await $node.node.db.db.getPosts()).length);
   $node.waitForStart();
-  window.addEventListener('popstate', (e) => console.log(e));
 })();

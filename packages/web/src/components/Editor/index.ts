@@ -15,19 +15,19 @@ import css from './index.scss';
 import $editor from '../../state/editor.ts';
 import XmarkIcon from '../../../static/icons/xmark.svg';
 
-@connect(() => {
-  const content = new Observable('');
-
-  return {
-    content,
-    reference: $editor.reference,
-  };
-})
+// @connect(() => {
+//   return {
+//     reference: $editor.reference,
+//   };
+// })
 export default class Editor extends CustomElement {
   css = css.toString();
+
+  content = new Observable('');
+
   onSubmit = () => {
     const creator = this.state.creator;
-    const content = this.$.content.$;
+    const content = this.content.$;
 
     const post = new Post({
       type: MessageType.Post,
@@ -42,7 +42,7 @@ export default class Editor extends CustomElement {
         detail: {
           post,
           reset: () => {
-            this.$.content.$ = '';
+            this.content.$ = '';
           },
         },
       }),
@@ -50,7 +50,7 @@ export default class Editor extends CustomElement {
   };
 
   onInput = (event: any) => {
-    this.$.content.$ = event.target.value;
+    this.content.$ = event.target.value;
     this.dispatchEvent(
       new CustomEvent('input', {
         detail: { target: event.target },
@@ -108,8 +108,8 @@ export default class Editor extends CustomElement {
         h('div.top', h('div.creator', name), h('div.userId', handle)),
         //@ts-ignore
         h('textarea.content', {
-          content: this.$.content.$,
-          value: this.$.content.$,
+          content: this.content.$,
+          value: this.content.$,
           rows: '6',
           placeholder: 'Say something here',
           oninput: this.onInput,
@@ -122,7 +122,7 @@ export default class Editor extends CustomElement {
             // @ts-ignore
             {
               onclick: this.onSubmit,
-              ...disabled(!this.$.content.$ || !$signer.$ecdsa.$?.privateKey),
+              ...disabled(!this.content.$ || !$signer.$ecdsa.$?.privateKey),
             },
             'Submit',
           ),

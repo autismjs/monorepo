@@ -60,24 +60,26 @@ export class Observable<ObservableValue = any> {
     }
   }
 
-  subscribe(subscription: Subscription<ObservableValue>) {
+  subscribe = (subscription: Subscription<ObservableValue>) => {
     const currIndex = this.#subscriptions.indexOf(subscription);
+
     if (currIndex === -1) {
       this.#subscriptions.push(subscription);
-      const sub = subscription;
-      if (typeof sub === 'function') {
-        sub(this.$);
-      } else if (typeof sub !== 'function' && sub.next) {
-        sub.next(this.$);
-      }
+      // const sub = subscription;
+      // if (typeof sub === 'function') {
+      //   sub(this.$);
+      // } else if (typeof sub !== 'function' && sub.next) {
+      //   sub.next(this.$);
+      // }
     }
+
     return () => {
       const index = this.#subscriptions.indexOf(subscription);
       if (index !== -1) {
         this.#subscriptions.splice(index, 1);
       }
     };
-  }
+  };
 }
 
 export function useObserve<ValueType = any>(value: ValueType) {
@@ -99,9 +101,7 @@ export function useEffect(
 
   if (!oldlen) {
     element.effects.push(dependencies);
-    callback().then(() => {
-      element.update();
-    });
+    callback();
     return;
   }
 
@@ -115,21 +115,25 @@ export function useEffect(
 
   for (let i = 0; i < old.length; i++) {
     if (old[i] !== dependencies[i] && !equal(old[i], dependencies[i])) {
-      callback().then(() => {
-        element.update();
-      });
+      callback();
       return;
     }
   }
 }
 
 export class ObservableMap<keyType = string, ValueType = any> {
+  #onCreate: (key: keyType) => void;
   #map: Map<keyType, Observable<ValueType | null>> = new Map();
 
-  get(key: keyType) {
+  constructor(onCreate: (key: keyType) => void) {
+    this.#onCreate = onCreate;
+  }
+
+  get(key: keyType): Observable<ValueType | null> {
     const exist = this.#map.get(key);
     if (!exist) {
       this.#map.set(key, new Observable<ValueType | null>(null));
+      this.#onCreate(key);
     }
     return this.#map.get(key) as Observable<ValueType | null>;
   }

@@ -15,11 +15,11 @@ export class NodeStore {
   node: Autism;
   #wait: Promise<void>;
 
-  $globalPosts = new Observable<string[]>([]);
-  $replies = new ObservableMap<string, string[]>();
-  $posts = new ObservableMap<string, Post>();
-  $users = new ObservableMap<string, UserProfileData>();
-  $postmetas = new ObservableMap<string, PostMeta>();
+  $globalPosts: Observable<string[]>;
+  $replies: ObservableMap<string, string[]>;
+  $posts: ObservableMap<string, Post>;
+  $users: ObservableMap<string, UserProfileData>;
+  $postmetas: ObservableMap<string, PostMeta>;
 
   onPubsub = async (msg: AnyJSON, isRevert = false) => {
     switch (msg.type) {
@@ -56,6 +56,12 @@ export class NodeStore {
   };
 
   constructor() {
+    this.$replies = new ObservableMap<string, string[]>(this.getReplies);
+    this.$posts = new ObservableMap<string, Post>(this.getPost);
+    this.$users = new ObservableMap<string, UserProfileData>(this.getUser);
+    this.$postmetas = new ObservableMap<string, PostMeta>(this.getPostMeta);
+    this.$globalPosts = new Observable<string[]>([]);
+
     const node = new Autism({
       bootstrap: [
         '/ip4/192.168.86.24/tcp/54884/ws/p2p/12D3KooWBLCTz8qFy5tHT6HCbBF5wEeHvd4qa99PeZR72AkugDrP',
@@ -100,7 +106,7 @@ export class NodeStore {
     }
   };
 
-  getPostMeta(messageId?: string, own?: string | null) {
+  getPostMeta = (messageId?: string, own?: string | null) => {
     if (!messageId) return null;
 
     const store = this.$postmetas.get(messageId);
@@ -111,7 +117,7 @@ export class NodeStore {
       }
     });
     return store.$;
-  }
+  };
 
   async #updateReplies(messageId: string) {
     const replies = await this.node.db.db.getReplies(messageId);
@@ -152,26 +158,26 @@ export class NodeStore {
   }
 
   getRepostRef(hash: string) {
-    const post = $node.getPost(hash);
+    const post = $node.$posts.get(hash);
     const repostRef =
-      post?.subtype === PostSubtype.Repost ? post.reference : '';
+      post.$?.subtype === PostSubtype.Repost ? post.$.reference : '';
     const [rpCreator, rpHash] = repostRef?.split('/') || [];
     const repostHash = rpHash || rpCreator;
 
     if (repostHash) {
-      return $node.getPost(repostHash);
+      return $node.$posts.get(repostHash);
     }
 
     return null;
   }
 
-  getReplies(messageId: string) {
+  getReplies = (messageId: string) => {
     this.#updateReplies(messageId);
     const $replies = this.$replies.get(messageId);
     return $replies.$;
-  }
+  };
 
-  getPost(hash: string) {
+  getPost = (hash: string) => {
     const store = this.$posts.get(hash);
 
     this.node.db.db.getMessage(hash).then((message) => {
@@ -181,15 +187,15 @@ export class NodeStore {
     });
 
     return store.$;
-  }
+  };
 
-  getUser(creator = '') {
+  getUser = (creator = '') => {
     const store = this.$users.get(creator);
     this.node.db.db.getProfile(creator).then((profile) => {
       store.$ = profile;
     });
     return store.$;
-  }
+  };
 }
 
 const $node = new NodeStore();

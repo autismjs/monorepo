@@ -1,7 +1,10 @@
 import { CustomElement, h, register } from '../../../lib/ui.ts';
 import css from './index.scss';
 
+let i = 0;
+
 export default class Button extends CustomElement {
+  debug = i++;
   css = css.toString();
 
   render() {

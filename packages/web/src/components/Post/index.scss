@@ -114,6 +114,11 @@
       margin-bottom: .5rem;
     }
 
+    .max-height {
+      max-height: fit-content;
+      mask-image: none;
+    }
+
     .content {
       grid-column-start: 1;
       grid-column-end: 3;
@@ -129,7 +134,9 @@
   }
 }
 
-
+.hidden {
+  display: none;
+}
 
 .max-height {
   max-height: 24rem;

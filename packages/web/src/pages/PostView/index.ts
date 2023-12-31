@@ -10,41 +10,44 @@ import {
 import css from './index.scss';
 import $node from '../../state/node.ts';
 import $editor from '../../state/editor.ts';
-import { Observable, useEffect } from '../../../lib/state.ts';
+import { Observable } from '../../../lib/state.ts';
 
-@connect(() => {
-  const $parents = new Observable<string[]>([]);
-  return {
-    parents: $parents,
-    pathname: Router.$pathname,
-    reference: $editor.reference,
-  };
-})
+import '../../components/Post';
+import '../../components/LeftSidebar';
+
+// @connect(() => {
+//   return {
+//     pathname: Router.$pathname,
+//     reference: $editor.reference,
+//   };
+// })
 export default class PostView extends CustomElement {
   css = css.toString();
 
-  async onupdated() {
-    const [, creator, , h] = Router.pathname.split('/');
-    const repost = $node.getRepostRef(h);
-    const messageId = !repost ? creator + '/' + h : repost.messageId;
-    const hash = repost?.hash || h;
+  parents = new Observable<string[]>([]);
 
-    useEffect(
-      async () => {
-        $node.$replies.get(messageId).subscribe(this.update);
-        $node.$posts.get(hash).subscribe(this.update);
-        const parents = await $node.getParents(hash);
-        this.$.parents.$ = parents;
-      },
-      [hash, this.$.parents.$.join('+')],
-      this,
-    );
-  }
+  // async onupdated() {
+  //   const [, creator, , h] = Router.pathname.split('/');
+  //   const repost = $node.getRepostRef(h);
+  //   const messageId = !repost ? creator + '/' + h : repost.messageId;
+  //   const hash = repost?.hash || h;
+  //
+  //   useEffect(
+  //     async () => {
+  //       // $node.$replies.get(messageId).subscribe(this._update);
+  //       // $node.$posts.get(hash).subscribe(this._update);
+  //       const parents = await $node.getParents(hash);
+  //       this.parents.$ = parents;
+  //     },
+  //     [hash, this.$.parents.$.join('+')],
+  //     this,
+  //   );
+  // }
 
   renderParents(): VNode {
     return h(
       'div.parents',
-      ...this.$.parents.$.map((parent: string) => {
+      ...this.parents.$.map((parent: string) => {
         const [creator, hash] = parent.split('/');
         const parentHash = hash || creator;
         // @ts-ignore
@@ -62,6 +65,11 @@ export default class PostView extends CustomElement {
     );
   }
 
+  // async update(): Promise<void> {
+  //   const [, , , hash] = Router.pathname.split('/');
+  //   this.query('div.posts > post-card')!.setAttribute('hash', hash);
+  // }
+
   render() {
     const [, , , hash] = Router.pathname.split('/');
 
@@ -70,13 +78,13 @@ export default class PostView extends CustomElement {
       h('left-sidebar'),
       h(
         'div.posts',
-        this.renderParents(),
+        // this.renderParents(),
         h(`post-card`, {
           ...boolAttr('comfortable', true),
           ...boolAttr('displayparent', true),
           hash,
         }),
-        this.renderReplies(),
+        // this.renderReplies(),
         h('div.posts__bottom'),
       ),
       h('div.sidebar'),
