@@ -334,6 +334,36 @@ export default class LevelDBAdapter implements BaseDBAdapter {
     return this.#query(db, predicate, options) as Promise<Post[]>;
   };
 
+  getReposts = async (
+    reference: string,
+    options?: {
+      reverse?: boolean;
+      limit?: number;
+      offset?: string;
+    },
+  ): Promise<Post[]> => {
+    if (!reference) return [];
+
+    const predicate = (msg: Any) => {
+      switch (msg.subtype) {
+        case PostSubtype.Repost:
+          return true;
+        default:
+          return false;
+      }
+    };
+
+    const hash = reference.split('/')[1] || reference;
+
+    if (!hash) return [];
+
+    const db = this.#indices.thread
+      .sublevel(hash)
+      .sublevel(MessageType[MessageType.Post]);
+
+    return this.#query(db, predicate, options) as Promise<Post[]>;
+  };
+
   async getModerations(
     reference: string,
     options?: {
@@ -357,6 +387,33 @@ export default class LevelDBAdapter implements BaseDBAdapter {
     const db = this.#indices.thread
       .sublevel(hash)
       .sublevel(MessageType[MessageType.Moderation]);
+
+    return this.#query(db, predicate, options);
+  }
+
+  async getThreads(
+    reference: string,
+    options?: {
+      reverse?: boolean;
+      limit?: number;
+      offset?: string;
+      subtype?: ModerationSubtype;
+    },
+  ): Promise<Any[]> {
+    const predicate = (msg: Any) => {
+      return (
+        typeof options?.subtype === 'undefined' ||
+        msg.subtype === options?.subtype
+      );
+    };
+
+    const hash = reference.split('/')[1] || reference;
+
+    if (!hash) return [];
+
+    const db = this.#indices.thread
+      .sublevel(hash)
+      .sublevel(MessageType[MessageType.Post]);
 
     return this.#query(db, predicate, options);
   }
@@ -454,25 +511,14 @@ export default class LevelDBAdapter implements BaseDBAdapter {
   }
 
   async getPostMeta(reference: string, own?: string | null): Promise<PostMeta> {
-    const replies = await this.getReplies(reference);
     const mods = await this.getModerations(reference);
-
-    const moderated: {
-      [key in ModerationSubtype]?: boolean;
-    } = {};
-
-    if (own) {
-      for (const mod of mods) {
-        if (mod.creator === own) {
-          moderated[mod.subtype] = true;
-        }
-      }
-    }
+    const threads = await this.getThreads(reference);
 
     return {
       moderations: flattenByCreatorSubtype(mods),
-      moderated,
-      replies: replies.length,
+      threads: flattenByCreatorSubtype(threads),
+      moderated: reduceByCreatorSubtype(mods, own),
+      threaded: reduceByCreatorSubtype(threads, own),
     };
   }
 
@@ -537,4 +583,23 @@ function flattenByCreatorSubtype(items: Any[]): { [subtype: string]: number } {
 
     return sum;
   }, {});
+}
+
+function reduceByCreatorSubtype(
+  msgs: Any[],
+  own?: string | null,
+): { [subtype: string]: boolean } {
+  const obj: {
+    [key: string]: boolean;
+  } = {};
+
+  if (own) {
+    for (const msg of msgs) {
+      if (msg.creator === own) {
+        obj[msg.subtype] = true;
+      }
+    }
+  }
+
+  return obj;
 }

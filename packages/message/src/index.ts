@@ -17,6 +17,8 @@ export { Profile, type ProfileJSON, ProfileSubtype } from './models/profile';
 
 export { Chat, type ChatJSON, ChatSubtype } from './models/chat';
 
+export { Reference } from './models/reference';
+
 export { Group, type GroupJSON, GroupSubtype } from './models/group';
 
 export { Revert, type RevertJSON, RevertSubtype } from './models/revert';

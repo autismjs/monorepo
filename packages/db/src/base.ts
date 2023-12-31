@@ -1,4 +1,9 @@
-import { Any, ModerationSubtype, ConnectionSubtype } from '@message';
+import {
+  Any,
+  ModerationSubtype,
+  ConnectionSubtype,
+  PostSubtype,
+} from '@message';
 
 export type UserProfileData = {
   name: string;
@@ -9,11 +14,10 @@ export type UserProfileData = {
 };
 
 export type PostMeta = {
-  moderated: {
-    [key in ModerationSubtype]?: boolean;
-  };
+  moderated: { [key in ModerationSubtype]?: boolean };
   moderations: { [subtype: string]: number };
-  replies: number;
+  threaded: { [key in PostSubtype]?: boolean };
+  threads: { [subtype: string]: number };
 };
 
 export interface BaseDBAdapter {
