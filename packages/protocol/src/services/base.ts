@@ -1,4 +1,4 @@
-import { ConstructorOptions, EventEmitter2 } from 'eventemitter2';
+import { EventEmitter2 } from 'eventemitter2';
 import { Any, Message, ProofType } from '@message';
 import {
   BaseP2P,
@@ -80,61 +80,40 @@ export class BaseNode extends EventEmitter2 {
     const body = Buffer.from(req.body, 'hex').toString('utf-8');
     const { user, root, depth, index } = JSON.parse(body);
 
-    return this.#getMutex(user).runExclusive(async () => {
-      const merkle = await this.db.merklize(user);
+    const merkle = await this.db.merklize(user);
 
-      const children = merkle.checkHash(depth, index, BigInt(root));
+    const children = merkle.checkHash(depth, index, BigInt(root));
 
-      if (!children) {
-        const message = await this.db.getMessage(
-          hexify(merkle.leaves[index]).padStart(64, '0'),
-        );
+    if (!children) {
+      const message = await this.db.getMessage(
+        hexify(merkle.leaves[index]).padStart(64, '0'),
+      );
 
-        if (message) {
-          res.send(
-            Buffer.from(
-              JSON.stringify({
-                messages: [message.hex],
-              }),
-              'utf-8',
-            ),
-          );
-        } else {
-          res.send(Buffer.from(JSON.stringify({}), 'utf-8'));
-        }
-      } else if (children && typeof children === 'object') {
-        if (children.depth > 8) {
-          const messages = await Promise.all(
-            merkle.getLeaves(depth, index).map((leaf) => {
-              return this.db
-                .getMessage(hexify(leaf).padStart(64, '0'))
-                .then((msg) => {
-                  return msg?.hex;
-                });
+      if (message) {
+        console.log(`sending 1 message`);
+        res.send(
+          Buffer.from(
+            JSON.stringify({
+              messages: [message.hex],
             }),
-          );
-          res.send(
-            Buffer.from(
-              JSON.stringify({
-                messages: messages,
-              }),
-              'utf-8',
-            ),
-          );
-        } else {
-          res.send(
-            Buffer.from(
-              JSON.stringify({
-                children: children,
-              }),
-              'utf-8',
-            ),
-          );
-        }
+            'utf-8',
+          ),
+        );
       } else {
         res.send(Buffer.from(JSON.stringify({}), 'utf-8'));
       }
-    });
+    } else if (children && typeof children === 'object') {
+      res.send(
+        Buffer.from(
+          JSON.stringify({
+            children: children,
+          }),
+          'utf-8',
+        ),
+      );
+    } else {
+      res.send(Buffer.from(JSON.stringify({}), 'utf-8'));
+    }
   };
 
   #syncUserWithPeer = async (
@@ -196,6 +175,7 @@ export class BaseNode extends EventEmitter2 {
     }
 
     if (json.messages) {
+      console.log(`received ${json.messages.length} new messages`);
       for (const hex of json.messages) {
         const msg = Message.fromHex(hex);
         if (msg) {
@@ -209,7 +189,7 @@ export class BaseNode extends EventEmitter2 {
 
   #dialSync = async (peerId: PeerId) => {
     const info = await this.p2p.dialProtocol(peerId, [ProtocolType.V1Info]);
-    const { users } = await info.json();
+    const { users = [] } = (await info.json()) || {};
 
     for (const user of users) {
       const merkle = await this.db.merklize(user);
@@ -249,6 +229,7 @@ export class BaseNode extends EventEmitter2 {
     this.p2p.onAny(this.#onAny);
     this.p2p.on(`pubsub:${PubsubTopics.Global}`, this.#onGlobalPubSub);
     this.p2p.once('peer:connect', this.#startSync);
+    this.p2p.on('peer:connect', this.#dialSync);
 
     await this.db.start();
     await this.p2p.start();

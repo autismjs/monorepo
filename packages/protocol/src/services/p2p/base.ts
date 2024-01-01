@@ -82,7 +82,13 @@ export class BaseP2P extends EventEmitter2 {
     return {
       buffer: () => bufferPromise,
       json: () =>
-        bufferPromise.then((buf) => JSON.parse(buf.toString('utf-8'))),
+        bufferPromise.then((buf) => {
+          try {
+            return JSON.parse(buf.toString('utf-8'));
+          } catch (e) {
+            console.error(e);
+          }
+        }),
     };
   }
 

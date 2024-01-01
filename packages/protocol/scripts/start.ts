@@ -25,8 +25,8 @@ const argv = yargs(hideBin(process.argv)).argv;
     console.log('pubsub:message:success', peer);
   });
 
-  node.on('sync:message', (peer) => {
-    console.log('sync:message', peer);
+  node.on('sync:new_message', (peer) => {
+    console.log('sync:new_message', peer);
   });
 
   await node.start();
