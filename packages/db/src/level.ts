@@ -33,6 +33,7 @@ export default class LevelDBAdapter
     global: AbstractSublevel<any, any, string, string>;
     user: AbstractSublevel<any, any, string, string>;
     thread: AbstractSublevel<any, any, string, string>;
+    revert: AbstractSublevel<any, any, string, string>;
   };
 
   constructor(
@@ -58,6 +59,9 @@ export default class LevelDBAdapter
       thread: this.#db.sublevel('thread', {
         valueEncoding: 'json',
       }),
+      revert: this.#db.sublevel('thread', {
+        valueEncoding: 'json',
+      }),
     };
 
     this.#mutex = new Mutex();
@@ -76,6 +80,7 @@ export default class LevelDBAdapter
     await this.#indices.user.clear();
     await this.#indices.global.clear();
     await this.#indices.thread.clear();
+    await this.#indices.revert.clear();
 
     console.log('cleared indices');
     const values = await this.#db.values();
@@ -100,6 +105,13 @@ export default class LevelDBAdapter
     if (exist) {
       return null;
     }
+
+    try {
+      const revert = await this.#indices.revert.get(message.hash);
+      if (revert) {
+        return null;
+      }
+    } catch (e) {}
 
     const time =
       charwise.encode(message.createdAt.getTime()) +
@@ -189,6 +201,7 @@ export default class LevelDBAdapter
         const rvt = message as Revert;
         const msg = await this.getMessage(Reference.from(rvt.reference).hash);
         if (msg) {
+          await this.#indices.revert.put(msg.hash, rvt.hash);
           await this.revertMessage(msg);
         }
         break;

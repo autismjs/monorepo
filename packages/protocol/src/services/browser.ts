@@ -1,11 +1,11 @@
 import { ConstructorOptions, EventEmitter2 } from 'eventemitter2';
 import { Any, Message, ProofType } from '@message';
 import {
-  P2P,
   ProtocolRequestParam,
   ProtocolResponseParam,
   ProtocolType,
-} from './p2p/browser.ts';
+} from './p2p/base.ts';
+import { P2P } from '@protocol/services/p2p/browser.ts';
 import { DB } from './db';
 import { PubsubTopics } from '../utils/types';
 import { ECDSA, hexify } from '@crypto';
