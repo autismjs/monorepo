@@ -5,11 +5,11 @@ import Error = types.Error;
 
 export type Subscription<ValueType = any> =
   | {
-      next?: (value: ValueType) => void;
+      next?: (oldValue: ValueType | null, newValue: ValueType) => void;
       error?: (err: Error) => void;
       complete?: () => void;
     }
-  | ((value: ValueType) => void);
+  | ((oldValue: ValueType | null, newValue: ValueType) => void);
 
 export class Observable<ObservableValue = any> {
   #state: ObservableValue;
@@ -24,13 +24,14 @@ export class Observable<ObservableValue = any> {
     if (this.#state === state || equal(this.#state, state)) {
       return;
     }
+    const oldState = this.#state;
     this.#state = state;
 
     for (const sub of this.#subscriptions) {
       if (typeof sub === 'function') {
-        sub(state);
+        sub(oldState, state);
       } else if (typeof sub !== 'function' && sub.next) {
-        sub.next(state);
+        sub.next(oldState, state);
       }
     }
   }
@@ -71,9 +72,9 @@ export class Observable<ObservableValue = any> {
       if (leading) {
         const sub = subscription;
         if (typeof sub === 'function') {
-          sub(this.$);
+          sub(null, this.$);
         } else if (typeof sub !== 'function' && sub.next) {
-          sub.next(this.$);
+          sub.next(null, this.$);
         }
       }
     }

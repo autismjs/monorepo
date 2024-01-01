@@ -5,7 +5,6 @@ import BlankImage from '../../../static/icons/blank.svg';
 // @ts-ignore
 import { minidenticon } from 'minidenticons';
 
-// @connect((el) => $node.$users.get(el.state.creator || ''))
 export default class ProfileImage extends CustomElement {
   static get observedAttributes() {
     return ['creator'];
@@ -24,7 +23,7 @@ export default class ProfileImage extends CustomElement {
         'data:image/svg+xml;utf8,' + minidenticon(this.state.creator, 50, 50);
     }
 
-    this.query('img')?.setAttribute('src', url);
+    this.query('img')!.setAttribute('src', url);
   }
 
   render() {

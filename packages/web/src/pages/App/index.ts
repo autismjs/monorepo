@@ -11,11 +11,24 @@ export default class App extends CustomElement {
   css = css.toString();
 
   update = async () => {
-    const posts = this.query('.posts');
+    const oldPosts = Array.from(this.query('.posts')!.children).slice();
+    const newPosts = this.renderPosts().map((node) => node.createElement());
 
-    if (posts) {
-      posts!.innerHTML = '';
-      posts?.append(...this.renderPosts().map((node) => node.createElement()));
+    const maxlen = Math.max(oldPosts.length, newPosts.length);
+
+    for (let i = 0; i < maxlen; i++) {
+      const oldEl = oldPosts[i];
+      const newEl = newPosts[i]?.children[0];
+
+      if (!oldEl && newEl) {
+        this.query('.posts')!.append(newPosts[i]);
+      } else if (oldEl && newEl) {
+        if (oldEl.getAttribute('hash') !== newEl.getAttribute('hash')) {
+          oldEl.setAttribute('hash', newEl.getAttribute('hash') || '');
+        }
+      } else if (oldEl && !newEl) {
+        this.query('.posts')!.removeChild(oldEl);
+      }
     }
   };
 

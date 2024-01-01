@@ -1,4 +1,4 @@
-import { connect, CustomElement, h, register } from '../../../lib/ui.ts';
+import { CustomElement, h, register } from '../../../lib/ui.ts';
 import css from './index.scss';
 import $signer from '../../state/signer.ts';
 import '../Editor';
@@ -6,12 +6,13 @@ import { Post, PostSubtype, ProofType } from '@message';
 import $node from '../../state/node.ts';
 import $editor from '../../state/editor.ts';
 
-@connect(() => ({
-  ecdsa: $signer.$ecdsa,
-  reference: $editor.reference,
-}))
 export default class LeftSidebar extends CustomElement {
   css = css.toString();
+
+  async subscribe(): Promise<void> {
+    this.listen($signer.$ecdsa);
+    this.listen($editor.reference);
+  }
 
   onSubmit = async (e: CustomEvent) => {
     const { post, reset } = e.detail;
@@ -40,7 +41,6 @@ export default class LeftSidebar extends CustomElement {
       `div.left-sidebar`,
       // @ts-ignore
       h('post-editor', {
-        creator: $signer.$ecdsa.$?.publicKey,
         onsubmit: this.onSubmit,
       }),
       h('c-button[disabled=true]', 'Import Private Key'),

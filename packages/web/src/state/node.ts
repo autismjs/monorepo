@@ -154,8 +154,6 @@ export class NodeStore {
     const repostHash = rpHash || rpCreator;
 
     if (repostHash) {
-      console.log(repostHash, $node.$posts.get(repostHash));
-
       return $node.$posts.get(repostHash);
     }
 

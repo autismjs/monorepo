@@ -1,6 +1,5 @@
 import {
   boolAttr,
-  connect,
   CustomElement,
   disabled,
   h,
@@ -15,19 +14,20 @@ import css from './index.scss';
 import $editor from '../../state/editor.ts';
 import XmarkIcon from '../../../static/icons/xmark.svg';
 
-// @connect(() => {
-//   return {
-//     reference: $editor.reference,
-//   };
-// })
 export default class Editor extends CustomElement {
   css = css.toString();
 
-  content = new Observable('');
+  $content = new Observable('');
+
+  async subscribe() {
+    this.listen($editor.reference);
+    this.listen($signer.$ecdsa);
+    this.listen(this.$content);
+  }
 
   onSubmit = () => {
-    const creator = this.state.creator;
-    const content = this.content.$;
+    const creator = $signer.$ecdsa.$?.publicKey || '';
+    const content = this.$content.$;
 
     const post = new Post({
       type: MessageType.Post,
@@ -42,7 +42,7 @@ export default class Editor extends CustomElement {
         detail: {
           post,
           reset: () => {
-            this.content.$ = '';
+            this.$content.$ = '';
           },
         },
       }),
@@ -50,7 +50,7 @@ export default class Editor extends CustomElement {
   };
 
   onInput = (event: any) => {
-    this.content.$ = event.target.value;
+    this.$content.$ = event.target.value;
     this.dispatchEvent(
       new CustomEvent('input', {
         detail: { target: event.target },
@@ -58,24 +58,65 @@ export default class Editor extends CustomElement {
     );
   };
 
-  render(): VNode {
-    const creator = this.state.creator;
+  async update() {
+    this.updateSigner();
+    this.updateReference();
+  }
+
+  async updateSigner() {
+    const creator = $signer.$ecdsa.$?.publicKey || '';
     const name = userName(creator) || 'Anonymous';
     const handle = userId(creator) || '';
+    this.query('profile-image')!.setAttribute('creator', creator);
+    this.query('div.creator')!.textContent = name;
+    this.query('div.userId')!.textContent = handle;
+
+    this.query('textarea.content')!.setAttribute('content', this.$content.$);
+    // @ts-ignore;
+    this.query('textarea.content')!.value = this.$content.$;
+
+    if (!$signer.$ecdsa.$?.privateKey) {
+      this.query('textarea.content')!.setAttribute('disabled', 'true');
+    } else {
+      this.query('textarea.content')!.removeAttribute('disabled');
+    }
+
+    if (!this.$content.$ || !$signer.$ecdsa.$?.privateKey) {
+      this.query('c-button#submit')!.setAttribute('disabled', 'true');
+    } else {
+      this.query('c-button#submit')!.removeAttribute('disabled');
+    }
+  }
+
+  async updateReference() {
     const [_c, _h] = $editor.reference.$.split('/');
     const hash = _h || _c;
     const parentCreator = _h ? _c : '';
     const parentHandle = userId(parentCreator) || '';
 
+    if (!!$editor.reference.$) {
+      this.query('div.ref')!.classList.remove('ref--hidden');
+    } else {
+      this.query('div.ref')!.classList.add('ref--hidden');
+    }
+
+    this.query('post-card.parent')!.setAttribute('hash', hash);
+
+    this.query('span.ref__text.ref__text--cancel')!.textContent =
+      `Cancel replying to ${parentHandle}`;
+    this.query('span.ref__text.ref__text--reply')!.textContent =
+      `Replying to ${parentHandle}`;
+  }
+  render(): VNode {
     return h(
       'div.editor',
       h(
         'div.ref',
         {
-          className: !hash ? 'ref--hidden' : '',
+          className: 'ref--hidden',
         },
         h('post-card.parent', {
-          hash: hash,
+          hash: '',
           ...boolAttr('hideactions', true),
         }),
         h(
@@ -89,11 +130,8 @@ export default class Editor extends CustomElement {
           h('img.xmark', {
             src: XmarkIcon,
           }),
-          h(
-            'span.ref__text.ref__text--cancel',
-            `Cancel replying to ${parentHandle}`,
-          ),
-          h('span.ref__text.ref__text--reply', `Replying to ${parentHandle}`),
+          h('span.ref__text.ref__text--cancel'),
+          h('span.ref__text.ref__text--reply'),
         ),
         h('div.ref__connector'),
       ),
@@ -103,13 +141,13 @@ export default class Editor extends CustomElement {
           ...boolAttr('comfortable', true),
         },
         h('profile-image', {
-          creator: creator,
+          creator: '',
         }),
-        h('div.top', h('div.creator', name), h('div.userId', handle)),
+        h('div.top', h('div.creator', ''), h('div.userId', '')),
         //@ts-ignore
         h('textarea.content', {
-          content: this.content.$,
-          value: this.content.$,
+          content: this.$content.$,
+          value: this.$content.$,
           rows: '6',
           placeholder: 'Say something here',
           oninput: this.onInput,
@@ -118,11 +156,11 @@ export default class Editor extends CustomElement {
         h(
           'div.bottom',
           h(
-            'c-button',
+            'c-button#submit',
             // @ts-ignore
             {
               onclick: this.onSubmit,
-              ...disabled(!this.content.$ || !$signer.$ecdsa.$?.privateKey),
+              ...disabled(!this.$content.$ || !$signer.$ecdsa.$?.privateKey),
             },
             'Submit',
           ),

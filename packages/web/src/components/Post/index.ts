@@ -5,13 +5,7 @@ import {
   h,
   register,
 } from '../../../lib/ui.ts';
-import {
-  debounce,
-  format,
-  fromNow,
-  userId,
-  userName,
-} from '../../utils/misc.ts';
+import { format, fromNow, userId, userName } from '../../utils/misc.ts';
 import CommentIcon from '../../../static/icons/comment.svg';
 import RepostIcon from '../../../static/icons/repost.svg';
 import RepostSlate300Icon from '../../../static/icons/repost-slate-300.svg';
@@ -93,7 +87,6 @@ export default class PostCard extends CustomElement {
       : '';
 
     const rpname = rpu.$?.name || userName(post?.creator) || 'Anonymous';
-    console.log('updating');
 
     if (repost) {
       this.query('div.reposted')!.classList.remove('hidden');
@@ -290,8 +283,8 @@ export default class PostCard extends CustomElement {
         h('div.userId'),
         h('div.createAt-top', h('span', '·'), h('span#createat_top')),
       ),
-      h('div.content', 'content'),
-      h('div.createAt-bottom', h('span#createat_bottom', 'fullCreateAt')),
+      h('div.content'),
+      h('div.createAt-bottom', h('span#createat_bottom')),
       h(
         'div.bottom',
         this.btn({

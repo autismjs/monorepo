@@ -27,7 +27,7 @@ export class CustomElement extends HTMLElement implements ICustomElement {
   #selectors = new Map<string, Element>();
   #unsubscribes: (() => void)[] = [];
   onmount?(): Promise<void>;
-  update?(): Promise<void>;
+  update?(oldValue?: any, newValue?: any): Promise<void>;
   subscribe?(): Promise<void>;
 
   async connectedCallback() {
@@ -106,9 +106,16 @@ export class CustomElement extends HTMLElement implements ICustomElement {
     if (this.subscribe) await this.subscribe();
   };
 
-  #update = async () => {
+  refresh(oldValue?: any, newValue?: any) {
+    return this.#update(oldValue, newValue);
+  }
+
+  #update = async (oldValue?: any, newValue?: any) => {
     const now = Date.now();
 
+    if (oldValue && newValue) {
+      if (oldValue === newValue) return;
+    }
     requestAnimationFrame(async () => {
       const timeSince = now - this.#lastPainted;
       const wait = 100;
@@ -119,7 +126,7 @@ export class CustomElement extends HTMLElement implements ICustomElement {
           this.#paintTimeout = null;
         }
         this.#lastPainted = now;
-        if (this.update) await this.update();
+        if (this.update) await this.update(oldValue, newValue);
         this.unsubscribe();
         await this.#subscribe();
       };
@@ -152,7 +159,7 @@ export class CustomElement extends HTMLElement implements ICustomElement {
         }
         this.#lastAttrUpdated = now;
         // console.log(key, ov, nv);
-        await this.#update();
+        await this.#update(ov, nv);
       };
 
       if (timeSince > wait) {
