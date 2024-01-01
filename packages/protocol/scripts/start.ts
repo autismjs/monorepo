@@ -25,6 +25,10 @@ const argv = yargs(hideBin(process.argv)).argv;
     console.log('pubsub:message:success', peer);
   });
 
+  node.on('sync:message', (peer) => {
+    console.log('sync:message', peer);
+  });
+
   await node.start();
   console.log(node.p2p.node!.getMultiaddrs().map((d) => d.toString()));
   console.log('there are ' + (await node.db.db.getPosts()).length + ' post(s)');

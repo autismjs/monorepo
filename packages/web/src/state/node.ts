@@ -22,19 +22,19 @@ export class NodeStore {
   $users: ObservableMap<string, UserProfileData>;
   $postmetas: ObservableMap<string, PostMeta>;
 
-  onPubsub = async (m: AnyJSON, isRevert = false) => {
+  onPubsub = async (m: AnyJSON) => {
     const msg = Message.fromJSON(m);
     switch (msg?.type) {
       case MessageType.Post: {
         const post = msg as Post;
         if (post.subtype === PostSubtype.Default) {
-          this.#updatePosts(isRevert ? undefined : post);
+          this.#updatePosts();
           this.getPost(post.hash!);
           this.getReplies(post.messageId);
           this.getPostMeta(post.messageId);
         }
         if ([PostSubtype.Repost].includes(post.subtype)) {
-          this.#updatePosts(isRevert ? undefined : post);
+          this.#updatePosts();
           this.getPost(Reference.from(post.reference!).hash);
           this.getReplies(post.reference!);
           this.getPostMeta(post.reference);
@@ -66,7 +66,7 @@ export class NodeStore {
 
     const node = new Autism({
       bootstrap: [
-        '/ip4/192.168.86.24/tcp/59048/ws/p2p/12D3KooWA6f6GYL1DfHhgh781TDvNZqsc3ZiDJtv1MTQ3JjBQqwH',
+        '/ip4/192.168.86.24/tcp/56101/ws/p2p/12D3KooWQPKzaYMrqAgB1XECXgGYnsQUMyQYJfUSXg8RWVgmyiDd',
       ],
     });
 
@@ -77,10 +77,13 @@ export class NodeStore {
       console.log('peer connected', peer);
     });
 
-    node.on('pubsub:message:success', (msg) => this.onPubsub(msg, false));
-    node.on('pubsub:message:revert', (msg) => this.onPubsub(msg, true));
+    node.on('pubsub:message:success', (msg) => this.onPubsub(msg));
+    node.on('pubsub:message:revert', (msg) => this.onPubsub(msg));
 
-    node.on('sync:new_message', this.onPubsub);
+    node.on('sync:new_message', (msg) => {
+      console.log('sync:new_message', msg);
+      this.onPubsub(msg);
+    });
 
     this.#wait = new Promise(async (r) => {
       await this.node.start();
@@ -93,19 +96,17 @@ export class NodeStore {
     return this.#wait;
   }
 
-  #updatePosts = async (msg?: Post) => {
+  #updatePosts = async () => {
     const posts = await this.node.db.db.getPosts();
 
-    if (msg) {
-      this.$globalPosts.$ = [msg.hash].concat(this.$globalPosts.$);
-    } else {
-      this.$globalPosts.$ = posts.map((p) => {
-        if (this.$posts.get(p.hash).$?.hex !== p.hex) {
-          this.$posts.set(p.hash, p);
-        }
-        return p.hash;
-      });
-    }
+    this.$globalPosts.$ = posts.map((p) => {
+      if (this.$posts.get(p.hash).$?.hex !== p.hex) {
+        this.$posts.set(p.hash, p);
+      }
+      return p.hash;
+    });
+
+    console.log(`total ${this.$globalPosts.$.length} posts`);
   };
 
   getPostMeta = (messageId?: string, own?: string | null) => {
@@ -171,7 +172,6 @@ export class NodeStore {
         }
         return p.messageId;
       });
-      console.log(messageId, replies);
     });
     return $replies.$;
   };

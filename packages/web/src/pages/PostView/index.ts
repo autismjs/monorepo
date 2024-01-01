@@ -39,7 +39,6 @@ export default class PostView extends CustomElement {
       this.listen($node.$posts.get(repost.$.hash));
     }
     if (messageId) {
-      console.log({ messageId }, $node.$replies.get(messageId));
       this.listen($node.$replies.get(messageId));
     }
   }

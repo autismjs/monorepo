@@ -46,6 +46,10 @@ export function format(date?: Date, fmt = 'YYYY-MM-DDTHH:mm:ssZ[Z]') {
   return dayjs(date).format(fmt);
 }
 
+export function exist(d?: any) {
+  return !!d;
+}
+
 export function throttle(delay: number) {
   let lastExecution = 0;
   return function (
