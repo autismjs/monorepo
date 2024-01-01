@@ -18,6 +18,10 @@ export class CustomElement extends HTMLElement implements ICustomElement {
   #mounted = false;
   #lastAttrUpdated = 0;
   #attrUpdateTimeout: any;
+
+  #lastPainted = 0;
+  #paintTimeout: any;
+
   $?: any;
   effects: any[][] = [];
   #selectors = new Map<string, Element>();
@@ -45,8 +49,8 @@ export class CustomElement extends HTMLElement implements ICustomElement {
     return this.children[index];
   }
 
-  listen(store: Observable) {
-    const cb = store.subscribe(this.#update);
+  listen(store: Observable, leading = false) {
+    const cb = store.subscribe(this.#update, leading);
     this.#unsubscribes.push(cb);
   }
 
@@ -66,7 +70,7 @@ export class CustomElement extends HTMLElement implements ICustomElement {
       return this.#selectors.get(selector);
     }
 
-    const el = this.shadowRoot.querySelector(selector);
+    const el = this.shadowRoot!.querySelector(selector);
 
     if (el) {
       this.#selectors.set(selector, el);
@@ -103,15 +107,40 @@ export class CustomElement extends HTMLElement implements ICustomElement {
   };
 
   #update = async () => {
-    if (this.update) await this.update();
-    this.unsubscribe();
-    await this.#subscribe();
+    const now = Date.now();
+
+    requestAnimationFrame(async () => {
+      const timeSince = now - this.#lastPainted;
+      const wait = 100;
+
+      const later = async () => {
+        if (this.#paintTimeout) {
+          clearTimeout(this.#paintTimeout);
+          this.#paintTimeout = null;
+        }
+        this.#lastPainted = now;
+        if (this.update) await this.update();
+        this.unsubscribe();
+        await this.#subscribe();
+      };
+
+      if (timeSince > wait) {
+        await later();
+      } else {
+        if (this.#paintTimeout) {
+          clearTimeout(this.#paintTimeout);
+        }
+        this.#paintTimeout = setTimeout(later, Math.max(0, wait - timeSince));
+      }
+
+      this.#lastPainted = now;
+    });
   };
 
   attributeChangedCallback(key: string, ov: string, nv: string) {
     if (nv === ov) return;
 
-    requestAnimationFrame(async () => {
+    return requestAnimationFrame(async () => {
       const now = Date.now();
       const timeSince = now - this.#lastAttrUpdated;
       const wait = 100;
@@ -137,6 +166,7 @@ export class CustomElement extends HTMLElement implements ICustomElement {
           Math.max(0, wait - timeSince),
         );
       }
+
       this.#lastAttrUpdated = now;
     });
   }
@@ -467,20 +497,17 @@ class UIRouter {
     this.$pathname.subscribe(this.update);
   }
 
-  #refreshPath = (evt?: any) => {
-    console.log(evt?.type, evt);
+  #refreshPath = () => {
     this.$pathname.$ = window.location.pathname;
   };
 
   #init() {
     if (!this.#hasInit) {
-      window.addEventListener('popstate', (evt) => {
-        console.log('popstate');
-        this.#refreshPath(evt);
+      window.addEventListener('popstate', () => {
+        this.#refreshPath();
       });
-      window.addEventListener('DOMContentLoaded', (evt) => {
-        console.log('DOMContentLoadedstate');
-        this.#refreshPath(evt);
+      window.addEventListener('DOMContentLoaded', () => {
+        this.#refreshPath();
       });
       this.#hasInit = true;
     }

@@ -5,7 +5,13 @@ import {
   h,
   register,
 } from '../../../lib/ui.ts';
-import { format, fromNow, userId, userName } from '../../utils/misc.ts';
+import {
+  debounce,
+  format,
+  fromNow,
+  userId,
+  userName,
+} from '../../utils/misc.ts';
 import CommentIcon from '../../../static/icons/comment.svg';
 import RepostIcon from '../../../static/icons/repost.svg';
 import RepostSlate300Icon from '../../../static/icons/repost-slate-300.svg';
@@ -37,18 +43,17 @@ export default class PostCard extends CustomElement {
 
   async subscribe(): Promise<void> {
     this.listen($signer.$ecdsa);
-    this.listen($editor.reference);
 
     if (!this.state.hash) return;
 
     const post = $node.$posts.get(this.state.hash);
 
+    this.listen(post);
+
     if (post.$) {
       const user = $node.$users.get(post.$.creator);
       this.listen(user);
     }
-
-    this.listen(post);
 
     const repost = $node.getRepostRef(this.state.hash);
     const tpostHash = repost?.$?.hash || this.state.hash;
@@ -56,12 +61,14 @@ export default class PostCard extends CustomElement {
     const messageId = tpost.$?.messageId;
 
     if (!tpostHash || !messageId) return;
-    $node.$replies.get(messageId).subscribe(this.update);
-    $node.$posts.get(tpostHash).subscribe(this.update);
-    $node.$postmetas.get(messageId).subscribe(this.update);
+
+    this.listen($node.$posts.get(tpostHash));
+    this.listen($node.$postmetas.get(messageId));
   }
 
   update = async () => {
+    if (!this.shadowRoot) return;
+
     const post = $node.getPost(this.state.hash);
     const repost =
       post?.subtype === PostSubtype.Repost && post.reference

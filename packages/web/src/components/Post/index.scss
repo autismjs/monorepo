@@ -242,12 +242,11 @@ profile-image {
     --border-radius: .25rem;
     --opacity: .6;
     --color: var(--slate-400);
+    cursor: pointer;
 
     img {
       width: var(--text-base);
       height: var(--text-base);
-      transition:
-              filter 200ms ease-in-out;
     }
 
     &:hover,

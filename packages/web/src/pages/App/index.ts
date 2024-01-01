@@ -30,7 +30,7 @@ export default class App extends CustomElement {
         hash,
         onclick: () => {
           const repost = $node.getRepostRef(hash);
-          const newHash = repost?.hash || hash;
+          const newHash = repost?.$?.hash || hash;
           const post = $node.getPost(newHash);
           const [creator, postHash] =
             $node.getPost(hash)!.messageId.split('/') || [];

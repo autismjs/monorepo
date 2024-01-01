@@ -60,17 +60,22 @@ export class Observable<ObservableValue = any> {
     }
   }
 
-  subscribe = (subscription: Subscription<ObservableValue>) => {
+  subscribe = (
+    subscription: Subscription<ObservableValue>,
+    leading = false,
+  ) => {
     const currIndex = this.#subscriptions.indexOf(subscription);
 
     if (currIndex === -1) {
       this.#subscriptions.push(subscription);
-      // const sub = subscription;
-      // if (typeof sub === 'function') {
-      //   sub(this.$);
-      // } else if (typeof sub !== 'function' && sub.next) {
-      //   sub.next(this.$);
-      // }
+      if (leading) {
+        const sub = subscription;
+        if (typeof sub === 'function') {
+          sub(this.$);
+        } else if (typeof sub !== 'function' && sub.next) {
+          sub.next(this.$);
+        }
+      }
     }
 
     return () => {

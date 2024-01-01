@@ -1,6 +1,5 @@
 import {
   boolAttr,
-  connect,
   CustomElement,
   h,
   register,
@@ -15,60 +14,107 @@ import { Observable } from '../../../lib/state.ts';
 import '../../components/Post';
 import '../../components/LeftSidebar';
 
-// @connect(() => {
-//   return {
-//     pathname: Router.$pathname,
-//     reference: $editor.reference,
-//   };
-// })
 export default class PostView extends CustomElement {
   css = css.toString();
 
   parents = new Observable<string[]>([]);
 
-  // async onupdated() {
-  //   const [, creator, , h] = Router.pathname.split('/');
-  //   const repost = $node.getRepostRef(h);
-  //   const messageId = !repost ? creator + '/' + h : repost.messageId;
-  //   const hash = repost?.hash || h;
-  //
-  //   useEffect(
-  //     async () => {
-  //       // $node.$replies.get(messageId).subscribe(this._update);
-  //       // $node.$posts.get(hash).subscribe(this._update);
-  //       const parents = await $node.getParents(hash);
-  //       this.parents.$ = parents;
-  //     },
-  //     [hash, this.$.parents.$.join('+')],
-  //     this,
-  //   );
-  // }
-
-  renderParents(): VNode {
-    return h(
-      'div.parents',
-      ...this.parents.$.map((parent: string) => {
-        const [creator, hash] = parent.split('/');
-        const parentHash = hash || creator;
-        // @ts-ignore
-        return h('post-card.parent', {
-          ...boolAttr('parent', true),
-          hash: parentHash,
-          onclick: () => {
-            const url = `/${creator}/status/${hash}`;
-            $editor.reference.$ = parent;
-            $node.getReplies(parent);
-            Router.go(url);
-          },
-        });
-      }),
-    );
+  async onmount() {
+    const [, , , h] = Router.pathname.split('/');
+    const repost = $node.getRepostRef(h);
+    const hash = repost?.$?.hash || h;
+    this.parents.$ = await $node.getParents(hash);
   }
 
-  // async update(): Promise<void> {
-  //   const [, , , hash] = Router.pathname.split('/');
-  //   this.query('div.posts > post-card')!.setAttribute('hash', hash);
-  // }
+  async subscribe(): Promise<void> {
+    const [, creator, , h] = Router.pathname.split('/');
+    const repost = $node.getRepostRef(h);
+    const messageId = !repost ? creator + '/' + h : repost?.$?.messageId;
+    const hash = repost?.$?.hash || h;
+    this.listen(this.parents);
+    this.listen(Router.$pathname);
+    this.listen($node.$posts.get(hash));
+
+    if (repost?.$) {
+      this.listen($node.$posts.get(repost.$.hash));
+    }
+    if (messageId) {
+      this.listen($node.$replies.get(messageId));
+    }
+  }
+
+  renderParents(): VNode[] {
+    return this.parents.$.map((parent: string) => {
+      const [creator, hash] = parent.split('/');
+      const parentHash = hash || creator;
+      // @ts-ignore
+      return h('post-card.parent', {
+        ...boolAttr('parent', true),
+        hash: parentHash,
+        onclick: () => {
+          const url = `/${creator}/status/${hash}`;
+          $editor.reference.$ = parent;
+          $node.getReplies(parent);
+          Router.go(url);
+        },
+      });
+    });
+  }
+
+  async update(): Promise<void> {
+    const [, , , hash] = Router.pathname.split('/');
+    const [, , , h] = Router.pathname.split('/');
+    const repost = $node.getRepostRef(h);
+    this.parents.$ = await $node.getParents(repost?.$?.hash || h);
+    this.query('div.posts > post-card')!.setAttribute('hash', hash);
+    this.updateParents();
+    this.updateReplies();
+  }
+
+  updateReplies() {
+    const oldReplies = Array.from(this.query('div.replies')!.children).slice();
+    const newReplies = this.renderReplies().map((node) => node.createElement());
+
+    const maxlen = Math.max(oldReplies.length, newReplies.length);
+
+    for (let i = 0; i < maxlen; i++) {
+      const oldEl = oldReplies[i];
+      const newEl = newReplies[i]?.children[0];
+
+      if (!oldEl && newEl) {
+        this.query('div.replies')!.append(newReplies[i]);
+      } else if (oldEl && newEl) {
+        if (oldEl.getAttribute('hash') !== newEl.getAttribute('hash')) {
+          // oldEl.setAttribute('hash', newEl.getAttribute('hash') || '');
+          oldEl.replaceWith(newReplies[i]);
+        }
+      } else if (oldEl && !newEl) {
+        this.query('div.replies')!.removeChild(oldEl);
+      }
+    }
+  }
+
+  updateParents() {
+    const oldParents = Array.from(this.query('div.parents')!.children).slice();
+    const newParents = this.renderParents().map((node) => node.createElement());
+
+    const maxlen = Math.max(oldParents.length, newParents.length);
+
+    for (let i = 0; i < maxlen; i++) {
+      const oldEl = oldParents[i];
+      const newEl = newParents[i]?.children[0];
+
+      if (!oldEl && newEl) {
+        this.query('div.parents')!.append(newParents[i]);
+      } else if (oldEl && newEl) {
+        if (oldEl.getAttribute('hash') !== newEl.getAttribute('hash')) {
+          oldEl.setAttribute('hash', newEl.getAttribute('hash') || '');
+        }
+      } else if (oldEl && !newEl) {
+        this.query('div.parents')!.removeChild(oldEl);
+      }
+    }
+  }
 
   render() {
     const [, , , hash] = Router.pathname.split('/');
@@ -78,41 +124,38 @@ export default class PostView extends CustomElement {
       h('left-sidebar'),
       h(
         'div.posts',
-        // this.renderParents(),
+        h('div.parents', this.renderParents()),
         h(`post-card`, {
           ...boolAttr('comfortable', true),
           ...boolAttr('displayparent', true),
           hash,
         }),
-        // this.renderReplies(),
+        h('div.replies', this.renderReplies()),
         h('div.posts__bottom'),
       ),
       h('div.sidebar'),
     );
   }
 
-  renderReplies = () => {
+  renderReplies = (): VNode[] => {
     const [, creator, , hash] = Router.pathname.split('/');
     const repost = $node.getRepostRef(hash);
-    const messageId = repost ? repost.messageId : creator + '/' + hash;
-    const replies = $node.getReplies(messageId);
+    const messageId = repost ? repost.$?.messageId : creator + '/' + hash;
+    const replies = $node.$replies.get(messageId!).$ || [];
 
-    return h(
-      'div.replies',
-      replies?.map((mid) => {
-        const [c, _h] = mid.split('/');
-        // @ts-ignore
-        return h('post-card.reply', {
-          hash: _h || c,
-          onclick: () => {
-            const url = c ? `/${c}/status/${_h}` : `/${_h}`;
-            $editor.reference.$ = mid;
-            $node.getReplies(mid);
-            Router.go(url);
-          },
-        });
-      }),
-    );
+    return replies.map((mid) => {
+      const [c, _h] = mid.split('/');
+      // @ts-ignore
+      return h('post-card.reply', {
+        hash: _h || c,
+        onclick: () => {
+          const url = c ? `/${c}/status/${_h}` : `/${_h}`;
+          $editor.reference.$ = mid;
+          $node.getReplies(mid);
+          Router.go(url);
+        },
+      });
+    });
   };
 }
 

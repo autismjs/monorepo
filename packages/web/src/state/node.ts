@@ -119,17 +119,6 @@ export class NodeStore {
     return store.$;
   };
 
-  async #updateReplies(messageId: string) {
-    const replies = await this.node.db.db.getReplies(messageId);
-    const $replies = this.$replies.get(messageId);
-    $replies.$ = replies.map((p) => {
-      if (this.$posts.get(p.hash).$?.hex !== p.hex) {
-        this.$posts.set(p.hash, p);
-      }
-      return p.messageId;
-    });
-  }
-
   async getParents(hash: string, list: string[] = []): Promise<string[]> {
     const p = this.getPost(hash);
     const post = p || (await this.node.db.db.getMessage<Post>(hash));
@@ -165,6 +154,8 @@ export class NodeStore {
     const repostHash = rpHash || rpCreator;
 
     if (repostHash) {
+      console.log(repostHash, $node.$posts.get(repostHash));
+
       return $node.$posts.get(repostHash);
     }
 
@@ -172,8 +163,15 @@ export class NodeStore {
   }
 
   getReplies = (messageId: string) => {
-    this.#updateReplies(messageId);
     const $replies = this.$replies.get(messageId);
+    this.node.db.db.getReplies(messageId).then((replies) => {
+      $replies.$ = replies.map((p) => {
+        if (this.$posts.get(p.hash).$?.hex !== p.hex) {
+          this.$posts.set(p.hash, p);
+        }
+        return p.messageId;
+      });
+    });
     return $replies.$;
   };
 
