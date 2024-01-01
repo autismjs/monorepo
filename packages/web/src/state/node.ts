@@ -2,6 +2,7 @@ import { Observable, ObservableMap } from '../../lib/state.ts';
 import { Autism } from '@protocol/browser';
 import {
   AnyJSON,
+  Message,
   MessageType,
   Moderation,
   Post,
@@ -21,8 +22,9 @@ export class NodeStore {
   $users: ObservableMap<string, UserProfileData>;
   $postmetas: ObservableMap<string, PostMeta>;
 
-  onPubsub = async (msg: AnyJSON, isRevert = false) => {
-    switch (msg.type) {
+  onPubsub = async (m: AnyJSON, isRevert = false) => {
+    const msg = Message.fromJSON(m);
+    switch (msg?.type) {
       case MessageType.Post: {
         const post = msg as Post;
         if (post.subtype === PostSubtype.Default) {
@@ -38,7 +40,7 @@ export class NodeStore {
           this.getPostMeta(post.reference);
         }
         if ([PostSubtype.Comment].includes(post.subtype)) {
-          this.getReplies(post.messageId);
+          this.getReplies(post.reference!);
           this.getPost(Reference.from(post.reference!).hash);
           this.getPostMeta(post.reference);
         }
@@ -64,7 +66,7 @@ export class NodeStore {
 
     const node = new Autism({
       bootstrap: [
-        '/ip4/192.168.86.24/tcp/54884/ws/p2p/12D3KooWBLCTz8qFy5tHT6HCbBF5wEeHvd4qa99PeZR72AkugDrP',
+        '/ip4/192.168.86.24/tcp/59048/ws/p2p/12D3KooWA6f6GYL1DfHhgh781TDvNZqsc3ZiDJtv1MTQ3JjBQqwH',
       ],
     });
 
@@ -169,6 +171,7 @@ export class NodeStore {
         }
         return p.messageId;
       });
+      console.log(messageId, replies);
     });
     return $replies.$;
   };
