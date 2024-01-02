@@ -277,7 +277,7 @@ tape('Message Format', (t) => {
       subtype: GroupSubtype.MemberRequest,
       creator: '0xa1b77ccf93a2b14174c322d673a87bfa0031a2d2',
       createdAt: new Date(0x018a01173656),
-      groupId: 'group-id',
+      groupId: 'db-id',
       data: ['a', 'ab', 'abcdefg'],
     });
 
@@ -288,7 +288,7 @@ tape('Message Format', (t) => {
       subtype: GroupSubtype.Broadcast,
       creator: '0xa1b77ccf93a2b14174c322d673a87bfa0031a2d2',
       createdAt: new Date(0x018a01173656),
-      groupId: 'group-id',
+      groupId: 'db-id',
       data: msgA.hex,
     });
 
@@ -318,7 +318,7 @@ tape('Message Format', (t) => {
         subtype: GroupSubtype.MemberRequest,
         creator: '0xa1b77ccf93a2b14174c322d673a87bfa0031a2d2',
         createdAt: new Date(0x018a01173656),
-        groupId: 'group-id',
+        groupId: 'db-id',
         data: ['a', 'ab', 'abcdefg'],
         proof: undefined,
       },
@@ -333,7 +333,7 @@ tape('Message Format', (t) => {
         subtype: GroupSubtype.Broadcast,
         creator: '0xa1b77ccf93a2b14174c322d673a87bfa0031a2d2',
         createdAt: new Date(0x018a01173656),
-        groupId: 'group-id',
+        groupId: 'db-id',
         data: msgA.hex,
         proof: undefined,
       },

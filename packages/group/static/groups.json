@@ -1,0 +1,82 @@
+[
+  {
+    "id": "twitter_common",
+    "title": "Common Twitter User",
+    "description": "Any Twitter users"
+  },
+  {
+    "id": "twitter_uncommon",
+    "title": "Uncommon Twitter User",
+    "description": "Any Twitter users with 100+ followers"
+  },
+  {
+    "id": "twitter_rare",
+    "title": "Rare Twitter User",
+    "description": "Any Twitter users with 1k+ followers"
+  },
+  {
+    "id": "twitter_epic",
+    "title": "Epic Twitter User",
+    "description": "Any Twitter users with 10k+ followers"
+  },
+  {
+    "id": "twitter_legendary",
+    "title": "Legendary Twitter User",
+    "description": "Any Twitter users with 100k+ followers"
+  },
+  {
+    "id": "twitter_mythic",
+    "title": "Mythic Twitter User",
+    "description": "Any Twitter users with 1M+ followers"
+  },
+  {
+    "id": "reddit_common",
+    "title": "Common Reddit User",
+    "description": "Any Reddit users"
+  },
+  {
+    "id": "reddit_uncommon",
+    "title": "Uncommon Reddit User",
+    "description": "Any Reddit users with 2k+ karma"
+  },
+  {
+    "id": "reddit_rare",
+    "title": "Rare Reddit User",
+    "description": "Any Reddit users with 20k+ karma"
+  },
+  {
+    "id": "reddit_epic",
+    "title": "Epic Reddit User",
+    "description": "Any Reddit users with 200k+ karma"
+  },
+  {
+    "id": "reddit_legendary",
+    "title": "Legendary Reddit User",
+    "description": "Any Reddit users with 500k+ karma"
+  },
+  {
+    "id": "github_common",
+    "title": "Common Github User",
+    "description": "Any Github users"
+  },
+  {
+    "id": "github_uncommon",
+    "title": "Uncommon Github User",
+    "description": "Any Github users with under 10+ stars"
+  },
+  {
+    "id": "github_rare",
+    "title": "Rare Github User",
+    "description": "Any Github users with 100+ stars"
+  },
+  {
+    "id": "github_epic",
+    "title": "Epic Github User",
+    "description": "Any Github users with 1000+ stars"
+  },
+  {
+    "id": "github_legendary",
+    "title": "Legendary Github User",
+    "description": "Any Github users with 10000+ stars"
+  }
+]
