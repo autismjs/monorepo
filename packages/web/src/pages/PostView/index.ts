@@ -62,13 +62,12 @@ export default class PostView extends CustomElement {
     });
   }
 
-  async update(ov: any, nv: any, store: any): Promise<void> {
-    console.log('changed to ', this.query('.posts')!.scrollTop);
+  async update(): Promise<void> {
     const bottom = this.query('.posts__bottom')!;
     // @ts-ignore
     bottom.style.height = '';
 
-    const [, creator, , hash] = Router.pathname.split('/');
+    const [, , , hash] = Router.pathname.split('/');
     const [, , , h] = Router.pathname.split('/');
     const repost = $node.getRepostRef(h);
     this.parents.$ = await $node.getParents(repost?.$?.hash || h);

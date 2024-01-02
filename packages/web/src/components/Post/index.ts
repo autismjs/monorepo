@@ -19,7 +19,7 @@ import {
   MessageType,
   Moderation,
   ModerationSubtype,
-  Post as AustismPost,
+  Post,
   PostSubtype,
   ProofType,
   Reference,
@@ -201,7 +201,7 @@ export default class PostCard extends CustomElement {
         createdAt: new Date(),
       });
     } else {
-      msg = new AustismPost({
+      msg = new Post({
         type: MessageType.Post,
         subtype: PostSubtype.Repost,
         reference: p.$.messageId,
@@ -215,7 +215,7 @@ export default class PostCard extends CustomElement {
       value: $signer.$ecdsa.$.sign(msg.hash),
     });
 
-    $node.node.publish(msg);
+    return $node.node.publish(msg);
   };
 
   toggleLike = async (evt: PointerEvent) => {
@@ -258,7 +258,7 @@ export default class PostCard extends CustomElement {
       value: $signer.$ecdsa.$.sign(msg.hash),
     });
 
-    $node.node.publish(msg);
+    return $node.node.publish(msg);
   };
 
   render() {

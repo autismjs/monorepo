@@ -130,10 +130,10 @@ export function useEffect(
 }
 
 export class ObservableMap<keyType = string, ValueType = any> {
-  #onCreate: (key: keyType) => void;
+  #onCreate?: (key: keyType) => void;
   #map: Map<keyType, Observable<ValueType | null>> = new Map();
 
-  constructor(onCreate: (key: keyType) => void) {
+  constructor(onCreate?: (key: keyType) => void) {
     this.#onCreate = onCreate;
   }
 
@@ -141,7 +141,7 @@ export class ObservableMap<keyType = string, ValueType = any> {
     const exist = this.#map.get(key);
     if (!exist) {
       this.#map.set(key, new Observable<ValueType | null>(null));
-      this.#onCreate(key);
+      if (this.#onCreate) this.#onCreate(key);
     }
     return this.#map.get(key) as Observable<ValueType | null>;
   }

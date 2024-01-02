@@ -16,6 +16,11 @@ export class NodeStore {
   node: Autism;
   #wait: Promise<void>;
 
+  /**
+   * [TODO]
+   * Need to take out global posts and replies from store
+   * this should pertains to just the view and be destroyed when navigated away
+   */
   $globalPosts: Observable<string[]>;
   $replies: ObservableMap<string, string[]>;
   $posts: ObservableMap<string, Post>;
