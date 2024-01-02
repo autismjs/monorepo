@@ -81,7 +81,7 @@ module.exports = [
     ignoreWarnings: [/Uncaught \(in promise\) CodeError: stream reset/],
     entry: {
       'autismjs-crypto': ['@crypto'],
-      app: path.join(__dirname, 'src', 'index.ts'),
+      app: path.join(__dirname, 'src', 'start.ts'),
     },
 
     resolve: {

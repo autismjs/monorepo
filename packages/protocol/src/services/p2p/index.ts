@@ -2,7 +2,7 @@
 import type { Libp2pInit } from 'libp2p';
 //@ts-ignore
 import type { Connection } from '@libp2p/interface';
-import logger from '../../utils/logger';
+import logger from '../../../../utilities/src/logger.ts';
 import { PubsubTopics } from '../../utils/types';
 import { BaseP2P } from '@protocol/services/p2p/base.ts';
 

@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "@message": ["../message/src"],
+      "@crypto": ["../crypto/src"],
+      "@db": ["../db/src"],
+      "@protocol": ["../protocol/src"],
+      "@message/*": ["../message/src/*"],
+      "@crypto/*": ["../crypto/src/*"],
+      "@db/*": ["../db/src/*"],
+      "@protocol/*": ["../protocol/src/*"]
+    },
+    "noEmit": true,
+    "baseUrl": ".",
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "nodenext",
+    "module": "nodenext",
+    "target": "ESNext",
+    "lib": ["esnext", "dom"],
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "useUnknownInCatchVariables": false,
+    "strictPropertyInitialization": false,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["src"],
+  "exclude": ["**/*.test.ts", "src/utils/test.ts"]
+}

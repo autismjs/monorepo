@@ -11,6 +11,7 @@
     "packages/crypto",
     "packages/db",
     "packages/message",
+    "packages/group",
     "packages/protocol",
     "packages/web"
   ],
