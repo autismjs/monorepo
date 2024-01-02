@@ -27,6 +27,7 @@ import {
   RevertSubtype,
 } from '@message';
 import $signer from '../../state/signer.ts';
+import { ECDSA } from '@crypto';
 
 export default class PostCard extends CustomElement {
   static get observedAttributes() {
@@ -36,7 +37,7 @@ export default class PostCard extends CustomElement {
   css = css.toString();
 
   async subscribe(): Promise<void> {
-    this.listen($signer.$ecdsa);
+    this.listen($signer.$identity);
 
     if (!this.state.hash) return;
 
@@ -72,10 +73,7 @@ export default class PostCard extends CustomElement {
     const p = $node.getPost(hash);
     const u = $node.$users.get(p?.creator || '');
     const rpu = $node.$users.get(repost?.creator || '');
-    const postmeta = $node.getPostMeta(
-      p?.messageId,
-      $signer.$ecdsa.$?.publicKey,
-    );
+    const postmeta = $node.getPostMeta(p?.messageId, $signer.publicKey);
 
     const creator = p?.json.creator || '';
     const createat = fromNow(p?.json.createdAt) || '';
@@ -142,7 +140,7 @@ export default class PostCard extends CustomElement {
       this.query('c-button.comment-btn')!.removeAttribute('active');
     }
 
-    if ($signer.$ecdsa.$?.privateKey) {
+    if ($signer.$identity.$) {
       this.query('c-button.comment-btn')!.removeAttribute('disabled');
       this.query('c-button.like-btn')!.removeAttribute('disabled');
       this.query('c-button.repost-btn')!.removeAttribute('disabled');
@@ -183,11 +181,11 @@ export default class PostCard extends CustomElement {
 
     if (!p.$?.messageId) return;
 
-    if (!$signer.$ecdsa.$ || !$signer.$ecdsa.$.publicKey) return;
+    if (!$signer.publicKey) return;
 
     const postmeta = await $node.node.db.db.getPostMeta(
       p.$.messageId,
-      $signer.$ecdsa.$.publicKey,
+      $signer.publicKey,
     );
 
     let msg;
@@ -197,7 +195,7 @@ export default class PostCard extends CustomElement {
         type: MessageType.Revert,
         subtype: RevertSubtype.Default,
         reference: postmeta.threaded[PostSubtype.Repost],
-        creator: $signer.$ecdsa.$.publicKey,
+        creator: $signer.publicKey,
         createdAt: new Date(),
       });
     } else {
@@ -205,17 +203,19 @@ export default class PostCard extends CustomElement {
         type: MessageType.Post,
         subtype: PostSubtype.Repost,
         reference: p.$.messageId,
-        creator: $signer.$ecdsa.$.publicKey,
+        creator: $signer.publicKey,
         createdAt: new Date(),
       });
     }
 
-    msg.commit({
-      type: ProofType.ECDSA,
-      value: $signer.$ecdsa.$.sign(msg.hash),
-    });
+    if ($signer.$identity.$ instanceof ECDSA) {
+      msg.commit({
+        type: ProofType.ECDSA,
+        value: $signer.$identity.$.sign(msg.hash),
+      });
 
-    return $node.node.publish(msg);
+      return $node.node.publish(msg);
+    }
   };
 
   toggleLike = async (evt: PointerEvent) => {
@@ -226,11 +226,11 @@ export default class PostCard extends CustomElement {
 
     if (!p.$?.messageId) return;
 
-    if (!$signer.$ecdsa.$ || !$signer.$ecdsa.$.publicKey) return;
+    if (!$signer.publicKey) return;
 
     const postmeta = await $node.node.db.db.getPostMeta(
       p.$.messageId,
-      $signer.$ecdsa.$.publicKey,
+      $signer.publicKey,
     );
 
     let msg;
@@ -240,7 +240,7 @@ export default class PostCard extends CustomElement {
         type: MessageType.Revert,
         subtype: RevertSubtype.Default,
         reference: postmeta.moderated[ModerationSubtype.Like],
-        creator: $signer.$ecdsa.$.publicKey,
+        creator: $signer.publicKey,
         createdAt: new Date(),
       });
     } else {
@@ -248,17 +248,19 @@ export default class PostCard extends CustomElement {
         type: MessageType.Moderation,
         subtype: ModerationSubtype.Like,
         reference: p.$.messageId,
-        creator: $signer.$ecdsa.$.publicKey,
+        creator: $signer.publicKey,
         createdAt: new Date(),
       });
     }
 
-    msg.commit({
-      type: ProofType.ECDSA,
-      value: $signer.$ecdsa.$.sign(msg.hash),
-    });
+    if ($signer.$identity.$ instanceof ECDSA) {
+      msg.commit({
+        type: ProofType.ECDSA,
+        value: $signer.$identity.$.sign(msg.hash),
+      });
 
-    return $node.node.publish(msg);
+      return $node.node.publish(msg);
+    }
   };
 
   render() {
@@ -332,7 +334,7 @@ export default class PostCard extends CustomElement {
         className: className,
         title: title,
         ...boolAttr('active', active),
-        ...disabled(!$signer.$ecdsa.$?.privateKey),
+        ...disabled(!$signer.$identity.$),
         onclick: onclick,
       },
       h('img', { src: props.src }),

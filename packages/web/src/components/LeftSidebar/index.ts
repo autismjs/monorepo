@@ -5,12 +5,13 @@ import '../Editor';
 import { Post, PostSubtype, ProofType } from '@message';
 import $node from '../../state/node.ts';
 import $editor from '../../state/editor.ts';
+import { ECDSA, ZK } from '@crypto';
 
 export default class LeftSidebar extends CustomElement {
   css = css.toString();
 
   async subscribe(): Promise<void> {
-    this.listen($signer.$ecdsa);
+    this.listen($signer.$identity);
     this.listen($editor.reference);
   }
 
@@ -23,16 +24,28 @@ export default class LeftSidebar extends CustomElement {
       reference: $editor.reference.$ || '',
     });
 
-    if (p) {
-      if ($signer.$ecdsa.$?.privateKey) {
+    const identity = $signer.$identity.$;
+
+    console.log(p, identity);
+    if (p && identity) {
+      if (identity instanceof ECDSA) {
+        const signature = await identity.sign(p.hash);
         p.commit({
           type: ProofType.ECDSA,
-          value: $signer.$ecdsa.$.sign(p.hash),
+          value: signature,
         });
-
-        await $node.node.publish(p);
-        reset();
+      } else if (identity instanceof ZK) {
+        // p.commit({
+        //   type: ProofType.Semaphore,
+        //   value: await identity.genSemaphoreProof({
+        //     signal: p.hash,
+        //     merkleProof: tree.createProof(0),
+        //   }),
+        // });
       }
+
+      await $node.node.publish(p);
+      reset();
     }
   };
 
@@ -49,7 +62,7 @@ export default class LeftSidebar extends CustomElement {
         // @ts-ignore
         {
           onclick: () => {
-            $signer.generateRandomPrivateKey();
+            $signer.generateRandomZKIdentity();
           },
         },
         'Generate Private Key',

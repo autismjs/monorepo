@@ -75,6 +75,61 @@ export default class LevelDBAdapter
     await this.#db.close();
   }
 
+  async getStats(
+    type?: 'users' | 'posts' | 'moderations' | 'connections' | 'messages',
+  ) {
+    console.time('level.getStats');
+
+    const stats: {
+      users?: number;
+      posts?: number;
+      moderations?: number;
+      connections?: number;
+      messages?: number;
+    } = {};
+
+    if (!type || type === 'users') {
+      stats.users = (await this.#getKeys(this.#indices.user)).length;
+    }
+
+    if (!type || type === 'moderations') {
+      stats.moderations = (
+        await this.#getKeys(
+          this.#indices.global.sublevel(MessageType[MessageType.Moderation], {
+            valueEncoding: 'json',
+          }),
+        )
+      ).length;
+    }
+
+    if (!type || type === 'posts') {
+      stats.posts = (
+        await this.#getKeys(
+          this.#indices.global.sublevel(MessageType[MessageType.Post], {
+            valueEncoding: 'json',
+          }),
+        )
+      ).length;
+    }
+
+    if (!type || type === 'connections') {
+      stats.connections = (
+        await this.#getKeys(
+          this.#indices.global.sublevel(MessageType[MessageType.Connection], {
+            valueEncoding: 'json',
+          }),
+        )
+      ).length;
+    }
+
+    if (!type || type === 'messages') {
+      stats.messages = (await this.#getKeys(this.#db)).length;
+    }
+
+    console.timeEnd('level.getStats');
+    return stats;
+  }
+
   async reindex() {
     console.log('clearing indices');
     await this.#indices.user.clear();
@@ -638,12 +693,13 @@ export default class LevelDBAdapter
     const mods = await this.getModerations(reference);
     const threads = await this.getThreads(reference);
 
-    return {
+    const result = {
       moderations: flattenByCreatorSubtype(mods),
       threads: flattenByCreatorSubtype(threads),
       moderated: reduceByCreatorSubtype(mods, own),
       threaded: reduceByCreatorSubtype(threads, own),
     };
+    return result;
   }
 
   async getUserMeta(user: string): Promise<{
@@ -670,6 +726,17 @@ export default class LevelDBAdapter
       names.push(key);
     }
     return names;
+  }
+
+  async #getKeys(
+    db: Level<string, AnyJSON> | AbstractSublevel<any, any, any, any>,
+  ) {
+    const keys = await db.keys();
+    const result = [];
+    for await (const key of keys) {
+      result.push(key);
+    }
+    return result;
   }
 
   async getMessage<MessageType = Any>(

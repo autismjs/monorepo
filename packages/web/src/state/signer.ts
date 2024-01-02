@@ -1,15 +1,22 @@
 import { Observable } from '../../lib/state.ts';
-import { ECDSA } from '@crypto';
+import { ECDSA, ZK } from '@crypto';
 
 export class Signer {
-  $ecdsa: Observable<ECDSA | null> = new Observable<ECDSA | null>(null);
-
-  async generateRandomPrivateKey() {
-    this.$ecdsa.$ = new ECDSA();
-  }
+  $identity: Observable<ZK | ECDSA | null> = new Observable<ZK | ECDSA | null>(
+    null,
+  );
 
   get publicKey() {
-    return this.$ecdsa.$?.publicKey || '';
+    if (this.$identity instanceof ECDSA) return this.$identity.publicKey;
+    return '';
+  }
+
+  async generateRandomPrivateKey() {
+    this.$identity.$ = new ECDSA();
+  }
+
+  async generateRandomZKIdentity() {
+    this.$identity.$ = new ZK();
   }
 }
 

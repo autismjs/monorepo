@@ -54,6 +54,8 @@ export class BaseNode extends EventEmitter2 {
           this.emit('pubsub:message:success', message.json);
         }
         return;
+      } else if (message.proof.type === ProofType.Semaphore) {
+        console.log('wow');
       }
     } catch (e) {
       this.emit(`pubsub:error`, e);

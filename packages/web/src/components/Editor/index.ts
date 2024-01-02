@@ -13,6 +13,7 @@ import { Observable } from '../../../lib/state.ts';
 import css from './index.scss';
 import $editor from '../../state/editor.ts';
 import XmarkIcon from '../../../static/icons/xmark.svg';
+import { ECDSA } from '@crypto';
 
 export default class Editor extends CustomElement {
   css = css.toString();
@@ -21,12 +22,15 @@ export default class Editor extends CustomElement {
 
   async subscribe() {
     this.listen($editor.reference);
-    this.listen($signer.$ecdsa);
+    this.listen($signer.$identity);
     this.listen(this.$content);
   }
 
   onSubmit = () => {
-    const creator = $signer.$ecdsa.$?.publicKey || '';
+    const creator =
+      $signer.$identity.$ instanceof ECDSA
+        ? $signer.$identity.$.publicKey || ''
+        : '';
     const content = this.$content.$;
 
     const post = new Post({
@@ -59,12 +63,15 @@ export default class Editor extends CustomElement {
   };
 
   async update() {
-    this.updateSigner();
-    this.updateReference();
+    await this.updateSigner();
+    await this.updateReference();
   }
 
   async updateSigner() {
-    const creator = $signer.$ecdsa.$?.publicKey || '';
+    const creator =
+      $signer.$identity.$ instanceof ECDSA
+        ? $signer.$identity.$.publicKey || ''
+        : '';
     const name = userName(creator) || 'Anonymous';
     const handle = userId(creator) || '';
     this.query('profile-image')!.setAttribute('creator', creator);
@@ -75,13 +82,13 @@ export default class Editor extends CustomElement {
     // @ts-ignore;
     this.query('textarea.content')!.value = this.$content.$;
 
-    if (!$signer.$ecdsa.$?.privateKey) {
+    if (!$signer.$identity.$) {
       this.query('textarea.content')!.setAttribute('disabled', 'true');
     } else {
       this.query('textarea.content')!.removeAttribute('disabled');
     }
 
-    if (!this.$content.$ || !$signer.$ecdsa.$?.privateKey) {
+    if (!this.$content.$ || !$signer.$identity.$) {
       this.query('c-button#submit')!.setAttribute('disabled', 'true');
     } else {
       this.query('c-button#submit')!.removeAttribute('disabled');
@@ -107,6 +114,7 @@ export default class Editor extends CustomElement {
     this.query('span.ref__text.ref__text--reply')!.textContent =
       `Replying to ${parentHandle}`;
   }
+
   render(): VNode {
     return h(
       'div.editor',
@@ -151,7 +159,7 @@ export default class Editor extends CustomElement {
           rows: '6',
           placeholder: 'Say something here',
           oninput: this.onInput,
-          ...disabled(!$signer.$ecdsa.$?.privateKey),
+          ...disabled(!$signer.$identity.$),
         }),
         h(
           'div.bottom',
@@ -160,7 +168,7 @@ export default class Editor extends CustomElement {
             // @ts-ignore
             {
               onclick: this.onSubmit,
-              ...disabled(!this.$content.$ || !$signer.$ecdsa.$?.privateKey),
+              ...disabled(!this.$content.$ || !$signer.$identity.$),
             },
             'Submit',
           ),
