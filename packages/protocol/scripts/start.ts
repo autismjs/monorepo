@@ -1,4 +1,5 @@
-import { Autism } from '../src';
+// @ts-ignore
+import { Autism } from '@protocol/index';
 // @ts-ignore
 import yargs from 'yargs/yargs';
 import { hideBin } from 'yargs/helpers';

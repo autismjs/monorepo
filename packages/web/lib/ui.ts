@@ -8,7 +8,8 @@ interface ICustomElement extends HTMLElement {
   state: any;
   render: () => VNode;
   onmount?(): Promise<void>;
-  update?(): Promise<void>;
+  onmounted?(): Promise<void>;
+  update?(oldValue: any, newValue: any, storeCtx: any): Promise<void>;
   subscribe?(): Promise<void>;
 }
 
@@ -27,18 +28,20 @@ export class CustomElement extends HTMLElement implements ICustomElement {
   #selectors = new Map<string, Element>();
   #unsubscribes: (() => void)[] = [];
   onmount?(): Promise<void>;
-  update?(oldValue?: any, newValue?: any): Promise<void>;
+  onmounted?(): Promise<void>;
+  update?(oldValue: any, newValue: any, storeCtx: any): Promise<void>;
   subscribe?(): Promise<void>;
 
   async connectedCallback() {
     if (this.#tree) {
-      await this.#update();
+      await this.#update(null, null, null);
       return;
     }
     this.attachShadow({ mode: 'open' });
     if (this.onmount) await this.onmount();
     this.create();
     await this.#subscribe();
+    if (this.onmounted) await this.onmounted();
   }
 
   get tree() {
@@ -106,11 +109,11 @@ export class CustomElement extends HTMLElement implements ICustomElement {
     if (this.subscribe) await this.subscribe();
   };
 
-  refresh(oldValue?: any, newValue?: any) {
-    return this.#update(oldValue, newValue);
+  refresh(oldValue: any, newValue: any, ctx: any) {
+    return this.#update(oldValue, newValue, ctx);
   }
 
-  #update = async (oldValue?: any, newValue?: any) => {
+  #update = async (oldValue: any, newValue: any, ctx: any) => {
     const now = Date.now();
 
     if (oldValue && newValue) {
@@ -126,7 +129,7 @@ export class CustomElement extends HTMLElement implements ICustomElement {
           this.#paintTimeout = null;
         }
         this.#lastPainted = now;
-        if (this.update) await this.update(oldValue, newValue);
+        if (this.update) await this.update(oldValue, newValue, ctx);
         this.unsubscribe();
         await this.#subscribe();
       };
@@ -159,7 +162,7 @@ export class CustomElement extends HTMLElement implements ICustomElement {
         }
         this.#lastAttrUpdated = now;
         // console.log(key, ov, nv);
-        await this.#update(ov, nv);
+        await this.#update(ov, nv, key);
       };
 
       if (timeSince > wait) {

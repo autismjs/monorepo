@@ -66,7 +66,7 @@ export class NodeStore {
 
     const node = new Autism({
       bootstrap: [
-        '/ip4/192.168.86.24/tcp/65385/ws/p2p/12D3KooWMbLM2KcBAt7UX8mfGbHqGgRrnUpmHxgAePbQUNQvjzeK',
+        '/ip4/192.168.86.24/tcp/53558/ws/p2p/12D3KooWKK4uPmGFDn1LntFyRsFBLnjRj26d5YKCHwEXsJQF46gs',
       ],
     });
 

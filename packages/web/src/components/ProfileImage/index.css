@@ -1,9 +1,9 @@
 img {
   display: var(--display, block);
-  width: var(--width, 2rem);
-  height: var(--height, 2rem);
+  width: var(--width, 3rem);
+  height: var(--height, 3rem);
   border: var(--border, none);
-  border-radius: var(--border-radius, 2px);
+  border-radius: var(--border-radius, 50%);
   padding: var(--padding, 0);
   margin: var(--margin, 0);
   background-color: var(--background-color, var(--slate-50));

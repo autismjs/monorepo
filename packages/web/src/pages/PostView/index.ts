@@ -19,6 +19,8 @@ export default class PostView extends CustomElement {
 
   parents = new Observable<string[]>([]);
 
+  #lastHash = '';
+
   async onmount() {
     const [, , , h] = Router.pathname.split('/');
     const repost = $node.getRepostRef(h);
@@ -60,14 +62,46 @@ export default class PostView extends CustomElement {
     });
   }
 
-  async update(): Promise<void> {
-    const [, , , hash] = Router.pathname.split('/');
+  async update(ov: any, nv: any, store: any): Promise<void> {
+    console.log('changed to ', this.query('.posts')!.scrollTop);
+    const bottom = this.query('.posts__bottom')!;
+    // @ts-ignore
+    bottom.style.height = '';
+
+    const [, creator, , hash] = Router.pathname.split('/');
     const [, , , h] = Router.pathname.split('/');
     const repost = $node.getRepostRef(h);
     this.parents.$ = await $node.getParents(repost?.$?.hash || h);
     this.query('div.posts > post-card')!.setAttribute('hash', hash);
     this.updateParents();
     this.updateReplies();
+
+    const height = window.innerHeight;
+    const posts = this.query('.posts')!;
+    const card = this.query('.posts > post-card')!;
+    const parents = this.query('.parents')!;
+    const replies = this.query('.replies')!;
+
+    const lastElement = replies.children.length
+      ? replies.children[replies.children.length - 1]
+      : card;
+    if (posts.scrollHeight + 8 > height) {
+      // @ts-ignore
+      bottom.style.height = `${
+        bottom.clientHeight + height - lastElement.clientHeight - 8
+      }px`;
+    } else {
+      // @ts-ignore
+      bottom.style.height = `${
+        bottom.clientHeight +
+        parents.clientHeight +
+        card.clientHeight +
+        replies.clientHeight -
+        lastElement.clientHeight
+      }px`;
+    }
+
+    this.query('.posts')!.scrollTop = this.query('.parents')!.clientHeight;
   }
 
   updateReplies() {

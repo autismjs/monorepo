@@ -1,15 +1,17 @@
 import { equal } from '../src/utils/misc.ts';
 import { CustomElement } from './ui.ts';
-import { types } from 'sass';
-import Error = types.Error;
 
 export type Subscription<ValueType = any> =
   | {
-      next?: (oldValue: ValueType | null, newValue: ValueType) => void;
+      next?: (
+        oldValue: ValueType | null,
+        newValue: ValueType,
+        storeCtx: any,
+      ) => void;
       error?: (err: Error) => void;
       complete?: () => void;
     }
-  | ((oldValue: ValueType | null, newValue: ValueType) => void);
+  | ((oldValue: ValueType | null, newValue: ValueType, storeCtx: any) => void);
 
 export class Observable<ObservableValue = any> {
   #state: ObservableValue;
@@ -29,9 +31,9 @@ export class Observable<ObservableValue = any> {
 
     for (const sub of this.#subscriptions) {
       if (typeof sub === 'function') {
-        sub(oldState, state);
+        sub(oldState, state, this);
       } else if (typeof sub !== 'function' && sub.next) {
-        sub.next(oldState, state);
+        sub.next(oldState, state, this);
       }
     }
   }
@@ -72,9 +74,9 @@ export class Observable<ObservableValue = any> {
       if (leading) {
         const sub = subscription;
         if (typeof sub === 'function') {
-          sub(null, this.$);
+          sub(null, this.$, this);
         } else if (typeof sub !== 'function' && sub.next) {
-          sub.next(null, this.$);
+          sub.next(null, this.$, this);
         }
       }
     }
