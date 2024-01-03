@@ -1,6 +1,6 @@
 import IHttpServer, {
   HttpServerOptions,
-  StatusCode,
+  parseJsonBody,
 } from './services/web/index.ts';
 import IDatabase, { DatabaseOptions } from './services/db/index.ts';
 
@@ -30,24 +30,36 @@ export default class GroupRegistry {
       }
     }
 
-    this.#http!.on('/health', (_, res) => {
-      res.writeHead(StatusCode.Ok, { 'Content-Type': 'text' });
-      res.end('ok');
+    this.#http!.get('/health', (_, res) => {
+      res.send('ok');
     });
 
-    this.#http!.on('/groups/:id', async (req, res) => {
+    this.#http!.get('/groups/:id/members', async (req, res) => {
+      res.send(await this.#db?.getGroupMembers(req.params!.id));
+    });
+
+    this.#http!.get('/groups/:id', async (req, res) => {
       const { id } = req.params!;
       const result = await this.#db?.getGroupInfo(id);
-      res.writeHead(StatusCode.Ok, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(result));
+      res.send(result);
     });
 
-    this.#http!.on('/groups', async (req, res) => {
-      console.time('groups');
+    this.#http!.get('/groups', async (req, res) => {
       const result = await this.#db?.getGroups();
-      res.writeHead(StatusCode.Ok, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(result));
-      console.timeEnd('groups');
+      res.send(result);
+    });
+
+    this.#http!.get('/commitments/:commitment', async (req, res) => {
+      const { commitment } = req.params!;
+      const result = await this.#db?.getGroupsByCommitment(commitment);
+      res.send(result);
+    });
+
+    this.#http!.post('/groups/:id/members', parseJsonBody, async (req, res) => {
+      const { id } = req.params!;
+      const { commitment } = req.body!;
+      await this.#db!.insertCommitment(commitment, id);
+      res.send('ok');
     });
   }
 }
